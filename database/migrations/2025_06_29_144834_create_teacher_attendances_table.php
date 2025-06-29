@@ -17,7 +17,7 @@ return new class extends Migration
             $table->date('date');
             $table->time('time_in')->nullable();
             $table->time('time_out')->nullable();
-            $table->enum('status', ['hadir', 'terlambat', 'tidak_hadir', 'izin']);
+            $table->enum('status', ['hadir', 'terlambat', 'tidak_hadir', 'izin', 'sakit']);
             $table->string('photo_in')->nullable();
             $table->foreignId('device_id')->nullable()->constrained('devices')->onDelete('set null');
             $table->timestamps();

@@ -21,6 +21,8 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'class_id',
+        'whatsapp_number',
         'password',
     ];
 
@@ -57,5 +59,9 @@ class User extends Authenticatable
             ->take(2)
             ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
+    }
+
+    public function classes() {
+        return $this->belongsTo(Classes::class, 'class_id');
     }
 }
