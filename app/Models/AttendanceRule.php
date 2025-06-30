@@ -28,4 +28,8 @@ class AttendanceRule extends Model
         'time_out_end' => 'datetime',
         'day_of_week' => DayOfWeekEnum::class
     ];
+
+    public function class() {
+        return $this->belongsTo(Classes::class, 'class_id');
+    }
 }

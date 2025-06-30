@@ -53,7 +53,7 @@ class StudentResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('nis')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('class_id')
+                Tables\Columns\TextColumn::make('class_id.name')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('gender')
