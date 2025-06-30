@@ -35,7 +35,8 @@ class StudentResource extends Resource
                 Forms\Components\Select::make('gender')
                     ->required()
                     ->options(GenderEnum::class),
-                Forms\Components\TextInput::make('fingerprint_id'),
+                Forms\Components\TextInput::make('fingerprint_id')
+                    ->label('ID Sidik Jari'),
                 Forms\Components\FileUpload::make('photo')
                     ->image()
                     ->imageEditor(),
