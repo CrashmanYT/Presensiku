@@ -20,7 +20,7 @@ class Classes extends Model
     ];
 
     public function homeroomTeacher() {
-        return $this->belongsTo(Teacher::class, 'homeroom_teacher_id');
+        return $this->belongsTo(Teacher::class);
     }
 
     public function students() {

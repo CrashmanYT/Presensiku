@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('teachers', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
             $table->string('nip')->nullable();
             $table->string('fingerprint_id')->nullable()->index();
             $table->string('photo')->nullable();

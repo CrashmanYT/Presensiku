@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->foreignId('class_id')->references('id')->on('classes')->nullable();
+            $table->foreignId('class_id')->nullable()->references('id')->on('classes');
             $table->string('whatsapp_numbers')->nullable();
             $table->rememberToken();
             $table->timestamps();
