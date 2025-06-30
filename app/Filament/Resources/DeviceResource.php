@@ -16,7 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class DeviceResource extends Resource
 {
     protected static ?string $model = Device::class;
-
+    protected static ?string $navigationGroup = 'Sistem';
+    protected static ?string $navigationLabel = 'Perangkat Sidik Jari';
     protected static ?string $navigationIcon = 'heroicon-o-device-tablet';
 
     public static function form(Form $form): Form

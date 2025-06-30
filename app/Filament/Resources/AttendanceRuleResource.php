@@ -17,7 +17,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class AttendanceRuleResource extends Resource
 {
     protected static ?string $model = AttendanceRule::class;
-
+    protected static ?string $navigationGroup = 'Data Absensi';
+    protected static ?string $navigationLabel = 'Jadwal Sekolah';
     protected static ?string $navigationIcon = 'heroicon-o-clock';
 
     public static function form(Form $form): Form
@@ -26,6 +27,7 @@ class AttendanceRuleResource extends Resource
             ->schema([
                 Forms\Components\Select::make('class_id')
                     ->label('Kelas')
+                    // ->multiple()
                     ->relationship('class', 'name')
                     ->required(),
                 Forms\Components\Textarea::make('description')
@@ -33,6 +35,7 @@ class AttendanceRuleResource extends Resource
                     ->columnSpanFull(),
                 Forms\Components\Select::make('day_of_week')
                     ->options(DayOfWeekEnum::class)
+                    // ->multiple()
                     ->label('Jadwal Harian'),
                 Forms\Components\DatePicker::make('date_override')
                     ->label('Jadwal Tanggal Tertentu'),
@@ -55,7 +58,7 @@ class AttendanceRuleResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('class_id.name')
+                Tables\Columns\TextColumn::make('class.name')
                     ->numeric()
                     ->label('Kelas')
                     ->sortable(),

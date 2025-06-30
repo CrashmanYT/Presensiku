@@ -17,7 +17,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class StudentAttendanceResource extends Resource
 {
     protected static ?string $model = StudentAttendance::class;
-
+    protected static ?string $navigationGroup = 'Data Absensi';
+    protected static ?string $navigationLabel = 'Absensi Murid';
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
 
     public static function form(Form $form): Form

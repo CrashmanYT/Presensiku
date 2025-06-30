@@ -16,7 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class ScanLogResource extends Resource
 {
     protected static ?string $model = ScanLog::class;
-
+    protected static ?string $navigationGroup = 'Sistem';
+    protected static ?string $navigationLabel = 'Log Absensi';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function form(Form $form): Form

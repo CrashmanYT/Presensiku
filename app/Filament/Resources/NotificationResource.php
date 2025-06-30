@@ -16,7 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class NotificationResource extends Resource
 {
     protected static ?string $model = Notification::class;
-
+    protected static ?string $navigationGroup = 'Sistem';
+    protected static ?string $navigationLabel = 'Notifikasi';
     protected static ?string $navigationIcon = 'heroicon-o-bell';
 
     public static function form(Form $form): Form
