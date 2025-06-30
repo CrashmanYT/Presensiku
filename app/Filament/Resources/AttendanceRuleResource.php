@@ -17,7 +17,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class AttendanceRuleResource extends Resource
 {
     protected static ?string $model = AttendanceRule::class;
-    protected static ?string $navigationGroup = 'Data Absensi';
+    protected static ?string $navigationGroup = 'Data Sekolah';
+    protected static ?string $label = 'Jadwal Sekolah';
     protected static ?string $navigationLabel = 'Jadwal Sekolah';
     protected static ?string $navigationIcon = 'heroicon-o-clock';
 

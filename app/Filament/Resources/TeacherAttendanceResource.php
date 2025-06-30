@@ -3,9 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\AttendanceStatusEnum;
-use App\Filament\Resources\StudentAttendanceResource\Pages;
-use App\Filament\Resources\StudentAttendanceResource\RelationManagers;
-use App\Models\StudentAttendance;
+use App\Filament\Resources\TeacherAttendanceResource\Pages;
+use App\Filament\Resources\TeacherAttendanceResource\RelationManagers;
+use App\Models\TeacherAttendance;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -14,39 +14,41 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class StudentAttendanceResource extends Resource
+class TeacherAttendanceResource extends Resource
 {
-    protected static ?string $model = StudentAttendance::class;
-    protected static ?string $navigationGroup = 'Data Absensi';
-    protected static ?string $navigationLabel = 'Absensi Murid';
-    protected static ?string $label = 'Absensi Murid';
+    protected static ?string $model = TeacherAttendance::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
+    protected static ?string $navigationGroup = 'Data Absensi';
+    protected static ?string $navigationLabel = 'Absensi Guru';
+    protected static ?string $label = 'Absensi Guru';
+
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('student_id')
+                Forms\Components\Select::make('teacher_id')
                     ->required()
-                    ->relationship('student', 'name')
-                    ->label('Nama Siswa')
-                    ->searchable(),
+                    ->relationship('teacher', 'name')
+                    ->searchable()
+                    ->label('Nama Guru'),
                 Forms\Components\DatePicker::make('date')
-                    ->label('Tanggal')
-                    ->required(),
+                    ->required()
+                    ->label('Tanggal'),
                 Forms\Components\TimePicker::make('time_in')
+                    ->required()
                     ->label('Jam Masuk'),
                 Forms\Components\TimePicker::make('time_out')
+                    ->required()
                     ->label('Jam Keluar'),
                 Forms\Components\Select::make('status')
                     ->options(AttendanceStatusEnum::class)
-                    ->label('Status Kehadiran')
                     ->required(),
                 Forms\Components\FileUpload::make('photo_in')
                     ->image()
-                    ->label('Log Foto'),
+                    ->imageEditor(),
                 Forms\Components\Select::make('device_id')
-                    ->label('Nama Device')
                     ->relationship('device', 'name'),
             ]);
     }
@@ -55,37 +57,25 @@ class StudentAttendanceResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('student.name')
+                Tables\Columns\TextColumn::make('teacher.name')
+                    ->label('Nama Guru')
                     ->searchable()
-                    ->label('Nama Siswa')
-                    ->toggleable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('student.class.name')
-                    ->searchable()
-                    ->label('Kelas')
-                    ->toggleable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('date')
                     ->date()
                     ->label('Tanggal')
-                    ->toggleable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('time_in')
-                    ->time('H:i')
-                    ->toggleable()
                     ->label('Jam Masuk'),
                 Tables\Columns\TextColumn::make('time_out')
-                    ->time('H:i')
-                    ->toggleable()
                     ->label('Jam Keluar'),
                 Tables\Columns\TextColumn::make('status')
                     ->searchable()
-                    ->toggleable()
-                    ->label('Status')
                     ->badge(),
+                Tables\Columns\TextColumn::make('photo_in')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('device.name')
-                    ->label('Perangkat')
-                    ->toggleable()
+                    ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -120,10 +110,10 @@ class StudentAttendanceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStudentAttendances::route('/'),
-            'create' => Pages\CreateStudentAttendance::route('/create'),
-            'view' => Pages\ViewStudentAttendance::route('/{record}'),
-            'edit' => Pages\EditStudentAttendance::route('/{record}/edit'),
+            'index' => Pages\ListTeacherAttendances::route('/'),
+            'create' => Pages\CreateTeacherAttendance::route('/create'),
+            'view' => Pages\ViewTeacherAttendance::route('/{record}'),
+            'edit' => Pages\EditTeacherAttendance::route('/{record}/edit'),
         ];
     }
 }

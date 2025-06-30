@@ -18,6 +18,8 @@ class ClassesResource extends Resource
     protected static ?string $model = Classes::class;
     protected static ?string $navigationGroup = 'Data Sekolah';
     protected static ?string $navigationLabel = 'Data Kelas';
+    protected static ?string $label = 'Data Kelas';
+
 
     protected static ?string $navigationIcon = 'heroicon-o-identification';
 

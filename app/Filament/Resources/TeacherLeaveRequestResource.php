@@ -3,9 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\LeaveRequestViaEnum;
-use App\Filament\Resources\StudentLeaveRequestResource\Pages;
-use App\Filament\Resources\StudentLeaveRequestResource\RelationManagers;
-use App\Models\StudentLeaveRequest;
+use App\Filament\Resources\TeacherLeaveRequestResource\Pages;
+use App\Filament\Resources\TeacherLeaveRequestResource\RelationManagers;
+use App\Models\TeacherLeaveRequest;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -14,32 +14,32 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class StudentLeaveRequestResource extends Resource
+class TeacherLeaveRequestResource extends Resource
 {
-    protected static ?string $model = StudentLeaveRequest::class;
+    protected static ?string $model = TeacherLeaveRequest::class;
+
     protected static ?string $navigationGroup = 'Data Absensi';
-    protected static ?string $navigationLabel = 'Perizinan Siswa';
-    protected static ?string $label = "Perizinan Siswa";
+    protected static ?string $navigationLabel = 'Perizinan Guru';
+    protected static ?string $label = "Perizinan Guru";
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('student_id')
+                Forms\Components\Select::make('teacher_id')
                     ->required()
+                    ->relationship('teacher', 'name')
                     ->searchable()
-                    ->relationship('student', 'name')
-                    ->label('Nama Siswa'),
+                    ->label('Nama Guru'),
                 Forms\Components\DatePicker::make('date')
-                    ->label('Tanggal')
-                    ->required(),
-                Forms\Components\Textarea::make('reason')
                     ->required()
+                    ->label('Tanggal'),
+                Forms\Components\Textarea::make('reason')
                     ->label('Alasan')
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('submitted_by')
-                    ->label('Dikirimkan Oleh '),
+                    ->label('Dikirimkan Oleh'),
                 Forms\Components\Select::make('via')
                     ->options(LeaveRequestViaEnum::class)
                     ->required(),
@@ -50,26 +50,19 @@ class StudentLeaveRequestResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('student.name')
+                Tables\Columns\TextColumn::make('teacher.name')
+                    ->numeric()
                     ->searchable()
-                    ->label('Nama Siswa')
-                    ->toggleable()
+                    ->label('Nama Guru')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('date')
                     ->date()
-                    ->toggleable()
                     ->label('Tanggal')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('reason')
-                    ->limit(50)
-                    ->toggleable()
-                    ->label('Alasan'),
                 Tables\Columns\TextColumn::make('submitted_by')
-                    ->label('Dikirimkan Oleh')
-                    ->toggleable()
-                    ->searchable(),
+                    ->searchable()
+                    ->label('Dikirimkan Oleh'),
                 Tables\Columns\TextColumn::make('via')
-                    ->badge()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -104,10 +97,10 @@ class StudentLeaveRequestResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStudentLeaveRequests::route('/'),
-            'create' => Pages\CreateStudentLeaveRequest::route('/create'),
-            'view' => Pages\ViewStudentLeaveRequest::route('/{record}'),
-            'edit' => Pages\EditStudentLeaveRequest::route('/{record}/edit'),
+            'index' => Pages\ListTeacherLeaveRequests::route('/'),
+            'create' => Pages\CreateTeacherLeaveRequest::route('/create'),
+            'view' => Pages\ViewTeacherLeaveRequest::route('/{record}'),
+            'edit' => Pages\EditTeacherLeaveRequest::route('/{record}/edit'),
         ];
     }
 }
