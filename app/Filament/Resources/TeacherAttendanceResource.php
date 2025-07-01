@@ -7,9 +7,17 @@ use App\Filament\Resources\TeacherAttendanceResource\Pages;
 use App\Filament\Resources\TeacherAttendanceResource\RelationManagers;
 use App\Models\TeacherAttendance;
 use Filament\Forms;
+use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\QueryBuilder;
+use Filament\Tables\Filters\QueryBuilder\Constraints\DateConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint\Operators\IsRelatedToOperator;
+use Filament\Tables\Filters\QueryBuilder\Constraints\SelectConstraint;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -87,8 +95,52 @@ class TeacherAttendanceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                QueryBuilder::make()
+                    ->constraints([
+                        RelationshipConstraint::make('teacher')
+                            ->label('Nama Guru')
+                            ->selectable(
+                                IsRelatedToOperator::make()
+                                    ->titleAttribute('name')
+                                    ->searchable()
+                                    ->preload()
+                            ),
+                        DateConstraint::make('date')
+                            ->label('Tanggal'),
+                        SelectConstraint::make('status')
+                            ->label('Status')
+                            ->options(AttendanceStatusEnum::class)
+                            ->multiple(),
+                        RelationshipConstraint::make('device')
+                            ->label('Nama Device')
+                            ->selectable(
+                                IsRelatedToOperator::make()
+                                    ->titleAttribute('name')
+                                    ->searchable()
+                                    ->preload()
+                            ),
+                        ]),
+                Filter::make('waktu_masuk')
+                    ->label('Jam Masuk')
+                    ->form([
+                        TimePicker::make('jam_masuk'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when($data['jam_masuk'], fn ($q, $time) => $q->whereTime('time_in', $time));
+                    }),
+                Filter::make('waktu_keluar')
+                    ->label('Jam Keluar')
+                    ->form([
+                        TimePicker::make('jam_keluar'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when($data['jam_keluar'], fn ($q, $time) => $q->whereTime('time_out', $time));
+                    }),
             ])
+            ->filtersLayout(filtersLayout: FiltersLayout::Modal)
+            ->filtersFormWidth('5xl')
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),

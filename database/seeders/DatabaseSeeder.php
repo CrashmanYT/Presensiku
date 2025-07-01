@@ -29,6 +29,9 @@ class DatabaseSeeder extends Seeder
             AttendanceRuleSeeder::class,
             StudentAttendanceSeeder::class,
             TeacherAttendanceSeeder::class,
+            StudentLeaveRequestSeeder::class,
+            TeacherLeaveRequestSeeder::class,
+            HolidaySeeder::class,
         ]);
     }
 }

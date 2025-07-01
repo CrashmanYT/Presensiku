@@ -10,6 +10,13 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\QueryBuilder;
+use Filament\Tables\Filters\QueryBuilder\Constraints\DateConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint\Operators\IsRelatedToOperator;
+use Filament\Tables\Filters\QueryBuilder\Constraints\SelectConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\TextConstraint;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -74,8 +81,31 @@ class TeacherLeaveRequestResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                QueryBuilder::make()
+                    ->constraints([
+                        RelationshipConstraint::make('teacher')
+                            ->label('Nama Guru')
+                            ->multiple()
+                            ->selectable(
+                                IsRelatedToOperator::make()
+                                    ->titleAttribute('name')
+                                    ->searchable()
+                                    ->preload()
+                            ),
+                        DateConstraint::make('date')
+                            ->label('Tanggal'),
+                        TextConstraint::make('reason')
+                            ->label('Alasan'),
+                        TextConstraint::make('submitte_by')
+                            ->label('Dikirimkan Oleh'),
+                        SelectConstraint::make('via')
+                            ->label('Via')
+                            ->options(LeaveRequestViaEnum::class)
+                            ->multiple()
+                    ])
             ])
+            ->filtersLayout(FiltersLayout::Modal)
+            ->filtersFormWidth('5xl')
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),

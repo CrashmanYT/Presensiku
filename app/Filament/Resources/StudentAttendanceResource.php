@@ -7,9 +7,18 @@ use App\Filament\Resources\StudentAttendanceResource\Pages;
 use App\Filament\Resources\StudentAttendanceResource\RelationManagers;
 use App\Models\StudentAttendance;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\QueryBuilder;
+use Filament\Tables\Filters\QueryBuilder\Constraints\DateConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\SelectConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\TextConstraint;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -97,8 +106,56 @@ class StudentAttendanceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
-            ])
+                SelectFilter::make('Nama')
+                    ->relationship('student', 'name')
+                    ->searchable()
+                    ->multiple()
+                    ->preload(),
+                SelectFilter::make('Kelas')
+                    ->relationship('student.class', 'name')
+                    ->searchable()
+                    ->multiple()
+                    ->preload(),
+                SelectFilter::make('Status')
+                    ->options(AttendanceStatusEnum::class)
+                    ->multiple(),
+                Filter::make('date_range')
+                    ->label('Rentang Tanggal')
+                    ->form([
+                        DatePicker::make('from')->label('Dari'),
+                        DatePicker::make('until')->label('Sampai'),
+                        
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when($data['from'], fn ($q, $date) => $q->whereDate('date', '>=', $date))
+                            ->when($data['until'], fn ($q, $date) => $q->whereDate('date', '<=', $date));
+
+                    }),
+                                
+                Filter::make('waktu_masuk')
+                    ->label('Jam Masuk')
+                    ->form([
+                        TimePicker::make('jam_masuk'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when($data['jam_masuk'], fn ($q, $time) => $q->whereTime('time_in', $time));
+                    }),
+                Filter::make('waktu_keluar')
+                    ->label('Jam Keluar')
+                    ->form([
+                        TimePicker::make('jam_keluar'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when($data['jam_keluar'], fn ($q, $time) => $q->whereTime('time_out', $time));
+                    }),
+                
+                ])
+            ->filtersLayout(filtersLayout: FiltersLayout::Modal)
+            ->filtersFormWidth('5xl')
+            ->filtersFormColumns(2)
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),

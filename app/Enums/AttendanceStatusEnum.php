@@ -35,4 +35,10 @@ enum AttendanceStatusEnum: string implements HasColor, HasLabel
             self::SAKIT => Color::Sky
         };
     }
+
+    public static function labels(): array{
+        
+        return collect(self::cases())->mapWithKeys(fn($case) => [$case->value => $case->getLabel()])->toArray();
+    }
+
 }

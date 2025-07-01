@@ -2,14 +2,26 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\AttendanceStatusEnum;
 use App\Enums\LeaveRequestViaEnum;
 use App\Filament\Resources\StudentLeaveRequestResource\Pages;
 use App\Filament\Resources\StudentLeaveRequestResource\RelationManagers;
 use App\Models\StudentLeaveRequest;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\QueryBuilder;
+use Filament\Tables\Filters\QueryBuilder\Constraints\DateConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint\Operators\IsRelatedToOperator;
+use Filament\Tables\Filters\QueryBuilder\Constraints\SelectConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\TextConstraint;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -81,8 +93,32 @@ class StudentLeaveRequestResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
-            ])
+                QueryBuilder::make()
+                    ->constraints([
+                        RelationshipConstraint::make('student')
+                            ->label('Nama Siswa')
+                            ->multiple()
+                            ->selectable(
+                                IsRelatedToOperator::make()
+                                    ->titleAttribute('name')
+                                    ->searchable()
+                                    ->preload()
+                            ),
+                        DateConstraint::make('date')
+                            ->label('Tanggal'),
+                        TextConstraint::make('reason')
+                            ->label('Alasan'),
+                        TextConstraint::make('submitte_by')
+                            ->label('Dikirimkan Oleh'),
+                        SelectConstraint::make('via')
+                            ->label('Via')
+                            ->options(LeaveRequestViaEnum::class)
+                            ->multiple()
+                    ])
+                
+                ])
+            ->filtersLayout(filtersLayout: FiltersLayout::Modal)
+            ->filtersFormWidth('5xl')
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),

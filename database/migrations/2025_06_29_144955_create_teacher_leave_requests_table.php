@@ -17,7 +17,7 @@ return new class extends Migration
             $table->date('date');
             $table->text('reason')->nullable();
             $table->string('submitted_by')->nullable();
-            $table->enum('via', ['manual', 'internal_form']);
+            $table->enum('via', ['manual', 'form_online']);
             $table->timestamps();
         });
     }
