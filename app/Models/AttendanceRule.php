@@ -26,7 +26,7 @@ class AttendanceRule extends Model
         'time_in_end' => 'datetime',
         'time_out_start' => 'datetime',
         'time_out_end' => 'datetime',
-        'day_of_week' => DayOfWeekEnum::class
+        'day_of_week' => 'array'
     ];
 
     public function class() {

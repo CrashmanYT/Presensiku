@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('attendance_rules', function (Blueprint $table) {
             $table->id();
             $table->foreignId('class_id')->constrained('classes')->onDelete('cascade');
-            $table->enum('day_of_week', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])->nullable();
+            $table->json('day_of_week')->nullable();
             $table->date('date_override')->nullable();
             $table->time('time_in_start');
             $table->time('time_in_end');

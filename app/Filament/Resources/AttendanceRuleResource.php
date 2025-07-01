@@ -28,7 +28,7 @@ class AttendanceRuleResource extends Resource
             ->schema([
                 Forms\Components\Select::make('class_id')
                     ->label('Kelas')
-                    // ->multiple()
+                    ->multiple()
                     ->relationship('class', 'name')
                     ->required(),
                 Forms\Components\Textarea::make('description')
@@ -36,7 +36,7 @@ class AttendanceRuleResource extends Resource
                     ->columnSpanFull(),
                 Forms\Components\Select::make('day_of_week')
                     ->options(DayOfWeekEnum::class)
-                    // ->multiple()
+                    ->multiple()
                     ->label('Jadwal Harian'),
                 Forms\Components\DatePicker::make('date_override')
                     ->label('Jadwal Tanggal Tertentu'),
