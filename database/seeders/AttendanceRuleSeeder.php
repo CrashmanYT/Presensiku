@@ -19,10 +19,9 @@ class AttendanceRuleSeeder extends Seeder
         $classes = Classes::all();
 
         foreach ($classes as $class) {
-            // Rule for weekdays (Monday-Friday)
             AttendanceRule::create([
                 'class_id' => $class->id,
-                'day_of_week' => json_encode(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']),
+                'day_of_week' => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
                 'date_override' => null,
                 'time_in_start' => '07:00:00',
                 'time_in_end' => '07:30:00',

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DayOfWeekEnum;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -28,6 +29,7 @@ class AttendanceRule extends Model
         'time_out_end' => 'datetime',
         'day_of_week' => 'array'
     ];
+
 
     public function class() {
         return $this->belongsTo(Classes::class, 'class_id');

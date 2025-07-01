@@ -13,6 +13,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Log;
 
 class AttendanceRuleResource extends Resource
 {
@@ -28,7 +29,8 @@ class AttendanceRuleResource extends Resource
             ->schema([
                 Forms\Components\Select::make('class_id')
                     ->label('Kelas')
-                    ->multiple()
+                    ->preload()
+                    ->searchable()
                     ->relationship('class', 'name')
                     ->required(),
                 Forms\Components\Textarea::make('description')
@@ -70,7 +72,12 @@ class AttendanceRuleResource extends Resource
                 Tables\Columns\TextColumn::make('day_of_week')
                     ->badge()
                     ->label('Jadwal Harian')
-                    ->searchable(),
+                    ->searchable()
+                    ->formatStateUsing(fn ($state) =>
+                        collect($state)
+                            ->map(fn ($day) => \App\Enums\DayOfWeekEnum::tryFrom($day)?->getLabel() ?? $day)
+                            ->implode(', ')
+                    ),
                 Tables\Columns\TextColumn::make('date_override')
                     ->date()
                     ->label('Jadwal Tanggal Tertentu')
