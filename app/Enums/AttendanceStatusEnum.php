@@ -4,9 +4,10 @@ namespace App\Enums;
 
 use Filament\Support\Colors\Color;
 use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
 
-enum AttendanceStatusEnum: string implements HasColor, HasLabel
+enum AttendanceStatusEnum: string implements HasColor, HasLabel, HasIcon
 {
     case HADIR = 'hadir';
     case TERLAMBAT = 'terlambat';
@@ -33,6 +34,17 @@ enum AttendanceStatusEnum: string implements HasColor, HasLabel
             self::TIDAK_HADIR => Color::Red,
             self::IZIN => Color::Blue,
             self::SAKIT => Color::Sky
+        };
+    }
+
+    public function getIcon(): ?string
+    {
+        return match($this) {
+            self::HADIR => 'heroicon-o-check-circle',
+            self::TERLAMBAT => 'heroicon-o-exclamation-triangle',
+            self::TIDAK_HADIR => 'heroicon-o-x-circle',
+            self::IZIN => 'heroicon-o-information-circle',
+            self::SAKIT => 'heroicon-o-information-circle'
         };
     }
 

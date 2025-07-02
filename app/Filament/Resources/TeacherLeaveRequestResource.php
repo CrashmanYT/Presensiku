@@ -83,7 +83,7 @@ class TeacherLeaveRequestResource extends Resource
             ->filters([
                 QueryBuilder::make()
                     ->constraints([
-                        SelectConstraint::make('teacher')
+                        RelationshipConstraint::make('teacher')
                             ->label('Nama Guru')
                             ->multiple()
                             ->selectable(

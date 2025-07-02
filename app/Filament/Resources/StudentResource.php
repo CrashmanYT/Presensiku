@@ -63,8 +63,7 @@ class StudentResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('fingerprint_id')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('photo')
-                    ->searchable(),
+                Tables\Columns\ImageColumn::make('photo'),
                 Tables\Columns\TextColumn::make('parent_whatsapp')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')

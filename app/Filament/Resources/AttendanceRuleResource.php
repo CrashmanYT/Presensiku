@@ -81,6 +81,7 @@ class AttendanceRuleResource extends Resource
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('day_of_week')
                     ->badge()
+                    ->separator(',')
                     ->label('Jadwal Harian')
                     ->searchable()
                     ->formatStateUsing(fn ($state) =>
