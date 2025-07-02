@@ -141,6 +141,7 @@ class TeacherAttendanceResource extends Resource
             ])
             ->filtersLayout(filtersLayout: FiltersLayout::Modal)
             ->filtersFormWidth('5xl')
+            ->filtersFormColumns(2)
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),

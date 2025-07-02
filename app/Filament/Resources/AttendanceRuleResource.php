@@ -7,9 +7,19 @@ use App\Filament\Resources\AttendanceRuleResource\Pages;
 use App\Filament\Resources\AttendanceRuleResource\RelationManagers;
 use App\Models\AttendanceRule;
 use Filament\Forms;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\QueryBuilder;
+use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint\Operators\IsRelatedToOperator;
+use Filament\Tables\Filters\QueryBuilder\Constraints\SelectConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\TextConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\TextConstraint\Operators\ContainsOperator;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -109,8 +119,43 @@ class AttendanceRuleResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                QueryBuilder::make()
+                    ->constraints([
+                        RelationshipConstraint::make('class')
+                            ->label('Nama Kelas')
+                            ->multiple()
+                            ->selectable(
+                                IsRelatedToOperator::make()
+                                    ->titleAttribute('name')
+                                    ->searchable()
+                                    ->preload()
+                            ),
+                        TextConstraint::make('description')
+                            ->label('Deskripsi'),
+                        ]),
+                Filter::make('day_of_week')
+                    ->label('Jadwal Harian')
+                    ->form([
+                        Select::make('day_of_week')
+                            ->multiple()
+                            ->options(DayOfWeekEnum::class)
+                            ->searchable()
+                    ])
+                    ->query(function ($query, array $data) {
+                        if (empty($data['day_of_week'])) {
+                            return $query; // ⬅️ Tidak filter apapun jika belum pilih!
+                        }
+
+                        $query->where(function ($q) use ($data) {
+                            foreach ((array) $data['day_of_week'] as $day) {
+                                $q->orWhereJsonContains('day_of_week', $day);
+                            }
+                        });
+                    })
+                    
             ])
+            ->filtersLayout(FiltersLayout::Modal)
+            ->filtersFormWidth('5xl')
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
