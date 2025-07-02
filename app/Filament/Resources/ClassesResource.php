@@ -62,9 +62,8 @@ class ClassesResource extends Resource
                 Tables\Columns\TextColumn::make('major')
                     ->label('Jurusan')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('homeroom_teacher_id.name')
+                Tables\Columns\TextColumn::make('homeroomTeacher.name')
                     ->label('Wali Kelas')
-                    ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
