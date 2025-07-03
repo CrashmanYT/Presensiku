@@ -31,6 +31,10 @@ class TeacherAttendanceResource extends Resource
     protected static ?string $navigationLabel = 'Absensi Guru';
     protected static ?string $label = 'Absensi Guru';
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['teacher', 'device']);
+    }
 
     public static function form(Form $form): Form
     {

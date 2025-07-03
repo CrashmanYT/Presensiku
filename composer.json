@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "croustibat/filament-jobs-monitor": "^2.6",
         "filament/filament": "^3.3",
         "filament/widgets": "^3.3",
         "laravel/framework": "^12.0",
@@ -14,6 +15,7 @@
         "livewire/flux": "^2.1.1",
         "livewire/livewire": "^3.6",
         "livewire/volt": "^1.7.0",
+        "pxlrbt/filament-excel": "^2.4",
         "spatie/laravel-permission": "^6.20"
     },
     "require-dev": {
@@ -77,6 +79,7 @@
             "php-http/discovery": true
         }
     },
-    "minimum-stability": "stable",
+    "minimum-stability": "beta", 
+
     "prefer-stable": true
 }

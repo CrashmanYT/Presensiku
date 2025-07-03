@@ -15,6 +15,10 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use pxlrbt\FilamentExcel\Columns\Column;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 class TeacherResource extends Resource
 {
@@ -67,7 +71,7 @@ class TeacherResource extends Resource
                 TextColumn::make('whatsapp_number')
                     ->label('Nomor WA')
                     ->searchable(),
-                
+
                 ])
             ->filters([
                 //
@@ -75,9 +79,27 @@ class TeacherResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
+            ->headerActions([
+                ExportAction::make('export')
+                    ->label('Export Data Guru')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('info')
+                    ->exports([
+                        ExcelExport::make('form')->withColumns([
+                            Column::make('name')->heading('Nama'),
+                            Column::make('nip')->heading('No Induk'),
+                            Column::make('whatsapp_number')->heading('Nomor WA'),
+                            Column::make('fingerprint_id')->heading('ID Sidik Jari'),
+                            Column::make('photo')->heading('Photo'),
+                            Column::make('created_at')->heading('Tanggal Dibuat'),
+                            Column::make('updated_at')->heading('Tanggal Diubah'),
+                        ])->withFilename('Data Guru')
+                    ])
+            ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    ExportBulkAction::make('export')
                 ]),
             ]);
     }

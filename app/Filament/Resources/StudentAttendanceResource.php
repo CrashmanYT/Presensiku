@@ -22,6 +22,11 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Maatwebsite\Excel\Excel;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use pxlrbt\FilamentExcel\Columns\Column;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 class StudentAttendanceResource extends Resource
 {
@@ -30,6 +35,11 @@ class StudentAttendanceResource extends Resource
     protected static ?string $navigationLabel = 'Absensi Murid';
     protected static ?string $label = 'Absensi Murid';
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['student', 'device', 'student.class']);
+    }
 
     public static function form(Form $form): Form
     {
@@ -124,7 +134,7 @@ class StudentAttendanceResource extends Resource
                     ->form([
                         DatePicker::make('from')->label('Dari'),
                         DatePicker::make('until')->label('Sampai'),
-                        
+
                     ])
                     ->query(function ($query, array $data) {
                         return $query
@@ -132,7 +142,7 @@ class StudentAttendanceResource extends Resource
                             ->when($data['until'], fn ($q, $date) => $q->whereDate('date', '<=', $date));
 
                     }),
-                                
+
                 Filter::make('waktu_masuk')
                     ->label('Jam Masuk')
                     ->form([
@@ -151,11 +161,17 @@ class StudentAttendanceResource extends Resource
                         return $query
                             ->when($data['jam_keluar'], fn ($q, $time) => $q->whereTime('time_out', $time));
                     }),
-                
+
                 ])
             ->filtersLayout(filtersLayout: FiltersLayout::Modal)
             ->filtersFormWidth('5xl')
             ->filtersFormColumns(2)
+            ->headerActions([
+                ExportAction::make('export')
+                    ->label('Export Absensi Murid')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('info')
+            ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
@@ -163,6 +179,7 @@ class StudentAttendanceResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    ExportBulkAction::make('export')
                 ]),
             ]);
     }

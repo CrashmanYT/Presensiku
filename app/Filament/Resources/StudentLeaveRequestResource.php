@@ -34,6 +34,12 @@ class StudentLeaveRequestResource extends Resource
     protected static ?string $label = "Perizinan Siswa";
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['student']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -115,7 +121,7 @@ class StudentLeaveRequestResource extends Resource
                             ->options(LeaveRequestViaEnum::class)
                             ->multiple()
                     ])
-                
+
                 ])
             ->filtersLayout(filtersLayout: FiltersLayout::Modal)
             ->filtersFormWidth('5xl')

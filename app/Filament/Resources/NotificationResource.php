@@ -21,11 +21,17 @@ class NotificationResource extends Resource
     protected static ?string $label = 'Notifikasi';
     protected static ?string $navigationIcon = 'heroicon-o-bell';
 
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['student']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-               
+
             ]);
     }
 

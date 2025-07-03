@@ -30,6 +30,11 @@ class TeacherLeaveRequestResource extends Resource
     protected static ?string $label = "Perizinan Guru";
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['teacher']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form

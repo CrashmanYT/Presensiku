@@ -33,6 +33,12 @@ class AttendanceRuleResource extends Resource
     protected static ?string $navigationLabel = 'Jadwal Sekolah';
     protected static ?string $navigationIcon = 'heroicon-o-clock';
 
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['class']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -109,7 +115,7 @@ class AttendanceRuleResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Akhir Jam Pulang')
                     ->time('H:i'),
-                    
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -153,7 +159,7 @@ class AttendanceRuleResource extends Resource
                             }
                         });
                     })
-                    
+
             ])
             ->filtersLayout(FiltersLayout::Modal)
             ->filtersFormWidth('5xl')

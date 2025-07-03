@@ -21,6 +21,12 @@ class ScanLogResource extends Resource
     protected static ?string $label = 'Log Absensi';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['device']);
+    }
+
     public static function form(Form $form): Form
     {
         return $form
