@@ -36,10 +36,7 @@ class StudentAttendanceResource extends Resource
     protected static ?string $label = 'Absensi Murid';
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
 
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()->with(['student', 'device', 'student.class']);
-    }
+    
 
     public static function form(Form $form): Form
     {
@@ -170,6 +167,18 @@ class StudentAttendanceResource extends Resource
                 ExportAction::make('export')
                     ->label('Export Absensi Murid')
                     ->icon('heroicon-o-arrow-up-tray')
+                    ->exports([
+                        ExcelExport::make()->withColumns([
+                            Column::make('student.name')->heading('Nama Siswa'),
+                            Column::make('class.name')->heading('Kelas'),
+                            Column::make('status')->heading('Status'),
+                            Column::make('date')->heading('Tanggal'),
+                            Column::make('time_in')->heading('Jam Masuk'),
+                            Column::make('time_out')->heading('Jam Keluar'),
+                        ])
+                            ->queue()
+                            ->chunkSize(100)
+                    ])
                     ->color('info')
             ])
             ->actions([

@@ -47,6 +47,8 @@ class ClassesResource extends Resource
                 Forms\Components\Select::make('homeroom_teacher_id')
                     ->relationship('homeroomTeacher', 'name')
                     ->required()
+                    ->searchable()
+                    ->preload()
                     ->label('Wali Kelas'),
 
             ]);

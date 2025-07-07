@@ -12,6 +12,8 @@ use App\Models\Student;
 use Filament\Actions\ImportAction;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Infolists\Infolist;
+use Filament\Infolists;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
@@ -62,6 +64,22 @@ class StudentResource extends Resource
                 Forms\Components\TextInput::make('parent_whatsapp')
                     ->tel()
                     ->prefix('+62'),
+            ]);
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Infolists\Components\TextEntry::make('name'),
+                Infolists\Components\TextEntry::make('nis'),
+                Infolists\Components\TextEntry::make('class.name'),
+                Infolists\Components\TextEntry::make('gender'),
+                Infolists\Components\TextEntry::make('fingerprint_id'),
+                Infolists\Components\ImageEntry::make('photo'),
+                Infolists\Components\TextEntry::make('parent_whatsapp'),
+                Infolists\Components\TextEntry::make('created_at')->dateTime(),
+                Infolists\Components\TextEntry::make('updated_at')->dateTime(),
             ]);
     }
 
