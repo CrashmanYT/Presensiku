@@ -14,12 +14,6 @@ class ListStudentAttendances extends ListRecords
 {
     protected static string $resource = StudentAttendanceResource::class;
 
-    protected function getHeaderWidgets(): array
-    {
-        return [
-            StudentAttendanceResource\Widgets\StudentAttendanceStatsWidget::class,
-        ];
-    }
 
     public function getTabs(): array
     {
@@ -110,5 +104,4 @@ class ListStudentAttendances extends ListRecords
             TextColumn::make('date')->label('Tanggal'),
         ];
     }
-    // ... use statements
 }

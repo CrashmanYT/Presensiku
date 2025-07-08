@@ -178,7 +178,6 @@ class RekapitulasiAbsensi extends Page implements HasTable
             // GROUP BY juga perlu menyertakan students.id
             ->groupBy('students.id', 'students.name', 'classes.name');
 
-//       dd($query);
        return $query;
     }
 
