@@ -16,12 +16,13 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class ClassesResource extends Resource
 {
     protected static ?string $model = Classes::class;
-    protected static ?string $navigationGroup = 'Data Sekolah';
+    protected static ?string $navigationGroup = 'Manajemen Data';
     protected static ?string $navigationLabel = 'Data Kelas';
     protected static ?string $label = 'Data Kelas';
 
 
     protected static ?string $navigationIcon = 'heroicon-o-identification';
+    protected static ?int $navigationSort = 3;
 
     public static function getEloquentQuery(): Builder
     {

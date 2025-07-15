@@ -28,10 +28,11 @@ use Illuminate\Support\Facades\Log;
 class AttendanceRuleResource extends Resource
 {
     protected static ?string $model = AttendanceRule::class;
-    protected static ?string $navigationGroup = 'Data Sekolah';
-    protected static ?string $label = 'Jadwal Sekolah';
-    protected static ?string $navigationLabel = 'Jadwal Sekolah';
+    protected static ?string $navigationGroup = 'Pengaturan Sistem';
+    protected static ?string $label = 'Jadwal Absensi';
+    protected static ?string $navigationLabel = 'Jadwal Absensi';
     protected static ?string $navigationIcon = 'heroicon-o-clock';
+    protected static ?int $navigationSort = 1;
 
 
     public static function getEloquentQuery(): Builder

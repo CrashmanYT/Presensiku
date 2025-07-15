@@ -24,9 +24,10 @@ class RekapitulasiAbsensi extends Page implements HasTable
 
     protected static string $view = 'filament.pages.rekapitulasi-absensi';
 
-    protected static ?string $navigationGroup = 'Laporan';
+    protected static ?string $navigationGroup = 'Laporan & Analitik';
 
     protected static ?string $title = 'Rekapitulasi Absensi';
+    protected static ?int $navigationSort = 2;
 
     protected static ?string $slug = 'laporan/rekapitulasi-absensi';
 

@@ -16,10 +16,11 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class NotificationResource extends Resource
 {
     protected static ?string $model = Notification::class;
-    protected static ?string $navigationGroup = 'Sistem';
+    protected static ?string $navigationGroup = 'Pengaturan Sistem';
     protected static ?string $navigationLabel = 'Notifikasi';
     protected static ?string $label = 'Notifikasi';
     protected static ?string $navigationIcon = 'heroicon-o-bell';
+    protected static ?int $navigationSort = 4;
 
 
     public static function getEloquentQuery(): Builder

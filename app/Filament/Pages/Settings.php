@@ -11,16 +11,15 @@ use Filament\Notifications\Notification;
 class Settings extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-cog';
-    protected static ?string $navigationGroup = 'Sistem';
+    protected static ?string $navigationGroup = 'Pengaturan Sistem';
 
     protected static string $view = 'filament.pages.settings';
 
-    protected static ?string $title = 'Pengaturan Sistem';
-
-    protected static ?int $navigationSort = 5;
+    protected static ?string $title = 'Pengaturan Umum';
+    protected static ?string $navigationLabel = 'Pengaturan Umum';
+    protected static ?int $navigationSort = 6;
 
     public ?array $data = [];
-
     public function mount(): void
     {
         $this->form->fill(Setting::pluck('value', 'key')->toArray());

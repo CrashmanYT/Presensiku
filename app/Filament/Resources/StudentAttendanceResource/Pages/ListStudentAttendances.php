@@ -14,20 +14,6 @@ class ListStudentAttendances extends ListRecords
 {
     protected static string $resource = StudentAttendanceResource::class;
 
-
-    public function getTabs(): array
-    {
-        return [
-            'daily'=> Tab::make('Harian')
-                ->badge(fn() => $this->getModel()::count())
-                ->label('Harian'),
-            'weekly' => Tab::make('Mingguan')
-                ->label('Mingguan'),
-            'monthly'=> Tab::make('Bulanan')
-                ->label('Bulanan'),
-
-        ];
-    }
     protected function getHeaderActions(): array
     {
         return [

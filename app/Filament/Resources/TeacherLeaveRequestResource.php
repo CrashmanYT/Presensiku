@@ -25,10 +25,11 @@ class TeacherLeaveRequestResource extends Resource
 {
     protected static ?string $model = TeacherLeaveRequest::class;
 
-    protected static ?string $navigationGroup = 'Data Absensi';
-    protected static ?string $navigationLabel = 'Perizinan Guru';
-    protected static ?string $label = "Perizinan Guru";
+    protected static ?string $navigationGroup = 'Manajemen Absensi';
+    protected static ?string $navigationLabel = 'Izin Guru';
+    protected static ?string $label = "Izin Guru";
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static ?int $navigationSort = 4;
 
     public static function getEloquentQuery(): Builder
     {

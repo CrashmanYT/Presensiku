@@ -27,7 +27,8 @@ class TeacherAttendanceResource extends Resource
     protected static ?string $model = TeacherAttendance::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
-    protected static ?string $navigationGroup = 'Data Absensi';
+    protected static ?int $navigationSort = 2;
+    protected static ?string $navigationGroup = 'Manajemen Absensi';
     protected static ?string $navigationLabel = 'Absensi Guru';
     protected static ?string $label = 'Absensi Guru';
 

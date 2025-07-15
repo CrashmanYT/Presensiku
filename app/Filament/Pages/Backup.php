@@ -9,14 +9,14 @@ use Illuminate\Support\Facades\Artisan;
 class Backup extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-archive-box';
-    protected static ?string $navigationLabel = 'Backup & Restore';
-    protected static ?string $navigationGroup = 'Sistem';
+    protected static ?string $navigationLabel = 'Cadangkan & Pulihkan';
+    protected static ?string $navigationGroup = 'Pengaturan Sistem';
 
     protected static string $view = 'filament.pages.backup';
 
-    protected static ?string $title = 'Backup & Restore';
+    protected static ?string $title = 'Cadangkan & Pulihkan';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 7;
 
     // Anda bisa menambahkan logika untuk backup/restore di sini
     public function backupDatabase()

@@ -16,10 +16,11 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class HolidayResource extends Resource
 {
     protected static ?string $model = Holiday::class;
-    protected static ?string $navigationGroup = 'Data Sekolah';
+    protected static ?string $navigationGroup = 'Pengaturan Sistem';
     protected static ?string $navigationLabel = 'Hari Libur';
     protected static ?string $label = 'Hari Libur';
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {

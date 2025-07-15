@@ -29,10 +29,11 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class StudentLeaveRequestResource extends Resource
 {
     protected static ?string $model = StudentLeaveRequest::class;
-    protected static ?string $navigationGroup = 'Data Absensi';
-    protected static ?string $navigationLabel = 'Perizinan Siswa';
-    protected static ?string $label = "Perizinan Siswa";
+    protected static ?string $navigationGroup = 'Manajemen Absensi';
+    protected static ?string $navigationLabel = 'Izin Murid';
+    protected static ?string $label = "Izin Murid";
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static ?int $navigationSort = 3;
 
 
     public static function getEloquentQuery(): Builder

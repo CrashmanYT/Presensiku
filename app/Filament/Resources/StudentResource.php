@@ -29,10 +29,11 @@ use pxlrbt\FilamentExcel\Exports\ExcelExport;
 class StudentResource extends Resource
 {
     protected static ?string $model = Student::class;
-    protected static ?string $navigationGroup = 'Data Sekolah';
+    protected static ?string $navigationGroup = 'Manajemen Data';
     protected static ?string $navigationLabel = 'Data Murid';
     protected static ?string $label = 'Data Murid';
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
+    protected static ?int $navigationSort = 1;
 
 
 

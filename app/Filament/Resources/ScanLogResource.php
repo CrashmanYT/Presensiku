@@ -16,10 +16,11 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class ScanLogResource extends Resource
 {
     protected static ?string $model = ScanLog::class;
-    protected static ?string $navigationGroup = 'Sistem';
-    protected static ?string $navigationLabel = 'Log Absensi';
-    protected static ?string $label = 'Log Absensi';
+    protected static ?string $navigationGroup = 'Laporan & Analitik';
+    protected static ?string $navigationLabel = 'Log Pindai';
+    protected static ?string $label = 'Log Pindai';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?int $navigationSort = 4;
 
 
     public static function getEloquentQuery(): Builder

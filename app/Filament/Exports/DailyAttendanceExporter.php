@@ -19,7 +19,21 @@ class DailyAttendanceExporter implements FromQuery, WithHeadings, WithMapping
 
     public function query()
     {
-        return $this->query->with(['student.class', 'device']);
+        return $this->query
+            ->join('students', 'student_attendances.student_id', '=', 'students.id')
+            ->join('classes', 'students.class_id', '=', 'classes.id')
+            ->leftJoin('devices', 'student_attendances.device_id', '=', 'devices.id')
+            ->select(
+                'students.name as student_name',
+                'classes.name as class_name',
+                'student_attendances.date',
+                'student_attendances.time_in',
+                'student_attendances.time_out',
+                'student_attendances.status',
+                'devices.name as device_name',
+                'student_attendances.created_at',
+                'student_attendances.updated_at'
+            );
     }
 
     public function headings(): array
@@ -37,18 +51,18 @@ class DailyAttendanceExporter implements FromQuery, WithHeadings, WithMapping
         ];
     }
 
-    public function map($attendance): array
+    public function map($row): array
     {
         return [
-            $attendance->student->name ?? '-',
-            $attendance->student->class->name ?? '-',
-            $attendance->date,
-            $attendance->time_in,
-            $attendance->time_out,
-            $attendance->status,
-            $attendance->device->name ?? '-',
-            $attendance->created_at,
-            $attendance->updated_at,
+            $row->student_name,
+            $row->class_name,
+            $row->date,
+            $row->time_in,
+            $row->time_out,
+            $row->status,
+            $row->device_name,
+            $row->created_at,
+            $row->updated_at,
         ];
     }
 }
