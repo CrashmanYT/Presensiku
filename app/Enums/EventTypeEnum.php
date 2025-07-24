@@ -7,7 +7,7 @@ use Filament\Support\Contracts\HasLabel;
 enum EventTypeEnum: string implements HasLabel
 {
     case SCAN_IN = 'scan_in';
-    case SCAN_OUT = 'scan_OUT';
+    case SCAN_OUT = 'scan_out';
 
     public function getLabel(): ?string
     {

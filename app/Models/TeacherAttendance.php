@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use App\Enums\AttendanceStatusEnum;
+use App\Interfaces\AttendanceInterface;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class TeacherAttendance extends Model
+class TeacherAttendance extends Model implements AttendanceInterface
 {
     use HasFactory;
 
@@ -33,5 +35,22 @@ class TeacherAttendance extends Model
 
     public function device() {
         return $this->belongsTo(Device::class);
+    }
+
+    public function detectScanType(Carbon $scanTime, AttendanceRule $attendanceRule): ?string
+    {
+        if (!$this->time_in) {
+            if ($scanTime->toDateTime()->format('H:i:s') > $this->time_in
+                && $scanTime->toDateTime()->format('H:i:s') < $this->time_out) {
+                return 'in';
+            }
+        }
+        if (!$this->time_out) {
+            if ($scanTime->toDateTime()->format('H:i:s') > $this->time_in
+                && $scanTime->toDateTime()->format('H:i:s') < $this->time_out) {
+                return 'out';
+            }
+        }
+        return null;
     }
 }

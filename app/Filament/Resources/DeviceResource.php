@@ -28,6 +28,8 @@ class DeviceResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('name')
                     ->required(),
+                Forms\Components\TextInput::make('cloud_id')
+                    ->required(),
                 Forms\Components\TextInput::make('ip_address')
                     ->unique(ignoreRecord: true)
                     ->required(),
@@ -43,6 +45,8 @@ class DeviceResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('cloud_id')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('ip_address')
                     ->searchable(),

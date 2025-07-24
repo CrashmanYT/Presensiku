@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             TeacherSeeder::class,
-            DeviceSeeder::class,
+//            DeviceSeeder::class,
             ClassSeeder::class,
             StudentSeeder::class,
             AttendanceRuleSeeder::class,

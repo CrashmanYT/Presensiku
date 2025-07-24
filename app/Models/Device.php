@@ -12,6 +12,9 @@ class Device extends Model
     protected $fillable = [
         'name',
         'ip_address',
+        'cloud_id',
+        'serial_number',
+        'type',
         'location',
         'is_active'
     ];

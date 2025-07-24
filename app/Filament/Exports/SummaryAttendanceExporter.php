@@ -41,7 +41,7 @@ class SummaryAttendanceExporter implements FromQuery, WithHeadings, WithMapping
             $summary->class_name,
             $summary->total_hadir,
             $summary->total_terlambat,
-            $summary->total_alpa,
+            $summary->total_tidak_hadir,
             $summary->total_sakit,
             $summary->total_izin,
         ];

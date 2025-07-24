@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('devices', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('cloud_id')->nullable();
             $table->string('ip_address')->unique();
             $table->string('location')->nullable();
             $table->boolean('is_active')->default(true);

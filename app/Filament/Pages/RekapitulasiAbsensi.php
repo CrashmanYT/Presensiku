@@ -153,7 +153,7 @@ class RekapitulasiAbsensi extends Page implements HasTable
                 ->query($query)
                 ->columns($columns)
                 ->paginated([10, 25, 50, 100])
-                ->defaultSort('student_name', 'asc')
+                ->defaultSort($this->activeTab === 'harian' ? 'student.name' : 'student_name', 'asc')
                 ->recordUrl(
                     fn (object $record): string => \App\Filament\Resources\StudentResource::getUrl('view', ['record' => $record->student_id])
                 );
