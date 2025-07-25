@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4" wire:poll.5s="refreshData">
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4" wire:poll.1s="refreshData">
     <!-- Auto-hide JavaScript -->
     <script>
         document.addEventListener('livewire:initialized', () => {

@@ -162,6 +162,9 @@ class WebhookController extends Controller
                 'status' => $attendance->status->value
             ]);
 
+            // Broadcast real-time event for immediate dashboard update
+            broadcast(new \App\Events\UserScanned($student->fingerprint_id));
+            
             // Dashboard will automatically detect this via polling
 
             return response()->json([

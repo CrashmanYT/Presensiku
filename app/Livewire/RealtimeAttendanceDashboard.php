@@ -9,6 +9,7 @@ use App\Models\TeacherAttendance;
 use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\Attributes\On;
+use Illuminate\Support\Facades\Cache;
 
 class RealtimeAttendanceDashboard extends Component
 {
@@ -19,8 +20,12 @@ class RealtimeAttendanceDashboard extends Component
     public $showDetails = false;
     public $lastChecked;
     public $autoHideTimer;
+    public $lastScanId = null;
 
-    protected $listeners = ['attendanceUpdated' => 'refreshData'];
+    protected $listeners = [
+        'attendanceUpdated' => 'refreshData',
+        'echo:attendance-dashboard,user.scanned' => 'handleRealtimeUserScanned'
+    ];
 
     public function mount()
     {
@@ -50,17 +55,36 @@ class RealtimeAttendanceDashboard extends Component
             return;
         }
 
-        // Look for recent attendance records (last 10 seconds)
-        $recentAttendance = StudentAttendance::where('created_at', '>=', now()->subSeconds(10))
-            ->with('student')
-            ->orderBy('created_at', 'desc')
-            ->first();
+        // Look for recent attendance records (last 3 seconds for faster detection)
+        $query = StudentAttendance::where('created_at', '>=', now()->subSeconds(3))
+            ->with(['student:id,name,fingerprint_id']) // Only load needed fields
+            ->orderBy('created_at', 'desc');
+            
+        // Optimize with lastScanId to avoid duplicate processing
+        if ($this->lastScanId) {
+            $query->where('id', '>', $this->lastScanId);
+        }
+        
+        $recentAttendance = $query->first();
 
         \Log::info('Checking for new scans, found: ' . ($recentAttendance ? 'Yes (ID: ' . $recentAttendance->id . ')' : 'No'));
 
         if ($recentAttendance && $recentAttendance->student) {
+            $this->lastScanId = $recentAttendance->id;
             \Log::info('Handling user scanned: fingerprint_id = ' . $recentAttendance->student->fingerprint_id);
             $this->handleUserScanned($recentAttendance->student->fingerprint_id);
+        }
+    }
+
+    /**
+     * Handle real-time user scanned event from broadcasting
+     */
+    public function handleRealtimeUserScanned($event)
+    {
+        \Log::info('Real-time user scanned event received', $event);
+        
+        if (!$this->showDetails && isset($event['fingerprint_id'])) {
+            $this->handleUserScanned($event['fingerprint_id']);
         }
     }
 
