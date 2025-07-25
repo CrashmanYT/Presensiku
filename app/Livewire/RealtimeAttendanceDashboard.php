@@ -49,12 +49,6 @@ class RealtimeAttendanceDashboard extends Component
 
     public function checkForNewScans()
     {
-        // Skip if already showing details
-        if ($this->showDetails) {
-            \Log::info('Skipping scan check - details already showing');
-            return;
-        }
-
         // Look for recent attendance records (last 3 seconds for faster detection)
         $query = StudentAttendance::where('created_at', '>=', now()->subSeconds(3))
             ->with(['student:id,name,fingerprint_id']) // Only load needed fields
@@ -71,6 +65,14 @@ class RealtimeAttendanceDashboard extends Component
 
         if ($recentAttendance && $recentAttendance->student) {
             $this->lastScanId = $recentAttendance->id;
+            
+            // Always handle new scans, even if currently showing details
+            if ($this->showDetails) {
+                \Log::info('New scan detected while showing details - updating to newer attendance');
+                // Reset auto-hide timer and show new user
+                $this->dispatch('reset-auto-hide');
+            }
+            
             \Log::info('Handling user scanned: fingerprint_id = ' . $recentAttendance->student->fingerprint_id);
             $this->handleUserScanned($recentAttendance->student->fingerprint_id);
         }
@@ -83,7 +85,13 @@ class RealtimeAttendanceDashboard extends Component
     {
         \Log::info('Real-time user scanned event received', $event);
         
-        if (!$this->showDetails && isset($event['fingerprint_id'])) {
+        // Always handle new scans, even if currently showing details
+        if (isset($event['fingerprint_id'])) {
+            if ($this->showDetails) {
+                \Log::info('New scan via broadcast while showing details - updating to newer user');
+                // Reset auto-hide timer for new user
+                $this->dispatch('reset-auto-hide');
+            }
             $this->handleUserScanned($event['fingerprint_id']);
         }
     }

@@ -1,9 +1,40 @@
 <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4" wire:poll.1s="refreshData">
     <!-- Auto-hide JavaScript -->
     <script>
+        let autoHideTimer = null;
+        
         document.addEventListener('livewire:initialized', () => {
             Livewire.on('start-auto-hide', () => {
-                setTimeout(() => {
+                // Clear any existing timer
+                if (autoHideTimer) {
+                    clearTimeout(autoHideTimer);
+                }
+                
+                // Start new timer
+                autoHideTimer = setTimeout(() => {
+                    @this.call('hideDetails');
+                }, 10000); // Hide after 10 seconds
+            });
+            
+            Livewire.on('reset-auto-hide', () => {
+                // Clear existing timer and start new one
+                if (autoHideTimer) {
+                    clearTimeout(autoHideTimer);
+                }
+                
+                // Add visual feedback for transition
+                const detailsContainer = document.querySelector('.attendance-details');
+                if (detailsContainer) {
+                    detailsContainer.classList.add('transition-opacity', 'duration-300');
+                    detailsContainer.style.opacity = '0.7';
+                    
+                    setTimeout(() => {
+                        detailsContainer.style.opacity = '1';
+                    }, 300);
+                }
+                
+                // Start new timer
+                autoHideTimer = setTimeout(() => {
                     @this.call('hideDetails');
                 }, 10000); // Hide after 10 seconds
             });
@@ -46,7 +77,7 @@
 
     <!-- User Details and Calendar -->
     @if($showDetails && $currentUser)
-        <div class="max-w-6xl mx-auto">
+        <div class="max-w-6xl mx-auto attendance-details">
             <!-- Header -->
             <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
                 <div class="flex justify-between items-start">
@@ -99,10 +130,13 @@
                     
                     <!-- Status Badge -->
                     <div class="text-right">
-                        <div class="bg-green-100 text-green-800 px-4 py-2 rounded-full font-semibold mb-2">
+                        <div class="bg-green-100 text-green-800 px-4 py-2 rounded-full font-semibold mb-2 pulse-on-update">
                             ✓ Scan Berhasil
                         </div>
                         <p class="text-sm text-gray-500">{{ now()->format('d/m/Y H:i:s') }}</p>
+                        <div class="text-xs text-blue-600 mb-2">
+                            <span class="opacity-75">Dashboard akan update otomatis untuk scan berikutnya</span>
+                        </div>
                         <button wire:click="hideDetails" class="mt-2 text-red-500 hover:text-red-700 text-sm">
                             Tutup
                         </button>
