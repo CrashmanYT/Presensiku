@@ -164,7 +164,7 @@ class WebhookController extends Controller
 
             // Broadcast real-time event for immediate dashboard update
             broadcast(new \App\Events\UserScanned($student->fingerprint_id));
-            
+
             // Dashboard will automatically detect this via polling
 
             return response()->json([
@@ -234,35 +234,101 @@ class WebhookController extends Controller
         }
     }
     public function handleTeacherAttendance(Teacher $teacher, Carbon $scanDateTime, AttendanceRule $attendanceRule, Device $device ) {
-        $scanDate = $scanDateTime->toDate()->format('Y-m-d');
-        $scanTime = $scanDateTime->toDateTime()->format('H:i:s');
-        $attendance = StudentAttendance::where('student_id', $teacher->id)
-            ->where('date', $scanDate);
-        if (!$attendance->exists())
-        {
-            $attendance = new StudentAttendance;
-            $attendance->student_id = $teacher->id;
-            $attendance->time_in = $scanTime;
+        $scanDate = $scanDateTime->format('Y-m-d');
+        $scanTime = $scanDateTime->format('H:i:s');
+
+        // Check if attendance record already exists
+        $attendance = TeacherAttendance::where('student_id', $teacher->id)
+            ->where('date', $scanDate)
+            ->first();
+
+        if (!$attendance) {
+            // Create new attendance record (scan in)
+            $attendance = new TeacherAttendance;
+            $attendance->teacher_id = $teacher->id;
+            $attendance->time_in = $scanDateTime;
             $attendance->date = $scanDate;
             $attendance->device_id = $device->id;
             $attendance->status = $this->checkAttendanceStatus($scanDateTime, $attendanceRule);
             $attendance->save();
+
+            Log::info('New attendance record created', [
+                'student_id' => $teacher->id,
+                'date' => $scanDate,
+                'time_in' => $scanDateTime->format('H:i:s'),
+                'status' => $attendance->status->value
+            ]);
+
+            // Broadcast real-time event for immediate dashboard update
+            broadcast(new \App\Events\UserScanned($teacher->fingerprint_id));
+
+            // Dashboard will automatically detect this via polling
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Scan masuk berhasil',
+                'data' => [
+                    'student_name' => $teacher->name,
+                    'time_in' => $scanDateTime->format('H:i:s'),
+                    'status' => $attendance->status->value,
+                    'date' => $scanDate
+                ]
+            ]);
         } else {
-            $now = Carbon::now();
-            if ($now->between($attendanceRule->time_in_start, $attendanceRule->time_out_start)) {
+            // cek jika absensi di lakukan lagi sebelum jam pulang, maka akan muncul pesan bahwa sudah absen masuk sebelumnya
+            if ($scanDateTime < $attendanceRule->time_out_start) {
+                Log::info('Anda sudah melakukan absensi masuk', [
+                    'teacher_id' => $teacher->id,
+                    'date' => $scanDate,
+                    'time_in' => $attendance->time_in,
+                ]);
+
                 return response()->json([
-                    'status' => 'success',
-                    'message' => 'Anda telah scan sebelumnya',
+                    'status' => 'info',
+                    'message' => 'Anda sudah melakukan absensi masuk',
+                    'data' => [
+                        'teacher_name' => $teacher->name,
+                        'time_in' => $attendance->time_in,
+                        'status' => $attendance->status->value,
+                    ]
                 ]);
             }
-            $attendance = $attendance->update(['time_out' => $scanTime]);
+            // Update existing record (scan out)
+            if (!$attendance->time_out) {
+                $attendance->time_out = $scanDateTime;
+                $attendance->save();
+
+                Log::info('Attendance record updated with time_out', [
+                    'teacher_id' => $teacher->id,
+                    'date' => $scanDate,
+                    'time_out' => $scanDateTime->format('H:i:s')
+                ]);
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Scan keluar berhasil',
+                    'data' => [
+                        'teacher_name' => $teacher->name,
+                        'time_in' => $attendance->time_in->format('H:i:s'),
+                        'time_out' => $scanDateTime->format('H:i:s'),
+                        'status' => $attendance->status->value,
+                        'date' => $scanDate
+                    ]
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 'info',
+                    'message' => 'Anda sudah melakukan scan masuk dan keluar hari ini',
+                    'data' => [
+                        'teacher_name' => $teacher->name,
+                        'time_in' => $attendance->time_in->format('H:i:s'),
+                        'time_out' => $attendance->time_out->format('H:i:s'),
+                        'status' => $attendance->status->value,
+                        'date' => $scanDate
+                    ]
+                ]);
+            }
         }
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $attendance,
-        ]);
-
     }
 
     public function checkAttendanceStatus(Carbon $scanTime, AttendanceRule $attendanceRule): AttendanceStatusEnum
