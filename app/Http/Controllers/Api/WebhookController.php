@@ -162,6 +162,8 @@ class WebhookController extends Controller
                 'status' => $attendance->status->value
             ]);
 
+            // Dashboard will automatically detect this via polling
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Scan masuk berhasil',

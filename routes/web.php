@@ -1,24 +1,18 @@
 <?php
 
-use App\Livewire\Settings\Appearance;
-use App\Livewire\Settings\Password;
-use App\Livewire\Settings\Profile;
+use App\Livewire\RealtimeAttendanceDashboard;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+// Redirect root to attendance dashboard
+Route::redirect('/', '/attendance-dashboard')->name('home');
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+// Realtime Attendance Dashboard (Public access)
+Route::get('/attendance-dashboard', RealtimeAttendanceDashboard::class)->name('attendance.dashboard');
 
-Route::middleware(['auth'])->group(function () {
-    Route::redirect('settings', 'settings/profile');
-
-    Route::get('settings/profile', Profile::class)->name('settings.profile');
-    Route::get('settings/password', Password::class)->name('settings.password');
-    Route::get('settings/appearance', Appearance::class)->name('settings.appearance');
-});
+// Test route for triggering dashboard updates
+Route::get('/test-scan/{fingerprintId}', function ($fingerprintId) {
+    broadcast(new \App\Events\UserScanned($fingerprintId));
+    return response()->json(['message' => 'Scan event triggered', 'fingerprint_id' => $fingerprintId]);
+})->name('test.scan');
 
 require __DIR__.'/auth.php';

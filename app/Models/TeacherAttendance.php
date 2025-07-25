@@ -8,7 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class TeacherAttendance extends Model implements AttendanceInterface
+class TeacherAttendance extends Model
 {
     use HasFactory;
 
