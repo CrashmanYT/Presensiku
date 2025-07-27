@@ -4,40 +4,11 @@ namespace App\Services;
 
 use App\Enums\AttendanceStatusEnum;
 use App\Models\AttendanceRule;
-use App\Models\Device;
-use App\Models\Student;
-use App\Models\StudentAttendance;
-use App\Models\Teacher;
-use App\Models\TeacherAttendance;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class AttendanceService
 {
-    /**
-     * Find user by fingerprint ID
-     */
-    public function findUserByFingerprintId(string $fingerprintId)
-    {
-        return Student::where('fingerprint_id', $fingerprintId)->first()
-            ?? Teacher::where('fingerprint_id', $fingerprintId)->first();
-    }
-
-    /**
-     * Get or create device by cloud ID
-     */
-    public function getOrCreateDevice(string $cloudId): Device
-    {
-        return Device::firstOrCreate(
-            ['cloud_id' => $cloudId],
-            [
-                'name' => 'Device ' . $cloudId,
-                'cloud_id' => $cloudId,
-                'ip_address' => 'N/A',
-                'is_active' => true,
-            ]
-        );
-    }
 
     /**
      * Get attendance rule for class and date

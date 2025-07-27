@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\AttendanceStatusEnum;
 use App\Filament\Resources\StudentAttendanceResource\Pages;
+use App\Helpers\ExportColumnHelper;
 use App\Filament\Resources\StudentAttendanceResource\RelationManagers;
 use App\Models\StudentAttendance;
 use Filament\Forms;
@@ -168,9 +169,16 @@ class StudentAttendanceResource extends Resource
                     ->bulkActions([
                         Tables\Actions\BulkActionGroup::make([
                             Tables\Actions\DeleteBulkAction::make(),
-                            ExportBulkAction::make('export')
-                        ]),
-                    ]);
+                ExportBulkAction::make('export')
+                    ->color('info')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->exports([
+                        ExcelExport::make('absensimurid')->withColumns(
+                            ExportColumnHelper::getStudentAttendanceColumns()
+                        )
+                    ])
+                ]),
+            ]);
     }
 
     public static function form(Form $form): Form

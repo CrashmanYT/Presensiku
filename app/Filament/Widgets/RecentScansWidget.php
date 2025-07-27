@@ -17,7 +17,10 @@ class RecentScansWidget extends BaseWidget
     protected int | string | array $columnSpan = 'full';
     protected function getTableQuery(): \Illuminate\Database\Eloquent\Builder
     {
-        return StudentAttendance::query()->latest()->limit(10);
+        return StudentAttendance::query()
+            ->with(['student.class', 'device'])
+            ->latest()
+            ->limit(10);
     }
 
     protected function getTableColumns(): array

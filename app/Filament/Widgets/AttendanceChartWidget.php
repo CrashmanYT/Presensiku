@@ -58,22 +58,31 @@ class AttendanceChartWidget extends ChartWidget
                 break;
         }
 
-        $data = [];
+        // Single query to get all attendance data for the date range
+        $attendanceData = StudentAttendance::whereBetween('date', [$startDate, $endDate])
+            ->selectRaw('date, status, count(*) as count')
+            ->groupBy('date', 'status')
+            ->get()
+            ->groupBy('date');
+
+        $data = [
+            'hadir' => [],
+            'terlambat' => [],
+            'tidak_hadir' => [],
+            'izin' => []
+        ];
         $labels = [];
 
         $currentDate = $startDate->copy();
         while ($currentDate->lte($endDate)) {
             $labels[] = $currentDate->format('M d');
+            $dateString = $currentDate->format('Y-m-d');
+            $dayData = $attendanceData->get($dateString, collect());
 
-            $hadir = StudentAttendance::whereDate('date', $currentDate)->where('status', 'hadir')->count();
-            $terlambat = StudentAttendance::whereDate('date', $currentDate)->where('status', 'terlambat')->count();
-            $tidakHadir = StudentAttendance::whereDate('date', $currentDate)->where('status', 'tidak_hadir')->count();
-            $izin = StudentAttendance::whereDate('date', $currentDate)->where('status', 'izin')->count();
-
-            $data['hadir'][] = $hadir;
-            $data['terlambat'][] = $terlambat;
-            $data['tidak_hadir'][] = $tidakHadir;
-            $data['izin'][] = $izin;
+            $data['hadir'][] = $dayData->where('status', 'hadir')->first()->count ?? 0;
+            $data['terlambat'][] = $dayData->where('status', 'terlambat')->first()->count ?? 0;
+            $data['tidak_hadir'][] = $dayData->where('status', 'tidak_hadir')->first()->count ?? 0;
+            $data['izin'][] = $dayData->where('status', 'izin')->first()->count ?? 0;
 
             $currentDate->addDay();
         }

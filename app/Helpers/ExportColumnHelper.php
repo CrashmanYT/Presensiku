@@ -47,10 +47,10 @@ class ExportColumnHelper
     {
         return [
             Column::make('name')->heading('Nama'),
-            Column::make('nip')->heading('NIP'),
-            Column::make('subject')->heading('Mata Pelajaran'),
-            Column::make('phone')->heading('Nomor Telepon'),
+            Column::make('nip')->heading('No Induk'),
+            Column::make('whatsapp_number')->heading('Nomor WA'),
             Column::make('fingerprint_id')->heading('ID Sidik Jari'),
+            Column::make('photo')->heading('Photo'),
             Column::make('created_at')->heading('Tanggal Dibuat'),
             Column::make('updated_at')->heading('Tanggal Diubah'),
         ];
