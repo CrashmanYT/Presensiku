@@ -19,7 +19,7 @@ class ClassesImporter extends Importer
                 ->label('Nama Kelas')
                 ->requiredMapping()
                 ->rules(['required', 'string', 'max:255']),
-                
+
             ImportColumn::make('level')
                 ->label('Level/Tingkat')
                 ->requiredMapping()
@@ -27,25 +27,18 @@ class ClassesImporter extends Importer
                 ->castStateUsing(function (string $state): int {
                     return (int) trim($state);
                 }),
-                
+
             ImportColumn::make('major')
                 ->label('Jurusan')
                 ->requiredMapping()
                 ->rules(['required', 'string', 'max:255']),
-                
+
             ImportColumn::make('homeroom_teacher_name')
                 ->label('Nama Wali Kelas')
                 ->rules(['nullable', 'string']),
         ];
     }
 
-    public function resolveRecord(): ?Classes
-    {
-        // Check if class already exists by name
-        return Classes::firstOrNew([
-            'name' => $this->data['name'],
-        ]);
-    }
 
     protected function beforeSave(): void
     {
@@ -61,9 +54,38 @@ class ClassesImporter extends Importer
         } else {
             $this->data['homeroom_teacher_id'] = null;
         }
-        
+
         // Remove homeroom_teacher_name from data as it's not a database field
         unset($this->data['homeroom_teacher_name']);
+    }
+
+    public function resolveRecord(): ?Classes
+    {
+        // Handle homeroom_teacher_name mapping before creating/updating record
+        $data = $this->data;
+
+        // Find homeroom teacher by name and set homeroom_teacher_id
+        if (!empty($data['homeroom_teacher_name'])) {
+            $teacher = Teacher::where('name', $data['homeroom_teacher_name'])->first();
+            if ($teacher) {
+                $data['homeroom_teacher_id'] = $teacher->id;
+            } else {
+                $data['homeroom_teacher_id'] = null;
+            }
+        } else {
+            $data['homeroom_teacher_id'] = null;
+        }
+
+        // Remove homeroom_teacher_name from data as it's not a database field
+        unset($data['homeroom_teacher_name']);
+
+        // Update the data property with clean data
+        $this->data = $data;
+
+        // Check if class already exists by name
+        return Classes::firstOrNew([
+            'name' => $this->data['name'],
+        ]);
     }
 
     public static function getCompletedNotificationBody(Import $import): string

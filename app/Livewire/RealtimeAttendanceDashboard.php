@@ -2,242 +2,374 @@
 
 namespace App\Livewire;
 
+use App\Services\AttendanceCalendarService;
+use App\Services\UserFinderService;
 use App\Models\Student;
-use App\Models\Teacher;
 use App\Models\StudentAttendance;
 use App\Models\TeacherAttendance;
+use App\Models\Holiday;
+use App\Models\AttendanceRule;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Livewire\Component;
 use Livewire\Attributes\On;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class RealtimeAttendanceDashboard extends Component
 {
+    // Status mappings
+    private const STATUS_COLORS = [
+        'hadir' => 'bg-green-500',
+        'tidak_hadir' => 'bg-red-500',
+        'terlambat' => 'bg-yellow-500',
+        'izin' => 'bg-blue-500',
+        'sakit' => 'bg-blue-500',
+        'holiday' => 'bg-purple-500',
+        'no_data' => 'bg-gray-200',
+        'error' => 'bg-gray-300',
+    ];
+    
+    private const STATUS_TEXTS = [
+        'hadir' => 'Hadir',
+        'tidak_hadir' => 'Tidak Hadir',
+        'terlambat' => 'Terlambat',
+        'izin' => 'Izin',
+        'sakit' => 'Sakit',
+        'holiday' => 'Hari Libur',
+    ];
+    
+    // Public properties
     public $currentUser = null;
     public $attendanceCalendar = [];
     public $currentMonth;
     public $currentYear;
     public $showDetails = false;
-    public $lastChecked;
-    public $autoHideTimer;
     public $lastScanId = null;
-
+    
+    // Services
+    protected AttendanceCalendarService $calendarService;
+    protected UserFinderService $userFinder;
+    
+    // Event listeners
     protected $listeners = [
         'attendanceUpdated' => 'refreshData',
         'echo:attendance-dashboard,user.scanned' => 'handleRealtimeUserScanned'
     ];
 
-    public function mount()
-    {
-        $this->currentMonth = now()->month;
-        $this->currentYear = now()->year;
-        $this->lastChecked = now();
+    public function boot(
+        AttendanceCalendarService $calendarService,
+        UserFinderService $userFinder
+    ) {
+        $this->calendarService = $calendarService;
+        $this->userFinder = $userFinder;
     }
 
-    public function refreshData()
-    {
-        \Log::info('RefreshData called at: ' . now());
+    // ================================================
+    // LIFECYCLE METHODS
+    // ================================================
 
-        // Check for new scans in the last few seconds
+    public function mount(): void
+    {
+        $this->initializeCurrentDate();
+        $this->logInfo('Dashboard mounted', $this->getCurrentDateContext());
+    }
+
+    private function initializeCurrentDate(): void
+    {
+        $now = now();
+        $this->currentMonth = $now->month;
+        $this->currentYear = $now->year;
+    }
+
+    private function getCurrentDateContext(): array
+    {
+        return [
+            'month' => $this->currentMonth,
+            'year' => $this->currentYear
+        ];
+    }
+
+    public function refreshData(): void
+    {
+        $this->logInfo('RefreshData called at: ' . now());
         $this->checkForNewScans();
 
-        // This will be called when new attendance is recorded
         if ($this->currentUser) {
             $this->loadAttendanceCalendar();
         }
     }
 
-    public function checkForNewScans()
+    public function checkForNewScans(): void
     {
-        // Look for recent attendance records (last 3 seconds for faster detection)
-        $query = StudentAttendance::where('created_at', '>=', now()->subSeconds(3))
-            ->with(['student:id,name,fingerprint_id']) // Only load needed fields
-            ->orderBy('created_at', 'desc');
-            
-        // Optimize with lastScanId to avoid duplicate processing
-        if ($this->lastScanId) {
-            $query->where('id', '>', $this->lastScanId);
-        }
-        
-        $recentAttendance = $query->first();
+        $recentAttendance = $this->userFinder->findRecentAttendance($this->lastScanId);
 
-        \Log::info('Checking for new scans, found: ' . ($recentAttendance ? 'Yes (ID: ' . $recentAttendance->id . ')' : 'No'));
-
-        if ($recentAttendance && $recentAttendance->student) {
-            $this->lastScanId = $recentAttendance->id;
-            
-            // Always handle new scans, even if currently showing details
-            if ($this->showDetails) {
-                \Log::info('New scan detected while showing details - updating to newer attendance');
-                // Reset auto-hide timer and show new user
-                $this->dispatch('reset-auto-hide');
-            }
-            
-            \Log::info('Handling user scanned: fingerprint_id = ' . $recentAttendance->student->fingerprint_id);
-            $this->handleUserScanned($recentAttendance->student->fingerprint_id);
+        if (!$recentAttendance || !$recentAttendance->student) {
+            return;
         }
+
+        $this->lastScanId = $recentAttendance->id;
+        $this->handleUserScanned($recentAttendance->student->fingerprint_id);
     }
 
-    /**
-     * Handle real-time user scanned event from broadcasting
-     */
-    public function handleRealtimeUserScanned($event)
+    public function handleRealtimeUserScanned(array $event): void
     {
-        \Log::info('Real-time user scanned event received', $event);
-        
-        // Always handle new scans, even if currently showing details
-        if (isset($event['fingerprint_id'])) {
-            if ($this->showDetails) {
-                \Log::info('New scan via broadcast while showing details - updating to newer user');
-                // Reset auto-hide timer for new user
-                $this->dispatch('reset-auto-hide');
-            }
-            $this->handleUserScanned($event['fingerprint_id']);
+        if (empty($event['fingerprint_id'])) {
+            return;
         }
+
+        $this->handleUserScanned($event['fingerprint_id']);
     }
 
     #[On('user-scanned')]
-    public function handleUserScanned($fingerprintId)
+    public function handleUserScanned(string $fingerprintId): void
     {
-        \Log::info('handleUserScanned called with fingerprint_id: ' . $fingerprintId);
+        $user = $this->userFinder->findByFingerprint($fingerprintId);
 
-        // Find user by fingerprint ID
-        $user = Student::where('fingerprint_id', $fingerprintId)->first();
         if (!$user) {
-            $user = Teacher::where('fingerprint_id', $fingerprintId)->first();
+            return;
         }
 
-        \Log::info('User found: ' . ($user ? 'Yes (Name: ' . $user->name . ', Type: ' . get_class($user) . ')' : 'No'));
+        $this->currentUser = $user;
+        $this->showDetails = true;
+        $this->loadAttendanceCalendar();
 
-        if ($user) {
-            $this->currentUser = $user;
-            $this->showDetails = true;
-            $this->loadAttendanceCalendar();
-
-            \Log::info('User details set, calendar loaded');
-
-            // Auto hide after 10 seconds
-            $this->dispatch('start-auto-hide');
+        if ($this->showDetails) {
+            $this->dispatch('reset-auto-hide');
         }
+        
+        $this->dispatch('start-auto-hide');
     }
 
-    public function hideDetails()
+    // ================================================
+    // UI CONTROL METHODS
+    // ================================================
+
+    public function hideDetails(): void
     {
         $this->showDetails = false;
         $this->currentUser = null;
         $this->attendanceCalendar = [];
+        $this->logInfo('Details hidden');
     }
 
-    // Method for testing - only available in local environment
-    public function testCalendar()
+    public function testCalendar(): void
     {
-        // Get any student with attendance data for testing
-        $student = Student::has('attendances')
+        if (!app()->environment('local')) {
+            $this->logInfo('Test calendar only available in local environment');
+            return;
+        }
+
+        $student = $this->findTestStudent();
+        
+        if (!$student) {
+            $this->logInfo('No student with attendance found for testing');
+            return;
+        }
+
+        $this->logInfo('Test calendar triggered', [
+            'student_name' => $student->name,
+            'fingerprint_id' => $student->fingerprint_id
+        ]);
+        
+        $this->handleUserScanned($student->fingerprint_id);
+    }
+
+    private function findTestStudent()
+    {
+        return Student::has('attendances')
             ->whereNotNull('fingerprint_id')
             ->first();
-            
-        if ($student) {
-            \Log::info('Test calendar triggered for student: ' . $student->name . ' (fingerprint_id: ' . $student->fingerprint_id . ')');
-            $this->currentUser = $student;
-            $this->showDetails = true;
-            $this->loadAttendanceCalendar();
-        } else {
-            \Log::info('No student with attendance found for testing');
-        }
     }
 
-    private function loadAttendanceCalendar()
+    // ================================================
+    // CALENDAR MANAGEMENT METHODS
+    // ================================================
+
+    private function loadAttendanceCalendar(): void
     {
         if (!$this->currentUser) return;
 
+        [$startDate, $endDate] = $this->getMonthDateRange();
+        $this->logCalendarLoadInfo($startDate, $endDate);
+        
+        $attendances = $this->fetchAttendances($startDate, $endDate);
+        $holidays = $this->fetchHolidays($startDate, $endDate);
+        $attendanceRules = $this->fetchAttendanceRules();
+        
+        $this->attendanceCalendar = $this->buildCalendar($startDate, $attendances, $holidays, $attendanceRules);
+        $this->logInfo('Calendar built with ' . count($this->attendanceCalendar) . ' days');
+    }
+
+    private function getMonthDateRange(): array
+    {
         $startDate = Carbon::create($this->currentYear, $this->currentMonth, 1);
         $endDate = $startDate->copy()->endOfMonth();
+        return [$startDate, $endDate];
+    }
 
-        \Log::info('Loading attendance calendar for user: ' . $this->currentUser->name . ' (ID: ' . $this->currentUser->id . ')');
-        \Log::info('Date range: ' . $startDate->format('Y-m-d') . ' to ' . $endDate->format('Y-m-d'));
+    private function logCalendarLoadInfo(Carbon $startDate, Carbon $endDate): void
+    {
+        $this->logInfo('Loading attendance calendar', [
+            'user_name' => $this->currentUser->name,
+            'user_id' => $this->currentUser->id,
+            'date_range' => $startDate->format('Y-m-d') . ' to ' . $endDate->format('Y-m-d')
+        ]);
+    }
 
-        // Get attendance data for the month
+    private function fetchAttendances(Carbon $startDate, Carbon $endDate): Collection
+    {
+        $dateRange = [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')];
+        
         if ($this->currentUser instanceof Student) {
             $attendances = StudentAttendance::where('student_id', $this->currentUser->id)
-                ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
-                ->get()
-                ->keyBy(function ($item) {
-                    return $item->date->format('Y-m-d');
-                });
+                ->whereBetween('date', $dateRange)
+                ->get();
         } else {
             $attendances = TeacherAttendance::where('teacher_id', $this->currentUser->id)
-                ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
-                ->get()
-                ->keyBy(function ($item) {
-                    return $item->date->format('Y-m-d');
-                });
+                ->whereBetween('date', $dateRange)
+                ->get();
         }
 
-        \Log::info('Found ' . $attendances->count() . ' attendance records');
+        $this->logAttendanceRecords($attendances);
+        
+        return $attendances->keyBy(function ($item) {
+            return $item->date->format('Y-m-d');
+        });
+    }
 
-        // Debug: Log all attendance records found
-        foreach ($attendances as $date => $attendance) {
-            $statusValue = $this->getStatusValue($attendance->status);
-            \Log::info('Attendance record - Date: ' . $date . ', Status: ' . $statusValue);
+    private function logAttendanceRecords(Collection $attendances): void
+    {
+        $this->logInfo('Found ' . $attendances->count() . ' attendance records');
+        
+        foreach ($attendances as $attendance) {
+            $statusValue = $this->extractStatusValue($attendance->status);
+            $this->logInfo('Attendance record', [
+                'date' => $attendance->date->format('Y-m-d'),
+                'status' => $statusValue
+            ]);
         }
+    }
 
-        // Build calendar array
+    private function fetchHolidays(Carbon $startDate, Carbon $endDate): Collection
+    {
+        return Holiday::where(function ($query) use ($startDate, $endDate) {
+            $startDateStr = $startDate->format('Y-m-d');
+            $endDateStr = $endDate->format('Y-m-d');
+            
+            $query->whereBetween('start_date', [$startDateStr, $endDateStr])
+                  ->orWhereBetween('end_date', [$startDateStr, $endDateStr])
+                  ->orWhere(function ($q) use ($startDateStr, $endDateStr) {
+                      $q->where('start_date', '<=', $startDateStr)
+                        ->where('end_date', '>=', $endDateStr);
+                  });
+        })->get();
+    }
+
+    private function fetchAttendanceRules(): Collection
+    {
+        if (!($this->currentUser instanceof Student) || !$this->currentUser->class) {
+            return collect();
+        }
+        
+        return AttendanceRule::where('class_id', $this->currentUser->class->id)->get();
+    }
+
+    private function buildCalendar(Carbon $startDate, Collection $attendances, Collection $holidays, Collection $attendanceRules): array
+    {
         $calendar = [];
         $currentDate = $startDate->copy();
 
         while ($currentDate->month == $this->currentMonth) {
-            $dateString = $currentDate->format('Y-m-d');
-            $attendance = $attendances->get($dateString);
-
-            // Get status with better error handling
-            $status = 'no_data';
-            if ($attendance) {
-                $status = $this->getStatusValue($attendance->status);
-            }
-
-            $calendar[] = [
-                'date' => $currentDate->day,
-                'full_date' => $dateString,
-                'status' => $status,
-                'is_today' => $currentDate->isToday(),
-                'is_weekend' => $currentDate->isWeekend(),
-            ];
-
-            \Log::info('Calendar day ' . $currentDate->day . ' (' . $dateString . '): status = ' . $status);
-
+            $dayData = $this->buildCalendarDay($currentDate, $attendances, $holidays, $attendanceRules);
+            $calendar[] = $dayData;
+            
+            $this->logInfo('Calendar day built', [
+                'day' => $currentDate->day,
+                'date' => $dayData['full_date'],
+                'status' => $dayData['status']
+            ]);
+            
             $currentDate->addDay();
         }
 
-        $this->attendanceCalendar = $calendar;
-        \Log::info('Calendar built with ' . count($calendar) . ' days');
+        return $calendar;
     }
 
-    public function previousMonth()
+    private function buildCalendarDay(Carbon $date, Collection $attendances, Collection $holidays, Collection $attendanceRules): array
     {
-        if ($this->currentMonth == 1) {
-            $this->currentMonth = 12;
-            $this->currentYear--;
+        $dateString = $date->format('Y-m-d');
+        $attendance = $attendances->get($dateString);
+        
+        $status = $attendance 
+            ? $this->extractStatusValue($attendance->status)
+            : $this->determineNoAttendanceStatus($date, $holidays, $attendanceRules);
+
+        return [
+            'date' => $date->day,
+            'full_date' => $dateString,
+            'status' => $status,
+            'is_today' => $date->isToday(),
+            'is_weekend' => $date->isWeekend(),
+        ];
+    }
+
+    private function determineNoAttendanceStatus(Carbon $date, Collection $holidays, Collection $attendanceRules): string
+    {
+        $isHoliday = $this->isHoliday($date, $holidays);
+        $shouldHaveAttendance = $this->shouldHaveAttendance($date, $attendanceRules);
+        
+        return ($isHoliday || !$shouldHaveAttendance) ? 'holiday' : 'no_data';
+    }
+
+    // ================================================
+    // NAVIGATION METHODS
+    // ================================================
+
+    public function previousMonth(): void
+    {
+        $this->navigateMonth(-1);
+    }
+
+    public function nextMonth(): void
+    {
+        $this->navigateMonth(1);
+    }
+
+    private function navigateMonth(int $direction): void
+    {
+        if ($direction === -1) {
+            if ($this->currentMonth == 1) {
+                $this->currentMonth = 12;
+                $this->currentYear--;
+            } else {
+                $this->currentMonth--;
+            }
         } else {
-            $this->currentMonth--;
+            if ($this->currentMonth == 12) {
+                $this->currentMonth = 1;
+                $this->currentYear++;
+            } else {
+                $this->currentMonth++;
+            }
         }
+        
+        $this->logInfo('Month navigation', [
+            'direction' => $direction === -1 ? 'previous' : 'next',
+            'new_month' => $this->currentMonth,
+            'new_year' => $this->currentYear
+        ]);
+        
         $this->loadAttendanceCalendar();
     }
 
-    public function nextMonth()
-    {
-        if ($this->currentMonth == 12) {
-            $this->currentMonth = 1;
-            $this->currentYear++;
-        } else {
-            $this->currentMonth++;
-        }
-        $this->loadAttendanceCalendar();
-    }
+    // ================================================
+    // STATUS PROCESSING METHODS
+    // ================================================
 
-    private function getStatusValue($status)
+    private function extractStatusValue($status): string
     {
         try {
-            \Log::info('Processing status value', [
+            $this->logInfo('Processing status value', [
                 'raw_status' => $status,
                 'status_type' => gettype($status),
                 'is_enum' => $status instanceof \BackedEnum,
@@ -246,44 +378,81 @@ class RealtimeAttendanceDashboard extends Component
 
             if ($status instanceof \BackedEnum) {
                 $value = $status->value;
-                \Log::info('Enum value extracted: ' . $value);
+                $this->logInfo('Enum value extracted: ' . $value);
                 return $value;
             }
 
             $stringValue = (string)$status;
-            \Log::info('String value: ' . $stringValue);
+            $this->logInfo('String value: ' . $stringValue);
             return $stringValue;
         } catch (\Exception $e) {
-            \Log::error('Error converting status: ' . $e->getMessage());
+            $this->logInfo('Error converting status: ' . $e->getMessage());
             return 'no_data';
         }
     }
 
-    public function getStatusColor($status)
+    public function getStatusColor(string $status): string
     {
-        \Log::info('Getting color for status: ' . $status);
-
-        return match($status) {
-            'hadir' => 'bg-green-500',
-            'tidak_hadir' => 'bg-red-500',
-            'terlambat' => 'bg-yellow-500',
-            'izin', 'sakit' => 'bg-blue-500',
-            'no_data' => 'bg-gray-200',
-            'error' => 'bg-gray-300',
-            default => 'bg-gray-200'
-        };
+        return self::STATUS_COLORS[$status] ?? self::STATUS_COLORS['no_data'];
     }
 
-    public function getStatusText($status)
+    public function getStatusText(string $status): string
     {
-        return match($status) {
-            'hadir' => 'Hadir',
-            'tidak_hadir' => 'Tidak Hadir',
-            'terlambat' => 'Terlambat',
-            'izin' => 'Izin',
-            'sakit' => 'Sakit',
-            default => 'Tidak Ada Data'
-        };
+        return self::STATUS_TEXTS[$status] ?? 'Tidak Ada Data';
+    }
+
+    // ================================================
+    // HOLIDAY AND ATTENDANCE RULE UTILITIES
+    // ================================================
+
+    private function isHoliday(Carbon $date, Collection $holidays): bool
+    {
+        return $holidays->contains(function ($holiday) use ($date) {
+            return $date->between($holiday->start_date, $holiday->end_date);
+        });
+    }
+
+    private function shouldHaveAttendance(Carbon $date, Collection $attendanceRules): bool
+    {
+        $dayName = strtolower($date->format('l'));
+        $dateString = $date->format('Y-m-d');
+        
+        if ($attendanceRules->isEmpty()) {
+            return !$date->isWeekend();
+        }
+        
+        // Check for specific date override
+        if ($this->hasDateOverrideRule($attendanceRules, $dateString)) {
+            return true;
+        }
+        
+        // Check for day of week rules
+        return $this->hasDayOfWeekRule($attendanceRules, $dayName);
+    }
+
+    private function hasDateOverrideRule(Collection $attendanceRules, string $dateString): bool
+    {
+        return $attendanceRules->contains(function ($rule) use ($dateString) {
+            return $rule->date_override && $rule->date_override->format('Y-m-d') === $dateString;
+        });
+    }
+
+    private function hasDayOfWeekRule(Collection $attendanceRules, string $dayName): bool
+    {
+        return $attendanceRules->contains(function ($rule) use ($dayName) {
+            return $rule->day_of_week 
+                && is_array($rule->day_of_week) 
+                && in_array($dayName, $rule->day_of_week);
+        });
+    }
+
+    // ================================================
+    // LOGGING UTILITIES
+    // ================================================
+
+    private function logInfo(string $message, array $context = []): void
+    {
+        Log::info('[RealtimeAttendanceDashboard] ' . $message, $context);
     }
 
     public function render()
