@@ -31,7 +31,7 @@ class DatabaseSeeder extends Seeder
             TeacherAttendanceSeeder::class,
             StudentLeaveRequestSeeder::class,
             TeacherLeaveRequestSeeder::class,
-            HolidaySeeder::class,
+//            HolidaySeeder::class,
         ]);
     }
 }
