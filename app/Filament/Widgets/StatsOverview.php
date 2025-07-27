@@ -13,12 +13,29 @@ class StatsOverviewWidget extends BaseWidget
     protected function getStats(): array
     {
         $today = Carbon::today();
+        $sevenDaysAgo = Carbon::today()->subDays(6);
 
+        // Single query to get total students
         $totalStudents = Student::count();
-        $presentStudents = StudentAttendance::whereDate('date', $today)->where('status', 'hadir')->count();
-        $lateStudents = StudentAttendance::whereDate('date', $today)->where('status', 'terlambat')->count();
-        $absentStudents = StudentAttendance::whereDate('date', $today)->where('status', 'tidak_hadir')->count();
-        $leaveStudents = StudentAttendance::whereDate('date', $today)->where('status', 'izin')->count();
+
+        // Single query to get today's attendance by status
+        $todayAttendance = StudentAttendance::whereDate('date', $today)
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        $presentStudents = $todayAttendance['hadir'] ?? 0;
+        $lateStudents = $todayAttendance['terlambat'] ?? 0;
+        $absentStudents = $todayAttendance['tidak_hadir'] ?? 0;
+        $leaveStudents = $todayAttendance['izin'] ?? 0;
+
+        // Single query to get 7 days trend data
+        $trendData = StudentAttendance::whereBetween('date', [$sevenDaysAgo, $today])
+            ->selectRaw('date, status, count(*) as count')
+            ->groupBy('date', 'status')
+            ->get()
+            ->groupBy('date');
 
         $presentTrend = [];
         $lateTrend = [];
@@ -27,13 +44,14 @@ class StatsOverviewWidget extends BaseWidget
         $totalStudentTrend = [];
 
         for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::today()->subDays($i);
-
-            $presentTrend[] = StudentAttendance::whereDate('date', $date)->where('status', 'hadir')->count();
-            $lateTrend[] = StudentAttendance::whereDate('date', $date)->where('status', 'terlambat')->count();
-            $absentTrend[] = StudentAttendance::whereDate('date', $date)->where('status', 'tidak_hadir')->count();
-            $leaveTrend[] = StudentAttendance::whereDate('date', $date)->where('status', 'izin')->count();
-            $totalStudentTrend[] = $totalStudents; // Total siswa cenderung stabil, jadi trennya datar
+            $date = Carbon::today()->subDays($i)->format('Y-m-d');
+            $dayData = $trendData->get($date, collect());
+            
+            $presentTrend[] = $dayData->where('status', 'hadir')->first()->count ?? 0;
+            $lateTrend[] = $dayData->where('status', 'terlambat')->first()->count ?? 0;
+            $absentTrend[] = $dayData->where('status', 'tidak_hadir')->first()->count ?? 0;
+            $leaveTrend[] = $dayData->where('status', 'izin')->first()->count ?? 0;
+            $totalStudentTrend[] = $totalStudents;
         }
 
         return [

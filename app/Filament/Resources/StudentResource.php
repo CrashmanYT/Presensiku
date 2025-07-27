@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\GenderEnum;
 use App\Filament\Exports\StudentExporter;
+use App\Helpers\ExportColumnHelper;
 use App\Filament\Imports\StudentImporter;
 use App\Filament\Resources\StudentResource\Pages;
 use App\Filament\Resources\StudentResource\RelationManagers;
@@ -144,17 +145,9 @@ class StudentResource extends Resource
                 ->color('info')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->exports([
-                    ExcelExport::make('singeldata')->withColumns([
-                        Column::make('name')->heading('Nama'),
-                        Column::make('nis')->heading('NIS'),
-                        Column::make('class.name')->heading('Kelas'),
-                        Column::make('gender')->heading('Jenis Kelamin'),
-                        Column::make('fingerprint_id')->heading('ID Sidik Jari'),
-                        Column::make('photo')->heading('Photo'),
-                        Column::make('parent_whatsapp')->heading('Nomor WA Orang Tua'),
-                        Column::make('created_at')->heading('Tanggal Dibuat'),
-                        Column::make('updated_at')->heading('Tanggal Diubah'),
-                    ])
+                    ExcelExport::make('singeldata')->withColumns(
+                        ExportColumnHelper::getStudentColumns()
+                    )
                 ])
             ])
             ->headerActions([
@@ -167,17 +160,9 @@ class StudentResource extends Resource
                     ->icon('heroicon-o-arrow-up-tray')
                     ->color('info')
                     ->exports([
-                        ExcelExport::make('form')->withColumns([
-                            Column::make('name')->heading('Nama'),
-                            Column::make('nis')->heading('NIS'),
-                            Column::make('class.name')->heading('Kelas'),
-                            Column::make('gender')->heading('Jenis Kelamin'),
-                            Column::make('fingerprint_id')->heading('ID Sidik Jari'),
-                            Column::make('photo')->heading('Photo'),
-                            Column::make('parent_whatsapp')->heading('Nomor WA Orang Tua'),
-                            Column::make('created_at')->heading('Tanggal Dibuat'),
-                            Column::make('updated_at')->heading('Tanggal Diubah'),
-                        ])
+                        ExcelExport::make('form')->withColumns(
+                            ExportColumnHelper::getStudentColumns()
+                        )
                     ])
             ]);
     }
