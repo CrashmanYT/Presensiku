@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\AttendanceChartWidget;
+use App\Filament\Widgets\RecentScansWidget;
 use App\Filament\Widgets\StatsOverviewWidget;
 use Filament\Pages\Page;
 
@@ -19,7 +21,9 @@ class Dashboard extends BaseDashboard
     protected function getHeaderWidgets(): array
     {
         return [
-            StatsOverviewWidget::class
+            StatsOverviewWidget::class,
+            AttendanceChartWidget::class,
+            RecentScansWidget::class,
         ];
     }
 }
