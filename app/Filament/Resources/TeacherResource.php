@@ -6,6 +6,7 @@ use App\Filament\Resources\TeacherResource\Pages;
 use App\Filament\Resources\TeacherResource\RelationManagers;
 use App\Models\Teacher;
 use App\Helpers\ExportColumnHelper;
+use App\Filament\Imports\TeacherImporter;
 use Filament\Forms;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
@@ -82,6 +83,17 @@ class TeacherResource extends Resource
                 Tables\Actions\EditAction::make(),
             ])
             ->headerActions([
+                Tables\Actions\Action::make('download_template')
+                    ->label('Download Template')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('gray')
+                    ->url(route('template.teacher'))
+                    ->openUrlInNewTab(),
+                Tables\Actions\ImportAction::make('import')
+                    ->label('Import Data Guru')
+                    ->importer(TeacherImporter::class)
+                    ->color('success')
+                    ->icon('heroicon-o-arrow-down-tray'),
                 ExportAction::make('export')
                     ->label('Export Data Guru')
                     ->icon('heroicon-o-arrow-up-tray')
@@ -96,6 +108,15 @@ class TeacherResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     ExportBulkAction::make('export')
+                        ->color('info')
+                        ->icon('heroicon-o-arrow-up-tray')
+                        ->exports([
+                            ExcelExport::make('data-guru')
+                                ->withColumns(
+                                    ExportColumnHelper::getTeacherColumns()
+                                )
+                                ->withFilename('Data Guru.xlsx')
+                        ]),
                 ]),
             ]);
     }

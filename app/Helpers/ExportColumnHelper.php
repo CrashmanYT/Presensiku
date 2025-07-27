@@ -70,4 +70,19 @@ class ExportColumnHelper
             Column::make('device.name')->heading('Perangkat'),
         ];
     }
+
+    /**
+     * Get standard class export columns
+     */
+    public static function getClassColumns(): array
+    {
+        return [
+            Column::make('name')->heading('Nama Kelas'),
+            Column::make('level')->heading('Level'),
+            Column::make('major')->heading('Jurusan'),
+            Column::make('homeroomTeacher.name')->heading('Wali Kelas'),
+            Column::make('created_at')->heading('Tanggal Dibuat'),
+            Column::make('updated_at')->heading('Tanggal Diubah'),
+        ];
+    }
 }

@@ -21,7 +21,7 @@ class Settings extends Page
     protected static ?int $navigationSort = 6;
 
     public ?array $data = [];
-    
+
     public function mount(): void
     {
         $this->form->fill(Setting::pluck('value', 'key')->toArray());
@@ -155,11 +155,15 @@ class Settings extends Page
                     ->description('Kustomisasi template pesan notifikasi WhatsApp')
                     ->icon('heroicon-o-chat-bubble-left-ellipsis')
                     ->schema([
-                        Forms\Components\Textarea::make('wa_message_late')
-                            ->label('Template Pesan Terlambat')
-                            ->rows(3)
-                            ->default('Halo {nama_siswa}, Anda terlambat masuk sekolah. Jam masuk: {jam_masuk}, seharusnya: {jam_seharusnya}')
-                            ->helperText('Variabel: {nama_siswa}, {jam_masuk}, {jam_seharusnya}, {kelas}'),
+                        Forms\Components\Repeater::make('template.pesan')
+                            ->schema([
+                                Forms\Components\Textarea::make('wa_message_late')
+                                    ->label('Template Pesan Terlambat')
+                                    ->rows(3)
+                                    ->default('Halo {nama_siswa}, Anda terlambat masuk sekolah. Jam masuk: {jam_masuk}, seharusnya: {jam_seharusnya}')
+                                    ->helperText('Variabel: {nama_siswa}, {jam_masuk}, {jam_seharusnya}, {kelas}')
+                                    ->label('Pesan'),
+                            ]),
                         Forms\Components\Textarea::make('wa_message_absent')
                             ->label('Template Pesan Tidak Hadir')
                             ->rows(3)

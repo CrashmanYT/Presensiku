@@ -10,7 +10,7 @@ use App\Filament\Resources\StudentResource\Pages;
 use App\Filament\Resources\StudentResource\RelationManagers;
 use App\Models\Classes;
 use App\Models\Student;
-use Filament\Actions\ImportAction;
+use Filament\Tables\Actions\ImportAction;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists\Infolist;
@@ -138,22 +138,31 @@ class StudentResource extends Resource
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-                ExportBulkAction::make()
-                ->color('info')
-                ->icon('heroicon-o-arrow-up-tray')
-                ->exports([
-                    ExcelExport::make('singeldata')->withColumns(
-                        ExportColumnHelper::getStudentColumns()
-                    )
-                ])
+                    Tables\Actions\BulkActionGroup::make([
+                        Tables\Actions\DeleteBulkAction::make(),
+                        ExportBulkAction::make('export')
+                            ->color('info')
+                            ->icon('heroicon-o-arrow-up-tray')
+                            ->exports([
+                                ExcelExport::make('data-murid')
+                                    ->withColumns(
+                                        ExportColumnHelper::getStudentColumns()
+                                    )
+                                    ->withFilename('Data Siswa.xlsx')
+                            ]),
+                    ]),
             ])
             ->headerActions([
-                Tables\Actions\ImportAction::make('Import Data Murid')
+                Tables\Actions\Action::make('download_template')
+                    ->label('Download Template')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('gray')
+                    ->url(route('template.student'))
+                    ->openUrlInNewTab(),
+                ImportAction::make('import')
+                    ->label('Import Data Murid')
                     ->importer(StudentImporter::class)
-                    ->color('info')
+                    ->color('success')
                     ->icon('heroicon-o-arrow-down-tray'),
                 \pxlrbt\FilamentExcel\Actions\Tables\ExportAction::make('export')
                     ->label('Export Data Murid')

@@ -5,6 +5,9 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ClassesResource\Pages;
 use App\Filament\Resources\ClassesResource\RelationManagers;
 use App\Models\Classes;
+use App\Helpers\ExportColumnHelper;
+use App\Filament\Imports\ClassesImporter;
+use Filament\Tables\Actions\ImportAction;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -12,6 +15,10 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use pxlrbt\FilamentExcel\Columns\Column;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 class ClassesResource extends Resource
 {
@@ -89,9 +96,43 @@ class ClassesResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
+            ->headerActions([
+                Tables\Actions\Action::make('download_template')
+                    ->label('Download Template')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('gray')
+                    ->url(route('template.class'))
+                    ->openUrlInNewTab(),
+                ImportAction::make('import')
+                    ->label('Import Data Kelas')
+                    ->importer(ClassesImporter::class)
+                    ->color('success')
+                    ->icon('heroicon-o-arrow-down-tray'),
+                ExportAction::make('export')
+                    ->label('Export Data Kelas')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('info')
+                    ->exports([
+                        ExcelExport::make('data-kelas')
+                            ->withColumns(
+                                ExportColumnHelper::getClassColumns()
+                            )
+                            ->withFilename('Data Kelas.xlsx')
+                    ])
+            ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    ExportBulkAction::make('export')
+                        ->color('info')
+                        ->icon('heroicon-o-arrow-up-tray')
+                        ->exports([
+                            ExcelExport::make('data-kelas')
+                                ->withColumns(
+                                    ExportColumnHelper::getClassColumns()
+                                )
+                                ->withFilename('Data Kelas.xlsx')
+                        ]),
                 ]),
             ]);
     }

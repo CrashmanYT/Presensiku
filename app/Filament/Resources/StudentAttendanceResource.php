@@ -162,7 +162,28 @@ class StudentAttendanceResource extends Resource
 //                            ->chunkSize(200)
 //                    ])
                 ])
-                    ->actions([
+            ->headerActions([
+                ExportAction::make('export')
+                    ->label('Export Data Absensi Siswa')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('info')
+                    ->exports([
+                        ExcelExport::make('absensi-siswa')
+                            ->withColumns(
+                                ExportColumnHelper::getStudentAttendanceColumns()
+                            )
+                            ->withFilename('Data Absensi Siswa.xlsx')
+                            ->modifyQueryUsing(function ($query) {
+                                return $query->with(['student.class', 'device'])
+                                    ->select('student_attendances.*')
+                                    ->orderBy('date', 'desc')
+                                    ->orderBy('id', 'desc');
+                            })
+                            ->queue()
+                            ->chunkSize(1000)
+                    ])
+            ])
+            ->actions([
                         Tables\Actions\ViewAction::make(),
                         Tables\Actions\EditAction::make(),
                     ])
@@ -173,9 +194,19 @@ class StudentAttendanceResource extends Resource
                     ->color('info')
                     ->icon('heroicon-o-arrow-up-tray')
                     ->exports([
-                        ExcelExport::make('absensimurid')->withColumns(
-                            ExportColumnHelper::getStudentAttendanceColumns()
-                        )
+                        ExcelExport::make('absensi-siswa-bulk')
+                            ->withColumns(
+                                ExportColumnHelper::getStudentAttendanceColumns()
+                            )
+                            ->withFilename('Data Absensi Siswa (Terpilih).xlsx')
+                            ->modifyQueryUsing(function ($query) {
+                                return $query->with(['student.class', 'device'])
+                                    ->select('student_attendances.*')
+                                    ->orderBy('date', 'desc')
+                                    ->orderBy('id', 'desc');
+                            })
+                            ->queue()
+                            ->chunkSize(1000)
                     ])
                 ]),
             ]);
