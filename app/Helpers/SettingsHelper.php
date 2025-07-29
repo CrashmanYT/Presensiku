@@ -29,10 +29,7 @@ class SettingsHelper
     public static function getDashboardSettings(): array
     {
         return [
-            'auto_hide_delay' => (int) static::get('dashboard.auto_hide_delay', 10),
-            'polling_interval' => (int) static::get('dashboard.polling_interval', 1),
             'show_test_button' => (bool) static::get('dashboard.show_test_button', true),
-            'transition_duration' => (int) static::get('dashboard.transition_duration', 300),
         ];
     }
 
@@ -42,10 +39,6 @@ class SettingsHelper
     public static function getAttendanceSettings(): array
     {
         return [
-            'scan_detection_window' => (int) static::get('attendance.scan_detection_window', 3),
-            'allow_late_scan' => (bool) static::get('attendance.allow_late_scan', true),
-            'auto_status_calculation' => (bool) static::get('attendance.auto_status_calculation', true),
-            'require_photo' => (bool) static::get('attendance.require_photo', false),
             'default_time_in_start' => static::get('default_time_in_start', '07:00'),
             'default_time_in_end' => static::get('default_time_in_end', '08:00'),
             'default_time_out_start' => static::get('default_time_out_start', '15:00'),
@@ -132,11 +125,11 @@ class SettingsHelper
     public static function getWhatsAppMessage(string $type, array $variables = []): string
     {
         $template = static::get("wa_message_{$type}", '');
-        
+
         foreach ($variables as $key => $value) {
             $template = str_replace("{{$key}}", $value, $template);
         }
-        
+
         return $template;
     }
 

@@ -26,11 +26,8 @@ class AttendanceProcessingService
      */
     public function handleScan(Student|Teacher $user, Device $device, Carbon $scanDateTime): JsonResponse
     {
-        $attendanceRule = $this->attendanceService->getAttendanceRule($user->class_id, $scanDateTime);
-        if (!$attendanceRule) {
-            Log::error('No attendance rule found for user', ['user_id' => $user->id, 'class_id' => $user->class_id]);
-            return response()->json(['status' => 'error', 'message' => 'Aturan absensi tidak ditemukan.'], 404);
-        }
+        $classId = ($user instanceof Student) ? $user->class_id : null;
+        $attendanceRule = $this->attendanceService->getAttendanceRule($classId, $scanDateTime);
 
         $attendance = $this->findExistingAttendance($user, $scanDateTime->toDateString());
 
