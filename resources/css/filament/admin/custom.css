@@ -1,0 +1,14 @@
+/* Custom styles for active navigation item */
+.fi-sidebar-item-active > a {
+    background-color: rgb(var(--primary-500));
+    color: #ffffff;
+}
+
+.fi-sidebar-item-active > a:hover {
+    background-color: rgb(var(--primary-600));
+}
+
+.fi-sidebar-item-active > a .fi-sidebar-item-icon,
+.fi-sidebar-item-active > a .fi-sidebar-item-label {
+    color: #ffffff;
+}

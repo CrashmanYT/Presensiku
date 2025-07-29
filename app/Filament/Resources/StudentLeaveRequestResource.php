@@ -32,7 +32,7 @@ class StudentLeaveRequestResource extends Resource
     protected static ?string $navigationGroup = 'Manajemen Absensi';
     protected static ?string $navigationLabel = 'Izin Murid';
     protected static ?string $label = "Izin Murid";
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static ?string $navigationIcon = 'heroicon-o-envelope';
     protected static ?int $navigationSort = 3;
 
 

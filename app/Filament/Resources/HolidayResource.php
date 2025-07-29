@@ -19,7 +19,7 @@ class HolidayResource extends Resource
     protected static ?string $navigationGroup = 'Pengaturan Sistem';
     protected static ?string $navigationLabel = 'Hari Libur';
     protected static ?string $label = 'Hari Libur';
-    protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
+    protected static ?string $navigationIcon = 'heroicon-o-sparkles';
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form

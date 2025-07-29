@@ -20,7 +20,7 @@ use Maatwebsite\Excel\Facades\Excel;
 class RekapitulasiAbsensi extends Page implements HasTable
 {
     use InteractsWithTable;
-    protected static ?string $navigationIcon = 'heroicon-o-document-chart-bar';
+    protected static ?string $navigationIcon = 'heroicon-o-chart-pie';
 
     protected static string $view = 'filament.pages.rekapitulasi-absensi';
 

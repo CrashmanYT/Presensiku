@@ -28,7 +28,7 @@ class TeacherLeaveRequestResource extends Resource
     protected static ?string $navigationGroup = 'Manajemen Absensi';
     protected static ?string $navigationLabel = 'Izin Guru';
     protected static ?string $label = "Izin Guru";
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static ?string $navigationIcon = 'heroicon-o-envelope';
     protected static ?int $navigationSort = 4;
 
     public static function getEloquentQuery(): Builder

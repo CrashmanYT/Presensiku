@@ -28,7 +28,7 @@ class ClassesResource extends Resource
     protected static ?string $label = 'Data Kelas';
 
 
-    protected static ?string $navigationIcon = 'heroicon-o-identification';
+    protected static ?string $navigationIcon = 'heroicon-o-building-library';
     protected static ?int $navigationSort = 3;
 
     public static function getEloquentQuery(): Builder

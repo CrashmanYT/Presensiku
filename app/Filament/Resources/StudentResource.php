@@ -33,7 +33,7 @@ class StudentResource extends Resource
     protected static ?string $navigationGroup = 'Manajemen Data';
     protected static ?string $navigationLabel = 'Data Murid';
     protected static ?string $label = 'Data Murid';
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
+    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
     protected static ?int $navigationSort = 1;
 
 

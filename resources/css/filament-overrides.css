@@ -10,3 +10,13 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* Style untuk navigasi aktif */
+.fi-sidebar-nav-item > a.fi-active {
+    background-color: var(--primary-500) !important;
+    color: #fff !important;
+}
+
+.fi-sidebar-nav-item > a.fi-active:hover {
+    background-color: var(--primary-600) !important;
+}

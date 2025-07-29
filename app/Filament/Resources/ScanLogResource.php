@@ -19,7 +19,7 @@ class ScanLogResource extends Resource
     protected static ?string $navigationGroup = 'Laporan & Analitik';
     protected static ?string $navigationLabel = 'Log Pindai';
     protected static ?string $label = 'Log Pindai';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-signal';
     protected static ?int $navigationSort = 4;
 
 
