@@ -20,7 +20,7 @@ class RealtimeAttendanceDashboard extends Component
         'terlambat' => 'bg-yellow-500',
         'izin' => 'bg-blue-500',
         'sakit' => 'bg-blue-500',
-        'holiday' => 'bg-purple-500',
+        'holiday' => 'bg-gray-500',
         'no_data' => 'bg-gray-200',
         'error' => 'bg-gray-300',
     ];

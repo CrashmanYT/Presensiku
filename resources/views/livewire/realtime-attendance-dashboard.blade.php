@@ -106,11 +106,11 @@
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <div class="text-center">
                         <!-- Avatar -->
-                        <div class="mx-auto w-48 h-56 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                        <div class="mx-auto w-80 h-96 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
                             @if($currentUser->photo)
-                                <img src="{{ Storage::url($currentUser->photo) }}" alt="{{ $currentUser->name }}" class="w-48 h-56 rounded-2xl object-cover">
+                                <img src="{{ Storage::url($currentUser->photo) }}" alt="{{ $currentUser->name }}" class="w-80 h-96 rounded-2xl object-cover">
                             @else
-                                <span class="text-5xl font-bold text-white">{{ substr($currentUser->name, 0, 2) }}</span>
+                                <span class="text-8xl font-bold text-white">{{ substr($currentUser->name, 0, 2) }}</span>
                             @endif
                         </div>
 
@@ -165,34 +165,6 @@
                         </div>
                     </div>
 
-                    <!-- Legend -->
-                    <div class="grid grid-cols-2 gap-2 mb-6 text-xs">
-                        <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3  {{$this->getStatusColor('hadir')}} rounded"></div>
-                            <span class="text-gray-600">Hadir</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 {{$this->getStatusColor('terlambat')}} rounded"></div>
-                            <span class="text-gray-600">Terlambat</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 {{$this->getStatusColor('tidak_hadir')}} rounded"></div>
-                            <span class="text-gray-600">Tidak Hadir</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 {{$this->getStatusColor('izin')}} rounded"></div>
-                            <span class="text-gray-600">Izin/Sakit</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 {{$this->getStatusColor('holiday')}} rounded"></div>
-                            <span class="text-gray-600">Hari Libur</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 {{$this->getStatusColor('no_data')}} rounded"></div>
-                            <span class="text-gray-600">Tidak Ada Data</span>
-                        </div>
-                    </div>
-
                     <!-- Calendar Grid -->
                     <div class="grid grid-cols-7 gap-1">
                         <!-- Day Headers -->
@@ -228,6 +200,34 @@
                                 </div>
                             </div>
                         @endforeach
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 mt-6 text-xs">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3  {{$this->getStatusColor('hadir')}} rounded"></div>
+                            <span class="text-gray-600">Hadir</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 {{$this->getStatusColor('terlambat')}} rounded"></div>
+                            <span class="text-gray-600">Terlambat</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 {{$this->getStatusColor('tidak_hadir')}} rounded"></div>
+                            <span class="text-gray-600">Tidak Hadir</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 {{$this->getStatusColor('izin')}} rounded"></div>
+                            <span class="text-gray-600">Izin/Sakit</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 {{$this->getStatusColor('holiday')}} rounded"></div>
+                            <span class="text-gray-600">Hari Libur</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 {{$this->getStatusColor('no_data')}} rounded"></div>
+                            <span class="text-gray-600">Tidak Ada Data</span>
+                        </div>
                     </div>
                 </div>
             </div>
