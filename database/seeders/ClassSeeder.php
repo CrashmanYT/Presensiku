@@ -28,7 +28,7 @@ class ClassSeeder extends Seeder
                         'name' => $level . ' ' . $major . ' ' . $i,
                         'level' => $level,
                         'major' => $major,
-                        'homeroom_teacher_id' => $faker->randomElement($teachers->pluck('id')),
+                        'homeroom_teacher_nip' => $faker->randomElement($teachers->pluck('nip')),
                     ]);
                 }
             }

@@ -52,7 +52,7 @@ class ClassesResource extends Resource
                     ->required()
                     ->required()
                     ->label('Jurusan'),
-                Forms\Components\Select::make('homeroom_teacher_id')
+                Forms\Components\Select::make('homeroom_teacher_nip')
                     ->relationship('homeroomTeacher', 'name')
                     ->required()
                     ->searchable()

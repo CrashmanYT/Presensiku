@@ -16,11 +16,11 @@ class Classes extends Model
         'name',
         'level',
         'major',
-        'homeroom_teacher_id'
+        'homeroom_teacher_nip'
     ];
 
     public function homeroomTeacher() {
-        return $this->belongsTo(Teacher::class);
+        return $this->belongsTo(Teacher::class, 'homeroom_teacher_nip', 'nip');
     }
 
     public function students() {

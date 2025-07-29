@@ -42,17 +42,17 @@ class ClassesImporter extends Importer
 
     protected function beforeSave(): void
     {
-        // Find homeroom teacher by name and set homeroom_teacher_id
+        // Find homeroom teacher by name and set homeroom_teacher_nip
         if (!empty($this->data['homeroom_teacher_name'])) {
             $teacher = Teacher::where('name', trim($this->data['homeroom_teacher_name']))->first();
             if ($teacher) {
-                $this->data['homeroom_teacher_id'] = $teacher->id;
+                $this->data['homeroom_teacher_nip'] = $teacher->nip;
             } else {
                 // If teacher not found, set to null
-                $this->data['homeroom_teacher_id'] = null;
+                $this->data['homeroom_teacher_nip'] = null;
             }
         } else {
-            $this->data['homeroom_teacher_id'] = null;
+            $this->data['homeroom_teacher_nip'] = null;
         }
 
         // Remove homeroom_teacher_name from data as it's not a database field
@@ -64,16 +64,16 @@ class ClassesImporter extends Importer
         // Handle homeroom_teacher_name mapping before creating/updating record
         $data = $this->data;
 
-        // Find homeroom teacher by name and set homeroom_teacher_id
+        // Find homeroom teacher by name and set homeroom_teacher_nip
         if (!empty($data['homeroom_teacher_name'])) {
             $teacher = Teacher::where('name', $data['homeroom_teacher_name'])->first();
             if ($teacher) {
-                $data['homeroom_teacher_id'] = $teacher->id;
+                $data['homeroom_teacher_nip'] = $teacher->nip;
             } else {
-                $data['homeroom_teacher_id'] = null;
+                $data['homeroom_teacher_nip'] = null;
             }
         } else {
-            $data['homeroom_teacher_id'] = null;
+            $data['homeroom_teacher_nip'] = null;
         }
 
         // Remove homeroom_teacher_name from data as it's not a database field
