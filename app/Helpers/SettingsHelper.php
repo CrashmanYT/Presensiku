@@ -29,7 +29,7 @@ class SettingsHelper
     public static function getDashboardSettings(): array
     {
         return [
-            'show_test_button' => (bool) static::get('dashboard.show_test_button', true),
+            'show_test_button' => (bool) static::get('dashboard.buttons.show_test', true),
         ];
     }
 
@@ -39,10 +39,10 @@ class SettingsHelper
     public static function getAttendanceSettings(): array
     {
         return [
-            'default_time_in_start' => static::get('default_time_in_start', '07:00'),
-            'default_time_in_end' => static::get('default_time_in_end', '08:00'),
-            'default_time_out_start' => static::get('default_time_out_start', '15:00'),
-            'default_time_out_end' => static::get('default_time_out_end', '16:00'),
+            'default_time_in_start' => static::get('attendance.defaults.time_in_start', '07:00'),
+            'default_time_in_end' => static::get('attendance.defaults.time_in_end', '08:00'),
+            'default_time_out_start' => static::get('attendance.defaults.time_out_start', '15:00'),
+            'default_time_out_end' => static::get('attendance.defaults.time_out_end', '16:00'),
         ];
     }
 
@@ -52,12 +52,11 @@ class SettingsHelper
     public static function getNotificationSettings(): array
     {
         return [
-            'enabled' => (bool) static::get('notification.enabled', true),
-            'late_threshold' => (int) static::get('notification.late_threshold', 15),
-            'absent_notification_time' => static::get('notification.absent_notification_time', '09:00'),
-            'channels' => json_decode(static::get('notification.channels', '["whatsapp"]'), true),
-            'wa_api_key' => static::get('wa_api_key', ''),
-            'kesiswaan_whatsapp_number' => static::get('kesiswaan_whatsapp_number', ''),
+            'enabled' => (bool) static::get('notifications.enabled', true),
+            'absent_notification_time' => static::get('notifications.absent.notification_time', '09:00'),
+            'channels' => static::get('notifications.channels', ['whatsapp']),
+            'wa_api_key' => static::get('notifications.whatsapp.api_key', ''),
+            'student_affairs_number' => static::get('notifications.whatsapp.student_affairs_number', ''),
         ];
     }
 
@@ -67,9 +66,9 @@ class SettingsHelper
     public static function getSystemSettings(): array
     {
         return [
-            'timezone' => static::get('system.timezone', 'Asia/Jakarta'),
-            'date_format' => static::get('system.date_format', 'd/m/Y'),
-            'language' => static::get('system.language', 'id'),
+            'timezone' => static::get('system.localization.timezone', 'Asia/Jakarta'),
+            'date_format' => static::get('system.localization.date_format', 'd/m/Y'),
+            'language' => static::get('system.localization.language', 'id'),
             'maintenance_mode' => (bool) static::get('system.maintenance_mode', false),
         ];
     }
@@ -80,9 +79,9 @@ class SettingsHelper
     public static function getWhatsAppTemplates(): array
     {
         return [
-            'late_message' => static::get('wa_message_late', 'Halo {nama_siswa}, Anda terlambat masuk sekolah. Jam masuk: {jam_masuk}, seharusnya: {jam_seharusnya}'),
-            'absent_message' => static::get('wa_message_absent', 'Halo, {nama_siswa} tidak hadir ke sekolah pada tanggal {tanggal}. Mohon konfirmasi.'),
-            'present_message' => static::get('wa_message_present', 'Halo, {nama_siswa} telah hadir ke sekolah pada jam {jam_masuk}.'),
+            'late' => static::get('notifications.whatsapp.templates.late', []),
+            'absent' => static::get('notifications.whatsapp.templates.absent', []),
+            'present' => static::get('notifications.whatsapp.templates.present', []),
         ];
     }
 
@@ -99,7 +98,7 @@ class SettingsHelper
      */
     public static function isNotificationEnabled(): bool
     {
-        return (bool) static::get('notification.enabled', true);
+        return (bool) static::get('notifications.enabled', true);
     }
 
     /**
@@ -115,7 +114,7 @@ class SettingsHelper
      */
     public static function formatDate($date): string
     {
-        $format = static::get('system.date_format', 'd/m/Y');
+        $format = static::get('system.localization.date_format', 'd/m/Y');
         return $date instanceof \DateTime ? $date->format($format) : date($format, strtotime($date));
     }
 
@@ -124,13 +123,26 @@ class SettingsHelper
      */
     public static function getWhatsAppMessage(string $type, array $variables = []): string
     {
-        $template = static::get("wa_message_{$type}", '');
+        $key = "notifications.whatsapp.templates.{$type}";
+        $templates = static::get($key, []);
 
-        foreach ($variables as $key => $value) {
-            $template = str_replace("{{$key}}", $value, $template);
+        if (!is_array($templates) || empty($templates)) {
+            return "Template pesan untuk '{$type}' tidak ditemukan atau kosong.";
         }
 
-        return $template;
+        // Pick a random template from the repeater
+        $randomTemplate = $templates[array_rand($templates)];
+        $templateString = $randomTemplate['message'] ?? '';
+
+        if (empty($templateString)) {
+            return "Format template pesan untuk '{$type}' tidak valid.";
+        }
+
+        foreach ($variables as $variable => $value) {
+            $templateString = str_replace('{' . $variable . '}', $value, $templateString);
+        }
+
+        return $templateString;
     }
 
     /**
