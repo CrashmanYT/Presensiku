@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Models\StudentAttendance;
+use App\Models\TeacherAttendance;
 
 class UserFinderService
 {
@@ -14,13 +15,27 @@ class UserFinderService
             ?? Teacher::where('fingerprint_id', $fingerprintId)->first();
     }
 
-    public function findRecentAttendance(?int $lastScanId = null)
-    {
-        return StudentAttendance::where('created_at', '>=', now()->subSeconds(3))
-            ->with(['student:id,name,fingerprint_id'])
-            ->when($lastScanId, fn($query) => $query->where('id', '>', $lastScanId))
+    public function findMostRecentAttendance(?string $lastTimestamp = null) {
+        $latestStudentAttendance = StudentAttendance::with('student:id,name,fingerprint_id')
+            ->when($lastTimestamp, fn($query) => $query->where('created_at', '>', $lastTimestamp))
             ->orderBy('created_at', 'desc')
             ->first();
+
+        $latestTeacherAttendance = TeacherAttendance::with('teacher:id,name,fingerprint_id')
+            ->when($lastTimestamp, fn($query) => $query->where('created_at', '>', $lastTimestamp))
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$latestStudentAttendance) {
+            return $latestTeacherAttendance;
+        }
+        if (!$latestTeacherAttendance) {
+            return $latestStudentAttendance;
+        }
+
+        return $latestTeacherAttendance->created_at->isAfter($latestStudentAttendance->created_at)
+            ? $latestTeacherAttendance
+            : $latestStudentAttendance;
     }
 
     public function findTestStudent()

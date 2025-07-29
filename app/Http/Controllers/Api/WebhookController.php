@@ -2,67 +2,53 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Contracts\UserRepositoryInterface;
 use App\Contracts\DeviceRepositoryInterface;
-use App\Services\AttendanceService;
-use App\Services\StudentAttendanceHandler;
-use App\Services\TeacherAttendanceHandler;
-use App\Models\Student;
-use App\Models\Teacher;
+use App\Contracts\UserRepositoryInterface;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\WebhookAttendanceRequest;
-use Illuminate\Support\Facades\Log;
+use App\Models\Device;
+use App\Models\Student;
+use App\Services\AttendanceProcessingService;
 use Carbon\Carbon;
-use App\Helpers\ApiResponseHelper;
+use Illuminate\Http\JsonResponse;
 
 class WebhookController extends Controller
 {
     protected UserRepositoryInterface $userRepository;
     protected DeviceRepositoryInterface $deviceRepository;
-    protected AttendanceService $attendanceService;
-    protected StudentAttendanceHandler $studentAttendanceHandler;
-    protected TeacherAttendanceHandler $teacherAttendanceHandler;
+    protected AttendanceProcessingService $attendanceProcessingService;
 
     public function __construct(
         UserRepositoryInterface $userRepository,
         DeviceRepositoryInterface $deviceRepository,
-        AttendanceService $attendanceService,
-        StudentAttendanceHandler $studentAttendanceHandler,
-        TeacherAttendanceHandler $teacherAttendanceHandler
+        AttendanceProcessingService $attendanceProcessingService
     ) {
         $this->userRepository = $userRepository;
         $this->deviceRepository = $deviceRepository;
-        $this->attendanceService = $attendanceService;
-        $this->studentAttendanceHandler = $studentAttendanceHandler;
-        $this->teacherAttendanceHandler = $teacherAttendanceHandler;
+        $this->attendanceProcessingService = $attendanceProcessingService;
     }
 
     /**
-     * Handle attendance data from fingerprint device
-     * This endpoint receives real-time data from fingerprint scanners
+     * Handle attendance data from fingerprint device.
+     * This endpoint receives real-time data from fingerprint scanners.
      */
-    public function handleAttendance(WebhookAttendanceRequest $request)
+    public function handleAttendance(WebhookAttendanceRequest $request): JsonResponse
     {
         $fingerprintId = $request->getFingerprintId();
         $scanDateTime = Carbon::parse($request->getScanTime());
         $device = $this->deviceRepository->getOrCreateByCloudId($request->getCloudId());
 
         $user = $this->userRepository->findByFingerprintId($fingerprintId);
+
         if (!$user) {
-            return ApiResponseHelper::notFound('User not found');
+            return response()->json(['status' => 'error', 'message' => 'User tidak ditemukan'], 404);
         }
 
-        $attendanceRule = $this->attendanceService->getAttendanceRule($user->class_id, $scanDateTime);
-
-        if ($user instanceof Student) {
-            return $this->studentAttendanceHandler->handle($user, $scanDateTime, $attendanceRule, $device);
+        if (!$user->class_id && $user instanceof Student) {
+            return response()->json(['status' => 'error', 'message' => 'Siswa tidak memiliki kelas'], 400);
         }
 
-        if ($user instanceof Teacher) {
-            return $this->teacherAttendanceHandler->handle($user, $scanDateTime, $attendanceRule, $device);
-        }
-
-        return ApiResponseHelper::notFound('User not found');
+        return $this->attendanceProcessingService->handleScan($user, $device, $scanDateTime);
     }
-
 }
+

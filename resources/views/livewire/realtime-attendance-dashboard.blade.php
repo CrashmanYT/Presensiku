@@ -168,27 +168,27 @@
                     <!-- Legend -->
                     <div class="grid grid-cols-2 gap-2 mb-6 text-xs">
                         <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 bg-green-500 rounded"></div>
+                            <div class="w-3 h-3  {{$this->getStatusColor('hadir')}} rounded"></div>
                             <span class="text-gray-600">Hadir</span>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 bg-yellow-500 rounded"></div>
+                            <div class="w-3 h-3 {{$this->getStatusColor('terlambat')}} rounded"></div>
                             <span class="text-gray-600">Terlambat</span>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 bg-red-500 rounded"></div>
+                            <div class="w-3 h-3 {{$this->getStatusColor('tidak_hadir')}} rounded"></div>
                             <span class="text-gray-600">Tidak Hadir</span>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 bg-blue-500 rounded"></div>
+                            <div class="w-3 h-3 {{$this->getStatusColor('izin')}} rounded"></div>
                             <span class="text-gray-600">Izin/Sakit</span>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 bg-purple-500 rounded"></div>
+                            <div class="w-3 h-3 {{$this->getStatusColor('holiday')}} rounded"></div>
                             <span class="text-gray-600">Hari Libur</span>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 bg-gray-200 rounded"></div>
+                            <div class="w-3 h-3 {{$this->getStatusColor('no_data')}} rounded"></div>
                             <span class="text-gray-600">Tidak Ada Data</span>
                         </div>
                     </div>
