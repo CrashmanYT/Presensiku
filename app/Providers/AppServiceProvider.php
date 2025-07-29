@@ -6,6 +6,8 @@ use Filament\Facades\Filament;
 use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Support\ServiceProvider;
+use App\Models\StudentAttendance;
+use App\Observers\StudentAttendanceObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,6 +24,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-
+        StudentAttendance::observe(StudentAttendanceObserver::class);
     }
 }

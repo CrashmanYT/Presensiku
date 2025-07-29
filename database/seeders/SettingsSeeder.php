@@ -99,6 +99,14 @@ class SettingsSeeder extends Seeder
                 'description' => 'Nomor WhatsApp kesiswaan/BK.',
                 'is_public' => false,
             ],
+            [
+                'key' => 'notifications.whatsapp.administration_number',
+                'value' => '',
+                'type' => 'string',
+                'group_name' => 'notifications',
+                'description' => 'Nomor WhatsApp Tata Usaha (TU) untuk laporan guru.',
+                'is_public' => false,
+            ],
 
             // System Settings
             [
@@ -163,6 +171,48 @@ class SettingsSeeder extends Seeder
                 'type' => 'json',
                 'group_name' => 'notifications',
                 'description' => 'Template pesan hadir.',
+                'is_public' => false,
+            ],
+
+            // Discipline Score Settings
+            [
+                'key' => 'discipline.scores.hadir',
+                'value' => '5',
+                'type' => 'integer',
+                'group_name' => 'discipline',
+                'description' => 'Poin untuk status hadir.',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'discipline.scores.terlambat',
+                'value' => '-2',
+                'type' => 'integer',
+                'group_name' => 'discipline',
+                'description' => 'Poin untuk status terlambat.',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'discipline.scores.izin',
+                'value' => '0',
+                'type' => 'integer',
+                'group_name' => 'discipline',
+                'description' => 'Poin untuk status izin.',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'discipline.scores.sakit',
+                'value' => '0',
+                'type' => 'integer',
+                'group_name' => 'discipline',
+                'description' => 'Poin untuk status sakit.',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'discipline.scores.tidak_hadir',
+                'value' => '-5',
+                'type' => 'integer',
+                'group_name' => 'discipline',
+                'description' => 'Poin untuk status alpa (tidak hadir).',
                 'is_public' => false,
             ],
         ];

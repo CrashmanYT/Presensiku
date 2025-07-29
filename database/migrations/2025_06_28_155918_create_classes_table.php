@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('level');
             $table->string('major');
             $table->string('homeroom_teacher_nip');
-            $table->foreign('homeroom_teacher_nip')->on('teachers')->references('nip')->onDelete('set null');
+            $table->foreign('homeroom_teacher_nip')->on('teachers')->references('nip');
             $table->timestamps();
         });
     }

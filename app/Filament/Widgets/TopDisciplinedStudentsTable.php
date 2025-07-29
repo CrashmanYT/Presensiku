@@ -2,57 +2,27 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Student;
+use App\Models\DisciplineRanking;
+use App\Models\Classes;
 use Carbon\Carbon;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Builder;
 
 class TopDisciplinedStudentsTable extends BaseWidget
 {
     protected static ?string $heading = 'Siswa Paling Disiplin';
     protected int | string | array $columnSpan = 'full';
 
-    public ?string $selectedMonth = null;
-    public ?string $selectedYear = null;
-    public ?string $selectedClass = null;
-
-    protected function getTableQuery(): \Illuminate\Database\Eloquent\Builder
+    protected function getTableQuery(): Builder
     {
-        // Get the current month and year if not set
-        $this->selectedMonth = $this->selectedMonth ?? now()->format('m');
-        $this->selectedYear = $this->selectedYear ?? now()->format('Y');
-
-        $startDate = Carbon::create($this->selectedYear, $this->selectedMonth, 1)->startOfMonth();
-        $endDate = Carbon::create($this->selectedYear, $this->selectedMonth, 1)->endOfMonth();
-
-        $query = Student::query()
-            ->with(['class'])
-            ->select([
-                'students.*',
-                DB::raw('COUNT(CASE WHEN student_attendances.status = "hadir" THEN 1 END) as total_present'),
-                DB::raw('COUNT(CASE WHEN student_attendances.status = "terlambat" THEN 1 END) as total_late'),
-                DB::raw('COUNT(CASE WHEN student_attendances.status = "tidak_hadir" THEN 1 END) as total_absent'),
-                DB::raw('(
-                    COUNT(CASE WHEN student_attendances.status = "hadir" THEN 1 END) * 100 +
-                    COUNT(CASE WHEN student_attendances.status = "terlambat" THEN 1 END) * 70 +
-                    COUNT(CASE WHEN student_attendances.status = "sakit" THEN 1 END) * 80 +
-                    COUNT(CASE WHEN student_attendances.status = "izin" THEN 1 END) * 75 -
-                    COUNT(CASE WHEN student_attendances.status = "tidak_hadir" THEN 1 END) * 50
-                ) as discipline_score')
-            ])
-            ->leftJoin('student_attendances', 'students.id', '=', 'student_attendances.student_id')
-            ->whereBetween('student_attendances.date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
-            ->groupBy('students.id', 'students.name', 'students.nis', 'students.class_id', 'students.gender', 'students.fingerprint_id', 'students.photo', 'students.parent_whatsapp', 'students.created_at', 'students.updated_at');
-
-        if ($this->selectedClass) {
-            $query->where('students.class_id', $this->selectedClass);
-        }
-
-        return $query->orderBy('discipline_score', 'desc');
+        return DisciplineRanking::query()
+            ->join('students', 'discipline_rankings.student_id', '=', 'students.id')
+            ->join('classes', 'students.class_id', '=', 'classes.id')
+            ->select('discipline_rankings.*', 'students.name as student_name', 'classes.name as class_name');
     }
 
     public function table(Table $table): Table
@@ -62,9 +32,7 @@ class TopDisciplinedStudentsTable extends BaseWidget
             ->columns([
                 TextColumn::make('rank')
                     ->label('Peringkat')
-                    ->getStateUsing(function ($record, $rowLoop) {
-                        return $rowLoop->iteration;
-                    })
+                    ->getStateUsing(fn (\Livewire\Component $livewire, object $rowLoop): string => (string) ($rowLoop->iteration + ($livewire->getTableRecordsPerPage() * ($livewire->getTablePage() - 1))))
                     ->badge()
                     ->color(fn ($state) => match (true) {
                         $state == 1 => 'warning',
@@ -74,60 +42,63 @@ class TopDisciplinedStudentsTable extends BaseWidget
                     })
                     ->width('80px'),
 
-                TextColumn::make('name')
+                TextColumn::make('student_name')
                     ->label('Nama Siswa')
-                    ->searchable()
+                    ->searchable(isIndividual: true)
                     ->sortable()
                     ->wrap(),
 
-                TextColumn::make('class.name')
+                TextColumn::make('class_name')
                     ->label('Kelas')
                     ->badge()
                     ->color('primary')
                     ->width('120px'),
 
                 TextColumn::make('total_present')
-                    ->label('Total Kehadiran')
-                    ->getStateUsing(fn ($record) => $record->total_present ?? 0)
+                    ->label('Total Tepat Waktu')
                     ->icon('heroicon-o-check-circle')
                     ->iconColor('success')
                     ->sortable()
                     ->width('140px')
                     ->alignCenter(),
 
-                TextColumn::make('discipline_score')
+                TextColumn::make('score')
                     ->label('Skor Disiplin')
-                    ->getStateUsing(fn ($record) => round($record->discipline_score ?? 0, 1))
                     ->badge()
-                    ->color(fn ($state) => match (true) {
-                        $state >= 800 => 'success',
-                        $state >= 600 => 'warning',
-                        default => 'danger'
-                    })
+                    ->color(fn ($state) => $state >= 0 ? 'success' : 'danger')
                     ->sortable()
                     ->width('120px')
                     ->alignCenter(),
             ])
             ->filters([
+                SelectFilter::make('month')
+                    ->label('Bulan & Tahun')
+                    ->options(function () {
+                        return DisciplineRanking::query()
+                            ->select('month')
+                            ->distinct()
+                            ->orderBy('month', 'desc')
+                            ->get()
+                            ->mapWithKeys(function ($item) {
+                                $date = Carbon::createFromFormat('Y-m', $item->month);
+                                return [$item->month => $date->translatedFormat('F Y')];
+                            })
+                            ->toArray();
+                    })
+                    ->default(now()->format('Y-m'))
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when($data['value'], fn ($query, $value) => $query->where('month', $value));
+                    }),
+
                 SelectFilter::make('class_id')
                     ->label('Kelas')
-                    ->relationship('class', 'name')
-                    ->placeholder('Semua Kelas'),
+                    ->options(Classes::pluck('name', 'id')->toArray())
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when($data['value'], fn ($query, $value) => $query->where('students.class_id', $value));
+                    }),
             ])
-            ->filtersLayout(Tables\Enums\FiltersLayout::AboveContent)
-            ->persistFiltersInSession()
-            ->defaultSort('discipline_score', 'desc')
+            ->defaultSort('score', 'desc')
             ->paginated([10, 25, 50])
-            ->striped()
-            ->defaultPaginationPageOption(10)
-            ->extremePaginationLinks()
-            ->poll('30s');
-    }
-
-    public function setFilters(?string $month, ?string $year, ?string $class): void
-    {
-        $this->selectedMonth = $month;
-        $this->selectedYear = $year;
-        $this->selectedClass = $class;
+            ->striped();
     }
 }

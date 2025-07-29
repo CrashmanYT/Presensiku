@@ -57,6 +57,21 @@ class SettingsHelper
             'channels' => static::get('notifications.channels', ['whatsapp']),
             'wa_api_key' => static::get('notifications.whatsapp.api_key', ''),
             'student_affairs_number' => static::get('notifications.whatsapp.student_affairs_number', ''),
+            'administration_number' => static::get('notifications.whatsapp.administration_number', ''),
+        ];
+    }
+
+    /**
+     * Discipline Score Settings
+     */
+    public static function getDisciplineScores(): array
+    {
+        return [
+            'hadir' => (int) static::get('discipline.scores.hadir', 5),
+            'terlambat' => (int) static::get('discipline.scores.terlambat', -2),
+            'izin' => (int) static::get('discipline.scores.izin', 0),
+            'sakit' => (int) static::get('discipline.scores.sakit', 0),
+            'tidak_hadir' => (int) static::get('discipline.scores.tidak_hadir', -5),
         ];
     }
 

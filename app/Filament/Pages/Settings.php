@@ -91,6 +91,41 @@ class Settings extends Page
                             ]),
                     ]),
 
+                // Discipline Score Settings
+                Forms\Components\Section::make('Pengaturan Skor Disiplin')
+                    ->description('Atur poin untuk setiap status kehadiran yang akan memengaruhi peringkat disiplin siswa.')
+                    ->icon('heroicon-o-scale')
+                    ->schema([
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('discipline.scores.hadir')
+                                    ->label('Poin Hadir')
+                                    ->numeric()
+                                    ->default(5)
+                                    ->helperText('Poin diberikan untuk setiap kehadiran.'),
+                                Forms\Components\TextInput::make('discipline.scores.terlambat')
+                                    ->label('Poin Terlambat')
+                                    ->numeric()
+                                    ->default(-2)
+                                    ->helperText('Poin dikurangi untuk setiap keterlambatan.'),
+                                Forms\Components\TextInput::make('discipline.scores.izin')
+                                    ->label('Poin Izin')
+                                    ->numeric()
+                                    ->default(0)
+                                    ->helperText('Poin untuk status izin.'),
+                                Forms\Components\TextInput::make('discipline.scores.sakit')
+                                    ->label('Poin Sakit')
+                                    ->numeric()
+                                    ->default(0)
+                                    ->helperText('Poin untuk status sakit.'),
+                                Forms\Components\TextInput::make('discipline.scores.tidak_hadir')
+                                    ->label('Poin Alpa (Tidak Hadir)')
+                                    ->numeric()
+                                    ->default(-5)
+                                    ->helperText('Poin dikurangi untuk setiap ketidakhadiran tanpa keterangan.'),
+                            ])
+                    ]),
+
                 // Notification Settings
                 Forms\Components\Section::make('Pengaturan Notifikasi')
                     ->description('Konfigurasi sistem notifikasi, termasuk WhatsApp.')
@@ -122,7 +157,12 @@ class Settings extends Page
                             ->label('Nomor WA Kesiswaan/BK')
                             ->tel()
                             ->placeholder('6281234567890')
-                            ->helperText('Nomor WhatsApp untuk menerima notifikasi internal.'),
+                            ->helperText('Nomor WhatsApp untuk menerima notifikasi internal terkait siswa.'),
+                        Forms\Components\TextInput::make('notifications.whatsapp.administration_number')
+                            ->label('Nomor WA Tata Usaha (TU)')
+                            ->tel()
+                            ->placeholder('6281234567890')
+                            ->helperText('Nomor WhatsApp untuk menerima notifikasi internal terkait guru.'),
                     ]),
 
                 // System Settings
@@ -170,6 +210,12 @@ class Settings extends Page
                     ->schema([
                         Forms\Components\Repeater::make('notifications.whatsapp.templates.late')
                             ->label('Pesan Keterlambatan')
+                            ->reorderableWithButtons()
+                            ->collapsible()
+                            ->cloneable()
+                            ->deleteAction(
+                                fn (Action $action) => $action->requiresConfirmation(),
+                            )
                             ->addActionLabel('Tambah Template Terlambat')
                             ->schema([
                                 Forms\Components\Textarea::make('message')
@@ -180,6 +226,12 @@ class Settings extends Page
                             ]),
                         Forms\Components\Repeater::make('notifications.whatsapp.templates.absent')
                             ->label('Pesan Tidak Hadir (Alpa)')
+                            ->reorderableWithButtons()
+                            ->collapsible()
+                            ->cloneable()
+                            ->deleteAction(
+                                fn (Action $action) => $action->requiresConfirmation(),
+                            )
                             ->addActionLabel('Tambah Template Tidak Hadir')
                             ->schema([
                                 Forms\Components\Textarea::make('message')
@@ -190,6 +242,12 @@ class Settings extends Page
                             ]),
                         Forms\Components\Repeater::make('notifications.whatsapp.templates.present')
                             ->label('Pesan Hadir')
+                            ->reorderableWithButtons()
+                            ->collapsible()
+                            ->cloneable()
+                            ->deleteAction(
+                                fn (Action $action) => $action->requiresConfirmation(),
+                            )
                             ->addActionLabel('Tambah Template Hadir')
                             ->schema([
                                 Forms\Components\Textarea::make('message')
