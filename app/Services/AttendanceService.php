@@ -101,57 +101,17 @@ class AttendanceService
 
     private function getDateOverrideRule(int | null $classId, string $scanDate): ?AttendanceRule
     {
-        $rule = AttendanceRule::where('class_id', $classId)
-            ->whereDate('date_override', $scanDate)
+        return AttendanceRule::where('class_id', $classId)
+            ->where('date_override', $scanDate)
             ->first();
-
-        if ($rule) {
-            Log::info('Found date override rule', [
-                'rule_id' => $rule->id,
-                'date_override' => $rule->date_override->format('Y-m-d'),
-                'time_in_start' => $rule->time_in_start,
-                'time_in_end' => $rule->time_in_end
-            ]);
-        }
-
-        return $rule;
     }
 
     private function getDayOfWeekRule(int | null $classId, string $dayName): ?AttendanceRule
     {
-        $rule = AttendanceRule::where('class_id', $classId)
+        return AttendanceRule::where('class_id', $classId)
             ->whereNull('date_override')
-            ->where(function ($query) use ($dayName) {
-                $query->where('day_of_week', 'like', '%"' . $dayName . '"%');
-            })
+            ->whereJsonContains('day_of_week', $dayName)
             ->first();
-
-        if ($rule) {
-            Log::info('Found day of week rule', [
-                'rule_id' => $rule->id,
-                'day_of_week' => $rule->day_of_week,
-                'time_in_start' => $rule->time_in_start,
-                'time_in_end' => $rule->time_in_end
-            ]);
-        }
-
-        return $rule;
-    }
-
-    private function getFallbackRule(int $classId): ?AttendanceRule
-    {
-        $rule = AttendanceRule::where('class_id', $classId)->first();
-
-        if ($rule) {
-            Log::warning('Using fallback rule', [
-                'rule_id' => $rule->id,
-                'class_id' => $classId
-            ]);
-        } else {
-            Log::error('No attendance rule found for class', ['class_id' => $classId]);
-        }
-
-        return $rule;
     }
 
     private function isDateOverrideRule(AttendanceRule $attendanceRule, string $scanDate): bool
