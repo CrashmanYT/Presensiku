@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Models\StudentAttendance;
+use Carbon\CarbonPeriod;
 use Filament\Widgets\ChartWidget;
 use Carbon\Carbon;
 
@@ -33,85 +34,81 @@ class AttendanceChartWidget extends ChartWidget
 
     protected function getData(): array
     {
-        $startDate = null;
+        // 1. Tentukan Rentang Tanggal
         $endDate = Carbon::today();
+        $startDate = match ($this->filter) {
+            'last_30_days' => Carbon::today()->subDays(29),
+            'this_month'   => Carbon::today()->startOfMonth(),
+            'last_month'   => Carbon::today()->subMonthNoOverflow()->startOfMonth(),
+            'last_3_months'=> Carbon::today()->subMonthsNoOverflow(2)->startOfMonth(),
+            default        => Carbon::today()->subDays(6),
+        };
 
-        switch ($this->filter) {
-            case 'last_7_days':
-                $startDate = Carbon::today()->subDays(6);
-                break;
-            case 'last_30_days':
-                $startDate = Carbon::today()->subDays(29);
-                break;
-            case 'this_month':
-                $startDate = Carbon::today()->startOfMonth();
-                break;
-            case 'last_month':
-                $startDate = Carbon::today()->subMonth()->startOfMonth();
-                $endDate = Carbon::today()->subMonth()->endOfMonth();
-                break;
-            case 'last_3_months':
-                $startDate = Carbon::today()->subMonths(2)->startOfMonth();
-                break;
-            default:
-                $startDate = Carbon::today()->subDays(6);
-                break;
+        if ($this->filter === 'last_month') {
+            $endDate = Carbon::today()->subMonthNoOverflow()->endOfMonth();
         }
 
-        // Single query to get all attendance data for the date range
-        $attendanceData = StudentAttendance::whereBetween('date', [$startDate, $endDate])
-            ->selectRaw('date, status, count(*) as count')
-            ->groupBy('date', 'status')
-            ->get()
-            ->groupBy('date');
-
-        $data = [
-            'hadir' => [],
-            'terlambat' => [],
-            'tidak_hadir' => [],
-            'izin' => []
-        ];
+        // 2. Siapkan Struktur Data Awal (Label dan Data Kosong) dengan loop 'while'
         $labels = [];
-
+        $templateData = [];
         $currentDate = $startDate->copy();
+
         while ($currentDate->lte($endDate)) {
-            $labels[] = $currentDate->format('M d');
             $dateString = $currentDate->format('Y-m-d');
-            $dayData = $attendanceData->get($dateString, collect());
-
-            $data['hadir'][] = $dayData->where('status', 'hadir')->first()->count ?? 0;
-            $data['terlambat'][] = $dayData->where('status', 'terlambat')->first()->count ?? 0;
-            $data['tidak_hadir'][] = $dayData->where('status', 'tidak_hadir')->first()->count ?? 0;
-            $data['izin'][] = $dayData->where('status', 'izin')->first()->count ?? 0;
-
+            $labels[] = $currentDate->format('M d');
+            $templateData[$dateString] = 0;
             $currentDate->addDay();
         }
 
+        $data = [
+            'hadir' => $templateData,
+            'terlambat' => $templateData,
+            'tidak_hadir' => $templateData,
+            'izin' => $templateData,
+            'sakit' => $templateData,
+        ];
+
+        // 3. Query Database
+        $attendanceCounts = StudentAttendance::query()
+            ->whereBetween('date', [$startDate, $endDate])
+            ->selectRaw('DATE(date) as date_only, status, COUNT(*) as count')
+            ->groupBy('date_only', 'status')
+            ->get();
+
+        // 4. Isi Struktur Data dengan Hasil Query
+        foreach ($attendanceCounts as $count) {
+            if (isset($data[$count->status->value])) {
+                $data[$count->status->value][$count->date_only] = $count->count;
+            }
+        }
+
+        // 5. Finalisasi dan Return Data untuk Chart
         return [
             'datasets' => [
                 [
                     'label' => 'Hadir',
-                    'data' => $data['hadir'],
+                    'data' => array_values($data['hadir']),
                     'borderColor' => '#36A2EB',
-                    'backgroundColor' => '#9BD0F5',
                 ],
                 [
                     'label' => 'Terlambat',
-                    'data' => $data['terlambat'],
+                    'data' => array_values($data['terlambat']),
                     'borderColor' => '#FF6384',
-                    'backgroundColor' => '#FFB1C1',
                 ],
                 [
                     'label' => 'Tidak Hadir',
-                    'data' => $data['tidak_hadir'],
-                    'borderColor' => '#4BC0C0',
-                    'backgroundColor' => '#C9FFCE',
+                    'data' => array_values($data['tidak_hadir']),
+                    'borderColor' => '#FFC107',
                 ],
                 [
                     'label' => 'Izin',
-                    'data' => $data['izin'],
-                    'borderColor' => '#FFCD56',
-                    'backgroundColor' => '#FFE699',
+                    'data' => array_values($data['izin']),
+                    'borderColor' => '#4BC0C0',
+                ],
+                [
+                    'label' => 'Sakit',
+                    'data' => array_values($data['sakit']),
+                    'borderColor' => '#9966FF',
                 ],
             ],
             'labels' => $labels,

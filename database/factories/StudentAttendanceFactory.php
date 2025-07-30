@@ -44,7 +44,7 @@ class StudentAttendanceFactory extends Factory
 
         return [
             'student_id' => Student::factory(),
-            'date' => $this->faker->dateTimeBetween('-1 month', 'now')->format('Y-m-d'),
+            'date' => $this->faker->dateTimeBetween('-3 month', 'now')->format('Y-m-d'),
             'time_in' => $timeIn,
             'time_out' => $timeOut,
             'status' => $status,
