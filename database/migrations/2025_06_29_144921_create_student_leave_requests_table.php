@@ -14,8 +14,11 @@ return new class extends Migration
         Schema::create('student_leave_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('student_id')->constrained('students')->onDelete('cascade');
-            $table->date('date');
+            $table->enum('type', ['sakit', 'izin'])->default('izin');
+            $table->date('start_date');
+            $table->date('end_date');
             $table->text('reason');
+            $table->string('attachment')->nullable();
             $table->string('submitted_by')->nullable();
             $table->enum('via', ['form_online', 'manual']);
             $table->timestamps();

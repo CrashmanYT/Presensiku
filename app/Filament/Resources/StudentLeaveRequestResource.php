@@ -50,13 +50,24 @@ class StudentLeaveRequestResource extends Resource
                     ->searchable()
                     ->relationship('student', 'name')
                     ->label('Nama Siswa'),
-                Forms\Components\DatePicker::make('date')
-                    ->label('Tanggal')
+                Forms\Components\Select::make('type')
+                    ->options([
+                        'sakit' => 'Sakit',
+                        'izin' => 'Izin',
+                    ])
+                    ->required(),
+                Forms\Components\DatePicker::make('start_date')
+                    ->label('Tanggal Mulai')
+                    ->required(),
+                DatePicker::make('end_date')
+                    ->label('Tanggal Mulai')
                     ->required(),
                 Forms\Components\Textarea::make('reason')
                     ->required()
                     ->label('Alasan')
                     ->columnSpanFull(),
+                Forms\Components\FileUpload::make('attachment')
+                    ->label('Surat Keterangan'),
                 Forms\Components\TextInput::make('submitted_by')
                     ->label('Dikirimkan Oleh '),
                 Forms\Components\Select::make('via')
@@ -74,10 +85,23 @@ class StudentLeaveRequestResource extends Resource
                     ->label('Nama Siswa')
                     ->toggleable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('date')
+                Tables\Columns\TextColumn::make('type')
+                    ->badge()
+                    ->colors([
+                        'warning' => 'sakit',
+                        'info' => 'izin',
+                    ])
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('start_date')
                     ->date()
                     ->toggleable()
-                    ->label('Tanggal')
+                    ->label('Tanggal Mulai')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('end_date')
+                    ->date()
+                    ->toggleable()
+                    ->label('Tanggal Selesai')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('reason')
                     ->limit(50)

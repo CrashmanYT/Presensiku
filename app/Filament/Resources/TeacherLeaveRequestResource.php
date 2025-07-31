@@ -7,6 +7,7 @@ use App\Filament\Resources\TeacherLeaveRequestResource\Pages;
 use App\Filament\Resources\TeacherLeaveRequestResource\RelationManagers;
 use App\Models\TeacherLeaveRequest;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -45,12 +46,23 @@ class TeacherLeaveRequestResource extends Resource
                     ->relationship('teacher', 'name')
                     ->searchable()
                     ->label('Nama Guru'),
-                Forms\Components\DatePicker::make('date')
-                    ->required()
-                    ->label('Tanggal'),
+                Forms\Components\Select::make('type')
+                    ->options([
+                        'sakit' => 'Sakit',
+                        'izin' => 'Izin',
+                    ])
+                    ->required(),
+                Forms\Components\DatePicker::make('start_date')
+                    ->label('Tanggal Mulai')
+                    ->required(),
+                DatePicker::make('end_date')
+                    ->label('Tanggal Selesai')
+                    ->required(),
                 Forms\Components\Textarea::make('reason')
                     ->label('Alasan')
                     ->columnSpanFull(),
+                Forms\Components\FileUpload::make('attachment')
+                    ->label('Surat Keterangan'),
                 Forms\Components\TextInput::make('submitted_by')
                     ->label('Dikirimkan Oleh'),
                 Forms\Components\Select::make('via')
@@ -68,10 +80,27 @@ class TeacherLeaveRequestResource extends Resource
                     ->searchable()
                     ->label('Nama Guru')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('date')
+                Tables\Columns\TextColumn::make('type')
+                    ->badge()
+                    ->colors([
+                        'warning' => 'sakit',
+                        'info' => 'izin',
+                    ])
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('start_date')
                     ->date()
-                    ->label('Tanggal')
+                    ->toggleable()
+                    ->label('Tanggal Mulai')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('end_date')
+                    ->date()
+                    ->toggleable()
+                    ->label('Tanggal Selesai')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('reason')
+                    ->label('Alasan')
+                    ->columnSpanFull(),
                 Tables\Columns\TextColumn::make('submitted_by')
                     ->searchable()
                     ->label('Dikirimkan Oleh'),

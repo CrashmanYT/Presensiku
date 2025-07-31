@@ -14,4 +14,6 @@ Route::post('/webhook/fingerprint', [WebhookController::class, 'handleAttendance
 
 // Fingerspot webhook (active route)
 Route::post('/webhook/fingerspot', [WebhookController::class, 'handleAttendance']);
-Route::post('/webhook/izin-webhook', [\App\Http\Controllers\Api\IzinController::class, 'webhook']);
+
+Route::post('/webhook/student-leave-request', [WebhookController::class, 'handleStudentLeaveRequest']);
+Route::post('/webhook/teacher-leave-request', [WebhookController::class, 'handleTeacherLeaveRequest']);

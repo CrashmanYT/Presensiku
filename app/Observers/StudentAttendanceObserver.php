@@ -24,13 +24,24 @@ class StudentAttendanceObserver
     public function updated(StudentAttendance $studentAttendance): void
     {
         if ($studentAttendance->isDirty('status')) {
-            $oldStatus = $studentAttendance->getOriginal('status');
-            $newStatus = $studentAttendance->status->value;
+            $originalStatus = $studentAttendance->getOriginal('status');
+            $newStatus = $studentAttendance->status; // Ini adalah objek Enum
+
+            // SOLUSI: Pastikan status lama adalah string
+            $oldStatusValue = $originalStatus instanceof \App\Enums\AttendanceStatusEnum
+                ? $originalStatus->value
+                : $originalStatus;
+
+            // Pastikan status baru adalah string
+            $newStatusValue = $newStatus->value;
 
             // Batalkan (decrement) skor untuk status lama
-            $this->updateRanking($studentAttendance->student, $studentAttendance->date, $oldStatus, 'decrement');
+            if ($oldStatusValue) {
+                $this->updateRanking($studentAttendance->student, $studentAttendance->date, $oldStatusValue, 'decrement');
+            }
+            
             // Tambahkan (increment) skor untuk status baru
-            $this->updateRanking($studentAttendance->student, $studentAttendance->date, $newStatus, 'increment');
+            $this->updateRanking($studentAttendance->student, $studentAttendance->date, $newStatusValue, 'increment');
         }
     }
 

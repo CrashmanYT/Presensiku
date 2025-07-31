@@ -12,14 +12,17 @@ class TeacherLeaveRequest extends Model
 
     protected $fillable = [
         'teacher_id',
-        'date',
+        'type',
+        'start_date',
+        'end_date',
         'reason',
         'submitted_by',
         'via'
     ];
 
     protected $casts = [
-        'date' => 'date',
+        'start_date' => 'date',
+        'end_date' => 'date',
         'via' => LeaveRequestViaEnum::class
     ];
 

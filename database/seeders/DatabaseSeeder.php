@@ -23,10 +23,10 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             TeacherSeeder::class,
-            SettingsSeeder::class,
-            DeviceSeeder::class,
             ClassSeeder::class,
             StudentSeeder::class,
+            SettingsSeeder::class,
+            DeviceSeeder::class,
             AttendanceRuleSeeder::class,
             StudentAttendanceSeeder::class,
             TeacherAttendanceSeeder::class,

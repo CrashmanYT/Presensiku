@@ -21,7 +21,7 @@ class StudentAttendanceSeeder extends Seeder
         $devices = Device::all();
 
         foreach ($students as $student) {
-            for ($i = 0; $i < 30; $i++) { // Generate 30 attendance records for each student
+            for ($i = 0; $i < 10; $i++) { // Generate 30 attendance records for each student
                 $date = $faker->dateTimeBetween('-1 month', 'now');
                 $timeIn = $faker->time('H:i:s', '08:00:00');
                 $timeOut = $faker->time('H:i:s', '16:00:00');
