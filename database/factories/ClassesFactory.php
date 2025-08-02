@@ -29,7 +29,7 @@ class ClassesFactory extends Factory
             'name' => $this->faker->unique()->word() . ' Class',
             'level' => $this->faker->randomElement(['X', 'XI', 'XII']),
             'major' => $this->faker->randomElement(['IPA', 'IPS', 'Bahasa']),
-            'homeroom_teacher_nip' => Teacher::factory(),
+            'homeroom_teacher_nip' => Teacher::factory()->create()->nip,
         ];
     }
 }
