@@ -26,7 +26,6 @@ class DeviceFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => "C262B8679F251623",
             'name' => $this->faker->word . ' Device',
             'ip_address' => $this->faker->unique()->localIpv4(),
             'location' => $this->faker->city(),

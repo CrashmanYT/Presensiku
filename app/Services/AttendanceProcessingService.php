@@ -66,7 +66,11 @@ class AttendanceProcessingService
 
     private function handleExistingAttendance(Student|Teacher $user, $attendance, Carbon $scanDateTime, AttendanceRule $attendanceRule): JsonResponse
     {
-        if ($scanDateTime->isBefore($attendanceRule->time_out_start)) {
+        // Bandingkan hanya bagian waktunya saja untuk menghindari masalah tanggal
+        $scanTime = Carbon::parse($scanDateTime->toTimeString());
+        $checkoutStartTime = Carbon::parse($attendanceRule->time_out_start);
+
+        if ($scanTime->isBefore($checkoutStartTime)) {
             return $this->buildAlreadyCheckedInResponse($user, $attendance);
         }
 
