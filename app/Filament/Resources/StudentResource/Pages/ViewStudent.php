@@ -3,15 +3,15 @@
 namespace App\Filament\Resources\StudentResource\Pages;
 
 use App\Filament\Resources\StudentResource;
+use Carbon\Carbon;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class ViewStudent extends ViewRecord implements HasTable
 {
@@ -22,18 +22,18 @@ class ViewStudent extends ViewRecord implements HasTable
     protected static string $view = 'filament.student-resource.pages.view-student';
 
     public $selectedMonth;
+
     public $selectedYear;
+
     public $selectedChartYear;
 
-    public function mount(int | string $record): void
+    public function mount(int|string $record): void
     {
         parent::mount($record);
         $this->selectedMonth = now()->month;
         $this->selectedYear = now()->year;
         $this->selectedChartYear = now()->year;
     }
-
-    
 
     protected function getHeaderActions(): array
     {
@@ -42,24 +42,19 @@ class ViewStudent extends ViewRecord implements HasTable
         ];
     }
 
-    
-
     public function updatedSelectedChartYear(): void
     {
         // Livewire akan secara otomatis me-refresh widget ketika properti berubah
     }
-
 
     public function table(Table $table): Table
     {
         return $this->getDailyHistoryTable(); // Default query, tidak akan terlihat
     }
 
-
-
     public function getMonthlyRecapData(int $month, int $year): Builder
     {
-        if (!$this->record || !$this->record->id) {
+        if (! $this->record || ! $this->record->id) {
             return \App\Models\StudentAttendance::query()->whereRaw('1 = 0'); // Return empty query
         }
 
@@ -87,15 +82,16 @@ class ViewStudent extends ViewRecord implements HasTable
 
     public function getMonthlyRecapSummary(): ?object
     {
-        if (!$this->record || !$this->record->id) {
+        if (! $this->record || ! $this->record->id) {
             return null;
         }
+
         return $this->getMonthlyRecapData($this->selectedMonth, $this->selectedYear)->first();
     }
 
     public function getDailyHistoryTable(): Table
     {
-        if (!$this->record || !$this->record->id) {
+        if (! $this->record || ! $this->record->id) {
             return Table::make($this)->query(\App\Models\StudentAttendance::query()->whereRaw('1 = 0')); // Return empty table
         }
 

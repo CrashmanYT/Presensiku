@@ -3,19 +3,20 @@
 namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Events\AfterSheet;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class TemplateExport implements FromArray, WithHeadings, WithStyles, ShouldAutoSize, WithEvents
+class TemplateExport implements FromArray, ShouldAutoSize, WithEvents, WithHeadings, WithStyles
 {
     private array $headers;
+
     private array $sampleData;
 
     public function __construct(array $headers, array $sampleData = [])
@@ -65,16 +66,16 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, ShouldAutoS
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function(AfterSheet $event) {
+            AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
-                
+
                 // Get the highest row and column
                 $highestRow = $sheet->getHighestRow();
                 $highestColumn = $sheet->getHighestColumn();
-                
+
                 // Apply borders to all data
                 if ($highestRow > 1) {
-                    $sheet->getStyle('A2:' . $highestColumn . $highestRow)->applyFromArray([
+                    $sheet->getStyle('A2:'.$highestColumn.$highestRow)->applyFromArray([
                         'borders' => [
                             'allBorders' => [
                                 'borderStyle' => Border::BORDER_THIN,
@@ -86,14 +87,14 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, ShouldAutoS
                         ],
                     ]);
                 }
-                
+
                 // Set row height
                 $sheet->getDefaultRowDimension()->setRowHeight(20);
                 $sheet->getRowDimension(1)->setRowHeight(25);
-                
+
                 // Freeze first row
                 $sheet->freezePane('A2');
-                
+
                 // Add instruction sheet
                 $this->addInstructions($event);
             },
@@ -104,11 +105,11 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, ShouldAutoS
     {
         $sheet = $event->sheet->getDelegate();
         $workbook = $sheet->getParent();
-        
+
         // Create new worksheet for instructions
         $instructionSheet = $workbook->createSheet();
         $instructionSheet->setTitle('Petunjuk Import');
-        
+
         $instructions = [
             ['PETUNJUK PENGGUNAAN TEMPLATE IMPORT'],
             [''],
@@ -120,13 +121,13 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, ShouldAutoS
             [''],
             ['KETERANGAN KOLOM:'],
         ];
-        
+
         // Add column descriptions based on headers
         $columnDescriptions = $this->getColumnDescriptions();
         foreach ($columnDescriptions as $description) {
             $instructions[] = $description;
         }
-        
+
         $instructions[] = [''];
         $instructions[] = ['CONTOH FORMAT:'];
         $instructions[] = ['- Jenis Kelamin: L atau P (untuk Laki-laki atau Perempuan)'];
@@ -134,10 +135,10 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, ShouldAutoS
         $instructions[] = ['- Level Kelas: 10, 11, atau 12'];
         $instructions[] = [''];
         $instructions[] = ['Jika ada pertanyaan, hubungi administrator sistem.'];
-        
+
         // Write instructions to sheet
         $instructionSheet->fromArray($instructions, null, 'A1');
-        
+
         // Style the instruction sheet
         $instructionSheet->getStyle('A1')->applyFromArray([
             'font' => [
@@ -150,10 +151,10 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, ShouldAutoS
                 'startColor' => ['rgb' => 'FFE699'],
             ],
         ]);
-        
+
         $instructionSheet->getColumnDimension('A')->setWidth(80);
         $instructionSheet->getStyle('A:A')->getAlignment()->setWrapText(true);
-        
+
         // Set the first sheet (template) as active
         $workbook->setActiveSheetIndex(0);
     }
@@ -161,7 +162,7 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, ShouldAutoS
     private function getColumnDescriptions(): array
     {
         $descriptions = [];
-        
+
         foreach ($this->headers as $header) {
             switch ($header) {
                 case 'name':
@@ -199,7 +200,7 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, ShouldAutoS
                     break;
             }
         }
-        
+
         return $descriptions;
     }
 }

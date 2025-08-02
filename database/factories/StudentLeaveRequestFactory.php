@@ -23,6 +23,7 @@ class StudentLeaveRequestFactory extends Factory
      * Define the model's default state.
      *
      * @return array<string, mixed>
+     *
      * @throws \Exception
      */
     public function definition(): array
@@ -31,7 +32,6 @@ class StudentLeaveRequestFactory extends Factory
         if (empty($studentIds)) {
             throw new \Exception('TeacherSeeder needs to be run before TeacherLeaveRequestSeeder.');
         }
-
 
         return [
             'student_id' => $this->faker->randomElement($studentIds),

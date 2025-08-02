@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\Services;
 
-use App\Enums\DayOfWeekEnum;
 use App\Enums\AttendanceStatusEnum;
+use App\Enums\DayOfWeekEnum;
 use App\Models\AttendanceRule;
 use App\Models\Holiday;
 use App\Models\StudentAttendance;
@@ -20,7 +20,7 @@ class AttendanceCalendarServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->calendarService = new AttendanceCalendarService();
+        $this->calendarService = new AttendanceCalendarService;
     }
 
     #[Test]
@@ -35,12 +35,12 @@ class AttendanceCalendarServiceTest extends TestCase
         $attendances = new Collection([
             '2025-08-04' => new StudentAttendance([
                 'status' => AttendanceStatusEnum::HADIR,
-            ])
+            ]),
         ]);
 
         // Collection lain bisa kosong karena tidak relevan untuk tes ini
-        $holidays = new Collection();
-        $attendanceRules = new Collection();
+        $holidays = new Collection;
+        $attendanceRules = new Collection;
 
         // Act
         $calendar = $this->calendarService->generateCalendar($year, $month, $attendances, $holidays, $attendanceRules);
@@ -59,14 +59,14 @@ class AttendanceCalendarServiceTest extends TestCase
         $month = 8;
         $holidayDay = 17; // Minggu, 17 Agustus 2025 - Hari Kemerdekaan
 
-        $attendances = new Collection();
+        $attendances = new Collection;
         $holidays = new Collection([
             new Holiday([
                 'start_date' => Carbon::create($year, $month, $holidayDay),
                 'end_date' => Carbon::create($year, $month, $holidayDay),
-            ])
+            ]),
         ]);
-        $attendanceRules = new Collection();
+        $attendanceRules = new Collection;
 
         // Act
         $calendar = $this->calendarService->generateCalendar($year, $month, $attendances, $holidays, $attendanceRules);
@@ -85,12 +85,12 @@ class AttendanceCalendarServiceTest extends TestCase
         $month = 8; // Agustus 2025
         $workingDay = 4; // Senin, 4 Agustus 2025
 
-        $attendances = new Collection();
-        $holidays = new Collection();
+        $attendances = new Collection;
+        $holidays = new Collection;
         $attendanceRules = new Collection([
             new AttendanceRule([
                 'day_of_week' => [DayOfWeekEnum::MONDAY->value],
-            ])
+            ]),
         ]);
 
         // Act
@@ -110,12 +110,12 @@ class AttendanceCalendarServiceTest extends TestCase
         $month = 8; // Agustus 2025
         $sunday = 3; // Minggu, 3 Agustus 2025
 
-        $attendances = new Collection();
-        $holidays = new Collection();
+        $attendances = new Collection;
+        $holidays = new Collection;
         $attendanceRules = new Collection([
             new AttendanceRule([
                 'day_of_week' => [DayOfWeekEnum::MONDAY->value],
-            ])
+            ]),
         ]);
 
         // Act
@@ -137,6 +137,7 @@ class AttendanceCalendarServiceTest extends TestCase
                 return $date;
             }
         }
+
         return null;
     }
 }

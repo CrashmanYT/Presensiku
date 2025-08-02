@@ -4,7 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\AttendanceStatusEnum;
 use App\Filament\Resources\TeacherAttendanceResource\Pages;
-use App\Filament\Resources\TeacherAttendanceResource\RelationManagers;
+use App\Helpers\ExportColumnHelper;
 use App\Models\TeacherAttendance;
 use Filament\Forms;
 use Filament\Forms\Components\TimePicker;
@@ -20,8 +20,6 @@ use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint\Oper
 use Filament\Tables\Filters\QueryBuilder\Constraints\SelectConstraint;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Helpers\ExportColumnHelper;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
@@ -31,9 +29,13 @@ class TeacherAttendanceResource extends Resource
     protected static ?string $model = TeacherAttendance::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
+
     protected static ?int $navigationSort = 2;
+
     protected static ?string $navigationGroup = 'Manajemen Absensi';
+
     protected static ?string $navigationLabel = 'Absensi Guru';
+
     protected static ?string $label = 'Absensi Guru';
 
     public static function getEloquentQuery(): Builder
@@ -128,7 +130,7 @@ class TeacherAttendanceResource extends Resource
                                     ->searchable()
                                     ->preload()
                             ),
-                        ]),
+                    ]),
                 Filter::make('waktu_masuk')
                     ->label('Jam Masuk')
                     ->form([
@@ -169,8 +171,8 @@ class TeacherAttendanceResource extends Resource
                                     ->orderBy('id', 'desc');
                             })
                             ->queue()
-                            ->chunkSize(1000)
-                    ])
+                            ->chunkSize(1000),
+                    ]),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -179,24 +181,24 @@ class TeacherAttendanceResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                ExportBulkAction::make('export')
-                    ->color('info')
-                    ->icon('heroicon-o-arrow-up-tray')
-                    ->exports([
-                        ExcelExport::make('absensi-guru-bulk')
-                            ->withColumns(
-                                ExportColumnHelper::getTeacherAttendanceColumns()
-                            )
-                            ->withFilename('Data Absensi Guru (Terpilih).xlsx')
-                            ->modifyQueryUsing(function ($query) {
-                                return $query->with(['teacher', 'device'])
-                                    ->select('teacher_attendances.*')
-                                    ->orderBy('date', 'desc')
-                                    ->orderBy('id', 'desc');
-                            })
-                            ->queue()
-                            ->chunkSize(1000)
-                    ])
+                    ExportBulkAction::make('export')
+                        ->color('info')
+                        ->icon('heroicon-o-arrow-up-tray')
+                        ->exports([
+                            ExcelExport::make('absensi-guru-bulk')
+                                ->withColumns(
+                                    ExportColumnHelper::getTeacherAttendanceColumns()
+                                )
+                                ->withFilename('Data Absensi Guru (Terpilih).xlsx')
+                                ->modifyQueryUsing(function ($query) {
+                                    return $query->with(['teacher', 'device'])
+                                        ->select('teacher_attendances.*')
+                                        ->orderBy('date', 'desc')
+                                        ->orderBy('id', 'desc');
+                                })
+                                ->queue()
+                                ->chunkSize(1000),
+                        ]),
                 ]),
             ]);
     }

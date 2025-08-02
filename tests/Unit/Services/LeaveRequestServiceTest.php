@@ -16,12 +16,13 @@ class LeaveRequestServiceTest extends TestCase
     use RefreshDatabase;
 
     private LeaveRequestService $leaveRequestService;
+
     private Student $student;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->leaveRequestService = new LeaveRequestService();
+        $this->leaveRequestService = new LeaveRequestService;
         $this->student = Student::factory()->create();
     }
 
@@ -31,6 +32,7 @@ class LeaveRequestServiceTest extends TestCase
     private function callPrivateMethod($object, $methodName, array $parameters)
     {
         $reflection = new ReflectionMethod(get_class($object), $methodName);
+
         return $reflection->invokeArgs($object, $parameters);
     }
 
@@ -50,10 +52,10 @@ class LeaveRequestServiceTest extends TestCase
 
         // Act: Panggil method privat handleOverlaps
         $this->callPrivateMethod($this->leaveRequestService, 'handleOverlaps', [
-            new StudentLeaveRequest(),
+            new StudentLeaveRequest,
             $this->student->id,
             $newStartDate,
-            $newEndDate
+            $newEndDate,
         ]);
 
         // Assert: Pastikan hasilnya benar
@@ -92,10 +94,10 @@ class LeaveRequestServiceTest extends TestCase
 
         // Act
         $this->callPrivateMethod($this->leaveRequestService, 'handleOverlaps', [
-            new StudentLeaveRequest(),
+            new StudentLeaveRequest,
             $this->student->id,
             $newStartDate,
-            $newEndDate
+            $newEndDate,
         ]);
 
         // Assert: Pastikan izin lama sudah dihapus
@@ -120,10 +122,10 @@ class LeaveRequestServiceTest extends TestCase
 
         // Act
         $this->callPrivateMethod($this->leaveRequestService, 'handleOverlaps', [
-            new StudentLeaveRequest(),
+            new StudentLeaveRequest,
             $this->student->id,
             $newStartDate,
-            $newEndDate
+            $newEndDate,
         ]);
 
         // Assert
@@ -150,10 +152,10 @@ class LeaveRequestServiceTest extends TestCase
 
         // Act
         $this->callPrivateMethod($this->leaveRequestService, 'handleOverlaps', [
-            new StudentLeaveRequest(),
+            new StudentLeaveRequest,
             $this->student->id,
             $newStartDate,
-            $newEndDate
+            $newEndDate,
         ]);
 
         // Assert
@@ -180,9 +182,9 @@ class LeaveRequestServiceTest extends TestCase
         // New leave request data from a webhook, which is in the middle of the old one.
         $webhookData = [
             'start_date' => '2025-08-04', // Monday
-            'end_date'   => '2025-08-06', // Wednesday
-            'type'       => 'izin',
-            'reason'     => 'Acara keluarga',
+            'end_date' => '2025-08-06', // Wednesday
+            'type' => 'izin',
+            'reason' => 'Acara keluarga',
             'attachment' => null,
         ];
 
@@ -197,53 +199,53 @@ class LeaveRequestServiceTest extends TestCase
         $this->assertDatabaseHas('student_leave_requests', [
             'student_id' => $this->student->id,
             'start_date' => '2025-08-04',
-            'end_date'   => '2025-08-06',
-            'type'       => 'izin',
-            'reason'     => 'Acara keluarga',
+            'end_date' => '2025-08-06',
+            'type' => 'izin',
+            'reason' => 'Acara keluarga',
         ]);
 
         // 2. The first part of the original leave request (trimmed).
         $this->assertDatabaseHas('student_leave_requests', [
             'student_id' => $this->student->id,
             'start_date' => '2025-08-01',
-            'end_date'   => '2025-08-03', // Trimmed from Aug 10th.
-            'type'       => 'sakit',
+            'end_date' => '2025-08-03', // Trimmed from Aug 10th.
+            'type' => 'sakit',
         ]);
 
         // 3. The second part of the original leave request (newly created).
         $this->assertDatabaseHas('student_leave_requests', [
             'student_id' => $this->student->id,
             'start_date' => '2025-08-07', // Starts after the new request ends.
-            'end_date'   => '2025-08-10',
-            'type'       => 'sakit',
+            'end_date' => '2025-08-10',
+            'type' => 'sakit',
         ]);
 
         // Assert: Check that the attendance records were created for the new leave request dates.
         // The dates are Mon, Tue, Wed, which are working days.
         $this->assertDatabaseHas('student_attendances', [
             'student_id' => $this->student->id,
-            'date'       => '2025-08-04',
-            'status'     => 'izin',
+            'date' => '2025-08-04',
+            'status' => 'izin',
         ]);
         $this->assertDatabaseHas('student_attendances', [
             'student_id' => $this->student->id,
-            'date'       => '2025-08-05',
-            'status'     => 'izin',
+            'date' => '2025-08-05',
+            'status' => 'izin',
         ]);
         $this->assertDatabaseHas('student_attendances', [
             'student_id' => $this->student->id,
-            'date'       => '2025-08-06',
-            'status'     => 'izin',
+            'date' => '2025-08-06',
+            'status' => 'izin',
         ]);
 
         // Make sure no attendance record was created for the weekend within the old request range.
         $this->assertDatabaseMissing('student_attendances', [
             'student_id' => $this->student->id,
-            'date'       => '2025-08-02', // Saturday
+            'date' => '2025-08-02', // Saturday
         ]);
         $this->assertDatabaseMissing('student_attendances', [
             'student_id' => $this->student->id,
-            'date'       => '2025-08-03', // Sunday
+            'date' => '2025-08-03', // Sunday
         ]);
     }
 }

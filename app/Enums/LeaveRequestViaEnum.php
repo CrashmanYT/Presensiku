@@ -13,15 +13,15 @@ enum LeaveRequestViaEnum: string implements HasColor, HasLabel
 
     public function getLabel(): ?string
     {
-        return match($this) {
-            self::FORM_ONLINE => "Form Online",
-            self::MANUAL => "Manual"
+        return match ($this) {
+            self::FORM_ONLINE => 'Form Online',
+            self::MANUAL => 'Manual'
         };
     }
 
     public function getColor(): string|array|null
     {
-        return match($this) {
+        return match ($this) {
             self::FORM_ONLINE => Color::Blue,
             self::MANUAL => Color::Emerald
         };

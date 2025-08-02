@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Setting;
+use Illuminate\Database\Seeder;
 
 class SettingsSeeder extends Seeder
 {
@@ -146,7 +145,7 @@ class SettingsSeeder extends Seeder
             [
                 'key' => 'notifications.whatsapp.templates.late',
                 'value' => json_encode([
-                    ['message' => 'Yth. Bapak/Ibu, ananda {nama_siswa} tercatat terlambat hari ini. Jam masuk: {jam_masuk}, seharusnya: {jam_seharusnya}.']
+                    ['message' => 'Yth. Bapak/Ibu, ananda {nama_siswa} tercatat terlambat hari ini. Jam masuk: {jam_masuk}, seharusnya: {jam_seharusnya}.'],
                 ]),
                 'type' => 'json',
                 'group_name' => 'notifications',
@@ -156,7 +155,7 @@ class SettingsSeeder extends Seeder
             [
                 'key' => 'notifications.whatsapp.templates.absent',
                 'value' => json_encode([
-                    ['message' => 'Yth. Bapak/Ibu, ananda {nama_siswa} tidak tercatat hadir di sekolah pada tanggal {tanggal}. Mohon konfirmasinya.']
+                    ['message' => 'Yth. Bapak/Ibu, ananda {nama_siswa} tidak tercatat hadir di sekolah pada tanggal {tanggal}. Mohon konfirmasinya.'],
                 ]),
                 'type' => 'json',
                 'group_name' => 'notifications',
@@ -166,7 +165,7 @@ class SettingsSeeder extends Seeder
             [
                 'key' => 'notifications.whatsapp.templates.present',
                 'value' => json_encode([
-                    ['message' => 'Informasi: Ananda {nama_siswa} telah tercatat hadir di sekolah pada jam {jam_masuk}.']
+                    ['message' => 'Informasi: Ananda {nama_siswa} telah tercatat hadir di sekolah pada jam {jam_masuk}.'],
                 ]),
                 'type' => 'json',
                 'group_name' => 'notifications',

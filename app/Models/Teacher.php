@@ -14,19 +14,21 @@ class Teacher extends Model
         'nip',
         'fingerprint_id',
         'photo',
-        'whatsapp_number'
+        'whatsapp_number',
     ];
 
-    public function classes() {
+    public function classes()
+    {
         return $this->hasMany(Classes::class);
     }
 
-    public function attendances() {
+    public function attendances()
+    {
         return $this->hasMany(TeacherAttendance::class);
-    } 
-
-    public function leaveRequests() {
-        return $this->hasMany(TeacherLeaveRequest::class);
     }
 
+    public function leaveRequests()
+    {
+        return $this->hasMany(TeacherLeaveRequest::class);
+    }
 }

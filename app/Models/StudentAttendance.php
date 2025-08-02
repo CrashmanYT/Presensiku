@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use App\Enums\AttendanceStatusEnum;
-use App\Interfaces\AttendanceInterface;
-use App\Models\AttendanceRule;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -27,7 +25,7 @@ class StudentAttendance extends Model
         'date' => 'date',
         'time_in' => 'datetime',
         'time_out' => 'datetime',
-        'status' => AttendanceStatusEnum::class
+        'status' => AttendanceStatusEnum::class,
     ];
 
     public function student(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -49,12 +47,12 @@ class StudentAttendance extends Model
         $timeOutEnd = Carbon::parse($attendanceRule->time_out_end)->format('H:i:s');
 
         // If no time_in recorded yet and scan time is within check-in window
-        if (!$this->time_in && $scanTimeFormatted >= $timeInStart && $scanTimeFormatted <= $timeInEnd) {
+        if (! $this->time_in && $scanTimeFormatted >= $timeInStart && $scanTimeFormatted <= $timeInEnd) {
             return 'in';
         }
 
         // If time_in exists but no time_out and scan time is within check-out window
-        if ($this->time_in && !$this->time_out && $scanTimeFormatted >= $timeOutStart && $scanTimeFormatted <= $timeOutEnd) {
+        if ($this->time_in && ! $this->time_out && $scanTimeFormatted >= $timeOutStart && $scanTimeFormatted <= $timeOutEnd) {
             return 'out';
         }
 

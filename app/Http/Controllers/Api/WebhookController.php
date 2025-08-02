@@ -9,23 +9,19 @@ use App\Http\Requests\LeaveRequestWebhookRequest;
 use App\Http\Requests\WebhookAttendanceRequest;
 use App\Models\Device;
 use App\Models\Student;
-use App\Models\StudentAttendance;
-use App\Models\StudentLeaveRequest;
 use App\Models\Teacher;
-use App\Models\TeacherLeaveRequest;
 use App\Services\AttendanceProcessingService;
 use App\Services\LeaveRequestService;
 use Carbon\Carbon;
-use Filament\Resources\Pages\Page;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class WebhookController extends Controller
 {
     protected UserRepositoryInterface $userRepository;
+
     protected DeviceRepositoryInterface $deviceRepository;
+
     protected AttendanceProcessingService $attendanceProcessingService;
 
     public function __construct(
@@ -50,23 +46,25 @@ class WebhookController extends Controller
 
         $user = $this->userRepository->findByFingerprintId($fingerprintId);
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['status' => 'error', 'message' => 'User tidak ditemukan'], 404);
         }
 
-        if (!$user->class_id && $user instanceof Student) {
+        if (! $user->class_id && $user instanceof Student) {
             return response()->json(['status' => 'error', 'message' => 'Siswa tidak memiliki kelas'], 400);
         }
 
         return $this->attendanceProcessingService->handleScan($user, $device, $scanDateTime);
     }
 
-    public function handleStudentLeaveRequest(LeaveRequestWebhookRequest $request, LeaveRequestService $leaveRequestService): JsonResponse {
+    public function handleStudentLeaveRequest(LeaveRequestWebhookRequest $request, LeaveRequestService $leaveRequestService): JsonResponse
+    {
         try {
             $validated = $request->validated();
             $student = Student::where('nis', trim($validated['identifier']))->firstOrFail();
 
             $leaveRequestService->processFromWebhook($student, $validated);
+
             return response()->json(['message' => 'Izin Siswa Berhasil Diproses'], 200);
         } catch (ModelNotFoundException $modelNotFoundException) {
             return response()->json(['message' => 'Siswa Dengan NIS Tersebut Tidak Ditemukan'], 404);
@@ -74,12 +72,15 @@ class WebhookController extends Controller
             return response()->json(['message' => $exception->getMessage()], 500);
         }
     }
-    public function handleTeacherLeaveRequest(LeaveRequestWebhookRequest $request, LeaveRequestService $leaveRequestService): JsonResponse {
+
+    public function handleTeacherLeaveRequest(LeaveRequestWebhookRequest $request, LeaveRequestService $leaveRequestService): JsonResponse
+    {
         try {
             $validated = $request->validated();
             $student = Teacher::where('nip', trim($validated['identifier']))->firstOrFail();
 
             $leaveRequestService->processFromWebhook($student, $validated);
+
             return response()->json(['message' => 'Izin Guru Berhasil Diproses'], 200);
         } catch (ModelNotFoundException $modelNotFoundException) {
             return response()->json(['message' => 'Guru Dengan NIP Tersebut Tidak Ditemukan'], 404);
@@ -88,4 +89,3 @@ class WebhookController extends Controller
         }
     }
 }
-

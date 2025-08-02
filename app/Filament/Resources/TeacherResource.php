@@ -2,12 +2,10 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\TeacherResource\Pages;
-use App\Filament\Resources\TeacherResource\RelationManagers;
-use App\Models\Teacher;
-use App\Helpers\ExportColumnHelper;
 use App\Filament\Imports\TeacherImporter;
-use Filament\Forms;
+use App\Filament\Resources\TeacherResource\Pages;
+use App\Helpers\ExportColumnHelper;
+use App\Models\Teacher;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -15,20 +13,22 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
-use pxlrbt\FilamentExcel\Columns\Column;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 class TeacherResource extends Resource
 {
     protected static ?string $model = Teacher::class;
+
     protected static ?string $navigationGroup = 'Manajemen Data';
+
     protected static ?string $navigationLabel = 'Data Guru';
+
     protected static ?string $label = 'Data Guru';
+
     protected static ?string $navigationIcon = 'heroicon-o-briefcase';
+
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
@@ -55,8 +55,7 @@ class TeacherResource extends Resource
                     ->label('Nomor Whatsapp')
                     ->tel()
                     ->prefix('+62')
-                    ->required()
-
+                    ->required(),
 
             ]);
     }
@@ -75,7 +74,7 @@ class TeacherResource extends Resource
                     ->label('Nomor WA')
                     ->searchable(),
 
-                ])
+            ])
             ->filters([
                 //
             ])
@@ -101,8 +100,8 @@ class TeacherResource extends Resource
                     ->exports([
                         ExcelExport::make('form')->withColumns(
                             ExportColumnHelper::getTeacherColumns()
-                        )->withFilename('Data Guru')
-                    ])
+                        )->withFilename('Data Guru'),
+                    ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -115,7 +114,7 @@ class TeacherResource extends Resource
                                 ->withColumns(
                                     ExportColumnHelper::getTeacherColumns()
                                 )
-                                ->withFilename('Data Guru.xlsx')
+                                ->withFilename('Data Guru.xlsx'),
                         ]),
                 ]),
             ]);

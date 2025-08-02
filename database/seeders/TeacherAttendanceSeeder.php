@@ -2,12 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Models\TeacherAttendance;
-use App\Models\Teacher;
 use App\Models\Device;
+use App\Models\Teacher;
+use App\Models\TeacherAttendance;
 use Faker\Factory as Faker;
+use Illuminate\Database\Seeder;
 
 class TeacherAttendanceSeeder extends Seeder
 {
@@ -33,7 +32,7 @@ class TeacherAttendanceSeeder extends Seeder
                     'time_in' => $timeIn,
                     'time_out' => $timeOut,
                     'status' => $status,
-                    'photo_in' => ($status == 'hadir' || $status == 'terlambat') ? 'https://i.pravatar.cc/150?img=' . $faker->numberBetween(1, 70) : null,
+                    'photo_in' => ($status == 'hadir' || $status == 'terlambat') ? 'https://i.pravatar.cc/150?img='.$faker->numberBetween(1, 70) : null,
                     'device_id' => $faker->randomElement($devices->pluck('id')),
                 ]);
             }

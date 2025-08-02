@@ -4,7 +4,6 @@ namespace Database\Factories;
 
 use App\Models\Device;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Device>
@@ -26,7 +25,7 @@ class DeviceFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->word . ' Device',
+            'name' => $this->faker->word.' Device',
             'ip_address' => $this->faker->unique()->localIpv4(),
             'location' => $this->faker->city(),
             'is_active' => $this->faker->boolean(),

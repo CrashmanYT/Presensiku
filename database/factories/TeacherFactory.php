@@ -28,7 +28,7 @@ class TeacherFactory extends Factory
             'name' => $this->faker->name(),
             'nip' => $this->faker->unique()->numerify('##############'),
             'fingerprint_id' => $this->faker->unique()->numerify('####'),
-            'photo' => 'https://i.pravatar.cc/150?img=' . $this->faker->numberBetween(1, 70),
+            'photo' => 'https://i.pravatar.cc/150?img='.$this->faker->numberBetween(1, 70),
             'whatsapp_number' => $this->faker->phoneNumber(),
         ];
     }

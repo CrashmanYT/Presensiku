@@ -15,7 +15,7 @@ class ApiResponseHelper
         return response()->json([
             'status' => 'success',
             'message' => $message,
-            'data' => $data
+            'data' => $data,
         ], $statusCode);
     }
 
@@ -27,7 +27,7 @@ class ApiResponseHelper
         return response()->json([
             'status' => 'error',
             'message' => $message,
-            'errors' => $errors
+            'errors' => $errors,
         ], $statusCode);
     }
 
@@ -39,7 +39,7 @@ class ApiResponseHelper
         return response()->json([
             'status' => 'info',
             'message' => $message,
-            'data' => $data
+            'data' => $data,
         ], $statusCode);
     }
 

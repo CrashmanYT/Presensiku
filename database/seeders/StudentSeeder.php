@@ -2,11 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Models\Student;
 use App\Models\Classes;
+use App\Models\Student;
 use Faker\Factory as Faker;
+use Illuminate\Database\Seeder;
 
 class StudentSeeder extends Seeder
 {
@@ -26,8 +25,8 @@ class StudentSeeder extends Seeder
                     'class_id' => $class->id,
                     'gender' => $faker->randomElement(['L', 'P']),
                     'fingerprint_id' => $faker->unique()->numerify('########'), // 8 digit fingerprint ID
-                    'photo' => 'https://i.pravatar.cc/150?img=' . $faker->numberBetween(1, 70),
-                    'parent_whatsapp' => '08' . $faker->unique()->numerify('##########'), // Indonesian WhatsApp number format
+                    'photo' => 'https://i.pravatar.cc/150?img='.$faker->numberBetween(1, 70),
+                    'parent_whatsapp' => '08'.$faker->unique()->numerify('##########'), // Indonesian WhatsApp number format
                 ]);
             }
         }

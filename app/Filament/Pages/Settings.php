@@ -2,25 +2,26 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Setting;
 use Filament\Forms;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Form;
-use Filament\Pages\Page;
-use App\Models\Setting;
-use App\Helpers\SettingsHelper;
 use Filament\Notifications\Notification;
-use Filament\Support\Enums\Alignment;
+use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 
 class Settings extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
+
     protected static ?string $navigationGroup = 'Pengaturan Sistem';
 
     protected static string $view = 'filament.pages.settings';
 
     protected static ?string $title = 'Pengaturan Sistem';
+
     protected static ?string $navigationLabel = 'Pengaturan Sistem';
+
     protected static ?int $navigationSort = 6;
 
     public ?array $data = [];
@@ -123,7 +124,7 @@ class Settings extends Page
                                     ->numeric()
                                     ->default(-5)
                                     ->helperText('Poin dikurangi untuk setiap ketidakhadiran tanpa keterangan.'),
-                            ])
+                            ]),
                     ]),
 
                 // Notification Settings
@@ -255,7 +256,7 @@ class Settings extends Page
                                     ->rows(3)
                                     ->default('Informasi: Ananda {nama_siswa} telah tercatat hadir di sekolah pada jam {jam_masuk}.')
                                     ->helperText('Variabel: {nama_siswa}, {jam_masuk}, {kelas}'),
-                            ])
+                            ]),
                     ]),
             ])
             ->statePath('data');
@@ -305,5 +306,4 @@ class Settings extends Page
             ->success()
             ->send();
     }
-
 }

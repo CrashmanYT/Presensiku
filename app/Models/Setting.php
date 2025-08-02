@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 
 class Setting extends Model
 {
@@ -34,11 +34,11 @@ class Setting extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::saved(function () {
             Cache::forget('settings');
         });
-        
+
         static::deleted(function () {
             Cache::forget('settings');
         });
@@ -70,13 +70,13 @@ class Setting extends Model
         });
 
         $value = $settings[$key] ?? $default;
-        
+
         // Get setting type for proper casting
         $setting = static::where('key', $key)->first();
         if ($setting) {
             return static::castValue($value, $setting->type);
         }
-        
+
         return $value;
     }
 
@@ -100,7 +100,7 @@ class Setting extends Model
      */
     protected static function castValue($value, string $type)
     {
-        return match($type) {
+        return match ($type) {
             'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             'integer' => (int) $value,
             'float' => (float) $value,

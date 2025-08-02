@@ -18,16 +18,17 @@ class TeacherLeaveRequest extends Model
         'attachment',
         'reason',
         'submitted_by',
-        'via'
+        'via',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
-        'via' => LeaveRequestViaEnum::class
+        'via' => LeaveRequestViaEnum::class,
     ];
 
-    public function teacher() {
+    public function teacher()
+    {
         return $this->belongsTo(Teacher::class);
     }
 }

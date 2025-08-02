@@ -3,23 +3,25 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\DeviceResource\Pages;
-use App\Filament\Resources\DeviceResource\RelationManagers;
 use App\Models\Device;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class DeviceResource extends Resource
 {
     protected static ?string $model = Device::class;
+
     protected static ?string $navigationGroup = 'Pengaturan Sistem';
+
     protected static ?string $navigationLabel = 'Data Perangkat';
+
     protected static ?string $label = 'Data Perangkat';
+
     protected static ?string $navigationIcon = 'heroicon-o-device-tablet';
+
     protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form

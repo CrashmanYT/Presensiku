@@ -15,7 +15,7 @@ class DeviceRepository implements DeviceRepositoryInterface
         return Device::firstOrCreate(
             ['cloud_id' => $cloudId],
             [
-                'name' => 'Device ' . $cloudId,
+                'name' => 'Device '.$cloudId,
                 'cloud_id' => $cloudId,
                 'ip_address' => 'N/A',
                 'is_active' => true,

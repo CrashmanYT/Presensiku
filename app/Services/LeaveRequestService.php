@@ -26,18 +26,18 @@ class LeaveRequestService
             $newEndDate = Carbon::parse($data['end_date']);
 
             if ($user instanceof Student) {
-                $leaveRequestModel = new StudentLeaveRequest();
+                $leaveRequestModel = new StudentLeaveRequest;
                 $attendanceModelClass = StudentAttendance::class;
                 $foreignKey = 'student_id';
             } else {
-                $leaveRequestModel = new TeacherLeaveRequest();
+                $leaveRequestModel = new TeacherLeaveRequest;
                 $attendanceModelClass = TeacherAttendance::class;
                 $foreignKey = 'teacher_id';
             }
 
             $this->handleOverlaps($leaveRequestModel, $user->id, $newStartDate, $newEndDate);
             $this->createLeaveRequest($leaveRequestModel, $user->id, $data);
-            $this->syncToAttendance(new $attendanceModelClass() , $foreignKey, $user->id, $newStartDate, $newEndDate, $data['type']);
+            $this->syncToAttendance(new $attendanceModelClass, $foreignKey, $user->id, $newStartDate, $newEndDate, $data['type']);
 
             DB::commit();
         } catch (\Exception $e) {
@@ -48,7 +48,7 @@ class LeaveRequestService
 
     private function handleOverlaps(StudentLeaveRequest|TeacherLeaveRequest $model, int $userId, Carbon $newStartDate, Carbon $newEndDate)
     {
-        $foreignKey = $model instanceof StudentLeaveRequest ? "student_id" : "teacher_id";
+        $foreignKey = $model instanceof StudentLeaveRequest ? 'student_id' : 'teacher_id';
 
         $overlappingRequests = $model::where($foreignKey, $userId)
             ->where('start_date', '<=', $newEndDate)
@@ -78,16 +78,16 @@ class LeaveRequestService
                     'via' => $oldRequest->via,
                 ]);
 
-            // Scenario 2: New request completely swallows the old one.
+                // Scenario 2: New request completely swallows the old one.
             } elseif ($newStartDate->lte($oldStartDate) && $newEndDate->gte($oldEndDate)) {
                 $oldRequest->delete();
 
-            // Scenario 3: New request trims the end of the old one.
+                // Scenario 3: New request trims the end of the old one.
             } elseif ($newStartDate->gt($oldStartDate) && $newStartDate->lte($oldEndDate)) {
                 $oldRequest->end_date = $newStartDate->copy()->subDay()->toDateString();
                 $oldRequest->save();
 
-            // Scenario 4: New request trims the start of the old one.
+                // Scenario 4: New request trims the start of the old one.
             } elseif ($newEndDate->lt($oldEndDate) && $newEndDate->gte($oldStartDate)) {
                 $oldRequest->start_date = $newEndDate->copy()->addDay()->toDateString();
                 $oldRequest->save();
@@ -97,7 +97,7 @@ class LeaveRequestService
 
     private function createLeaveRequest(StudentLeaveRequest|TeacherLeaveRequest $model, int $userId, array $data)
     {
-        $foreignKey = $model instanceof StudentLeaveRequest ? "student_id" : "teacher_id";
+        $foreignKey = $model instanceof StudentLeaveRequest ? 'student_id' : 'teacher_id';
 
         $model::create([
             $foreignKey => $userId,
@@ -106,16 +106,16 @@ class LeaveRequestService
             'end_date' => $data['end_date'],
             'reason' => $data['reason'],
             'attachment' => $data['attachment'] ?? null,
-            'via' => LeaveRequestViaEnum::FORM_ONLINE->value
+            'via' => LeaveRequestViaEnum::FORM_ONLINE->value,
         ]);
     }
 
     private function syncToAttendance(StudentAttendance|TeacherAttendance $attendanceModelClass, string $foreignKey, int $userId, Carbon $startDate, Carbon $endDate, string $type)
     {
         $holidays = Holiday::where(function ($query) use ($startDate, $endDate) {
-                $query->where('start_date', '<=', $endDate)
-                      ->where('end_date', '>=', $startDate);
-            })->get();
+            $query->where('start_date', '<=', $endDate)
+                ->where('end_date', '>=', $startDate);
+        })->get();
 
         $holidayList = [];
         foreach ($holidays as $holiday) {
@@ -129,6 +129,7 @@ class LeaveRequestService
         while ($currentDate->lte($endDate)) {
             if ($currentDate->isWeekend() || isset($holidayList[$currentDate->toDateString()])) {
                 $currentDate->addDay();
+
                 continue;
             }
 

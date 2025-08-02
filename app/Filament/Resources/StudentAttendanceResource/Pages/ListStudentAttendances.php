@@ -8,7 +8,6 @@ use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\DB;
 
 class ListStudentAttendances extends ListRecords
 {
@@ -53,6 +52,7 @@ class ListStudentAttendances extends ListRecords
                 ->whereBetween('date', [now()->startOfMonth(), now()->endOfMonth()])
                 ->groupBy('student_id');
         }
+
         return $query;
     }
 
@@ -71,14 +71,13 @@ class ListStudentAttendances extends ListRecords
                 TextColumn::make('persen')
                     ->label('%')
                     ->formatStateUsing(fn ($state, $record) => $record->total > 0
-                        ? number_format(($record->total_hadir / $record->total) * 100, 2) . '%'
+                        ? number_format(($record->total_hadir / $record->total) * 100, 2).'%'
                         : '-'
                     ),
                 TextColumn::make('action')
                     ->label('Action')
                     ->html()
-                    ->formatStateUsing(fn () =>
-                    '<a href="#" class="underline text-blue-500">Download</a>'
+                    ->formatStateUsing(fn () => '<a href="#" class="underline text-blue-500">Download</a>'
                     ),
             ];
         }

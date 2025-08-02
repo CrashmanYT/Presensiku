@@ -7,7 +7,7 @@ use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
 
-enum AttendanceStatusEnum: string implements HasColor, HasLabel, HasIcon
+enum AttendanceStatusEnum: string implements HasColor, HasIcon, HasLabel
 {
     case HADIR = 'hadir';
     case TERLAMBAT = 'terlambat';
@@ -17,7 +17,7 @@ enum AttendanceStatusEnum: string implements HasColor, HasLabel, HasIcon
 
     public function getLabel(): ?string
     {
-        return match($this) {
+        return match ($this) {
             self::HADIR => 'Hadir',
             self::TERLAMBAT => 'Terlambat',
             self::TIDAK_HADIR => 'Tidak Hadir',
@@ -28,7 +28,7 @@ enum AttendanceStatusEnum: string implements HasColor, HasLabel, HasIcon
 
     public function getColor(): string|array|null
     {
-        return match($this) {
+        return match ($this) {
             self::HADIR => Color::Green,
             self::TERLAMBAT => Color::Yellow,
             self::TIDAK_HADIR => Color::Red,
@@ -39,7 +39,7 @@ enum AttendanceStatusEnum: string implements HasColor, HasLabel, HasIcon
 
     public function getIcon(): ?string
     {
-        return match($this) {
+        return match ($this) {
             self::HADIR => 'heroicon-o-check-circle',
             self::TERLAMBAT => 'heroicon-o-exclamation-triangle',
             self::TIDAK_HADIR => 'heroicon-o-x-circle',
@@ -48,9 +48,9 @@ enum AttendanceStatusEnum: string implements HasColor, HasLabel, HasIcon
         };
     }
 
-    public static function labels(): array{
-        
-        return collect(self::cases())->mapWithKeys(fn($case) => [$case->value => $case->getLabel()])->toArray();
-    }
+    public static function labels(): array
+    {
 
+        return collect(self::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])->toArray();
+    }
 }

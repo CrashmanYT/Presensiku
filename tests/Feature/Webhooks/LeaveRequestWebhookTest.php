@@ -3,7 +3,6 @@
 namespace Tests\Feature\Webhooks;
 
 use App\Models\Student;
-use App\Models\StudentAttendance;
 use App\Models\StudentLeaveRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -14,7 +13,9 @@ class LeaveRequestWebhookTest extends TestCase
     use RefreshDatabase;
 
     private string $secretToken;
+
     private string $studentWebhookUrl;
+
     private Student $student;
 
     protected function setUp(): void
@@ -44,11 +45,11 @@ class LeaveRequestWebhookTest extends TestCase
 
         // Kirim request ke webhook
         $response = $this->withHeaders(['X-Webhook-Secret' => $this->secretToken])
-                         ->postJson($this->studentWebhookUrl, $payload);
+            ->postJson($this->studentWebhookUrl, $payload);
 
         // Pastikan respon sukses
         $response->assertStatus(200)
-                 ->assertJson(['message' => 'Izin Siswa Berhasil Diproses']);
+            ->assertJson(['message' => 'Izin Siswa Berhasil Diproses']);
 
         // Pastikan data dibuat di database
         $this->assertDatabaseHas('student_leave_requests', [
@@ -70,7 +71,7 @@ class LeaveRequestWebhookTest extends TestCase
         $payload = ['identifier' => '12345'];
 
         $response = $this->withHeaders(['X-Webhook-Secret' => 'wrong-token'])
-                         ->postJson($this->studentWebhookUrl, $payload);
+            ->postJson($this->studentWebhookUrl, $payload);
 
         // Otorisasi gagal akan mengembalikan status 403
         $response->assertStatus(403);
@@ -87,11 +88,11 @@ class LeaveRequestWebhookTest extends TestCase
         ];
 
         $response = $this->withHeaders(['X-Webhook-Secret' => $this->secretToken])
-                         ->postJson($this->studentWebhookUrl, $payload);
+            ->postJson($this->studentWebhookUrl, $payload);
 
         // Validasi gagal akan mengembalikan status 422
         $response->assertStatus(422)
-                 ->assertJsonValidationErrors(['type', 'end_date']);
+            ->assertJsonValidationErrors(['type', 'end_date']);
     }
 
     #[Test]
@@ -106,10 +107,10 @@ class LeaveRequestWebhookTest extends TestCase
         ];
 
         $response = $this->withHeaders(['X-Webhook-Secret' => $this->secretToken])
-                         ->postJson($this->studentWebhookUrl, $payload);
+            ->postJson($this->studentWebhookUrl, $payload);
 
         $response->assertStatus(404)
-                 ->assertJson(['message' => 'Siswa Dengan NIS Tersebut Tidak Ditemukan']);
+            ->assertJson(['message' => 'Siswa Dengan NIS Tersebut Tidak Ditemukan']);
     }
 
     #[Test]
@@ -132,8 +133,8 @@ class LeaveRequestWebhookTest extends TestCase
         ];
 
         $this->withHeaders(['X-Webhook-Secret' => $this->secretToken])
-             ->postJson($this->studentWebhookUrl, $payload)
-             ->assertStatus(200);
+            ->postJson($this->studentWebhookUrl, $payload)
+            ->assertStatus(200);
 
         // Pastikan record lama sudah "dipotong"
         $this->assertDatabaseHas('student_leave_requests', [
@@ -220,7 +221,7 @@ class LeaveRequestWebhookTest extends TestCase
         \App\Models\Holiday::factory()->create([
             'start_date' => $holidayDate,
             'end_date' => $holidayDate,
-            'description' => 'Test Holiday'
+            'description' => 'Test Holiday',
         ]);
 
         $payload = [

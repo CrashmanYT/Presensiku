@@ -13,15 +13,16 @@ enum GenderEnum: string implements HasColor, HasLabel
 
     public function getLabel(): ?string
     {
-        return match($this) {
+        return match ($this) {
             self::L => 'Laki-Laki',
             self::P => 'Perempuan'
         };
 
     }
+
     public function getColor(): string|array|null
     {
-        return match($this) {
+        return match ($this) {
             self::L => Color::Blue,
             self::P => Color::Pink,
         };

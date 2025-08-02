@@ -22,10 +22,11 @@ class ScanLog extends Model
     protected $casts = [
         'scanned_at' => 'datetime',
         'event_type' => EventTypeEnum::class,
-        'result' => ScanResultEnum::class
+        'result' => ScanResultEnum::class,
     ];
 
-    public function device() {
+    public function device()
+    {
         return $this->belongsTo(Device::class);
     }
 }

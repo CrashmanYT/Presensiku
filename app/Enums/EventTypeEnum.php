@@ -11,7 +11,7 @@ enum EventTypeEnum: string implements HasLabel
 
     public function getLabel(): ?string
     {
-        return match($this) {
+        return match ($this) {
             self::SCAN_IN => 'Scan In',
             self::SCAN_OUT => 'Scan Out',
         };

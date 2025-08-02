@@ -3,24 +3,20 @@
 namespace App\Filament\Pages;
 
 use App\Models\Backup as BackupModel;
-use Filament\Notifications\Notification;
-use Filament\Pages\Page;
-use Filament\Support\Enums\ActionSize;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Carbon\Carbon;
 use Exception;
+use Filament\Notifications\Notification;
+use Filament\Pages\Page;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 
 class Backup extends Page
 {
-
     protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
+
     protected static ?string $navigationLabel = 'Cadangkan & Pulihkan';
+
     protected static ?string $navigationGroup = 'Pengaturan Sistem';
 
     protected static string $view = 'filament.pages.backup';
@@ -30,7 +26,9 @@ class Backup extends Page
     protected static ?int $navigationSort = 7;
 
     public bool $isBackingUp = false;
+
     public string $backupProgress = '';
+
     public ?int $selectedBackupId = null;
 
     /**
@@ -44,13 +42,13 @@ class Backup extends Page
 
             // Buat direktori backup jika belum ada
             $backupDir = storage_path('app/backups');
-            if (!File::exists($backupDir)) {
+            if (! File::exists($backupDir)) {
                 File::makeDirectory($backupDir, 0755, true);
             }
 
             $timestamp = now()->format('Y-m-d_H-i-s');
             $backupFileName = "backup_presensiku_{$timestamp}.sql";
-            $backupFilePath = $backupDir . '/' . $backupFileName;
+            $backupFilePath = $backupDir.'/'.$backupFileName;
 
             $this->backupProgress = 'Membuat backup database...';
 
@@ -66,7 +64,7 @@ class Backup extends Page
                 'file_path' => $backupFileName,
                 'restored' => false,
                 'file_size' => $fileSize,
-                'description' => 'Database backup created on ' . now()->format('Y-m-d H:i:s'),
+                'description' => 'Database backup created on '.now()->format('Y-m-d H:i:s'),
             ]);
 
             $this->backupProgress = '';
@@ -86,11 +84,11 @@ class Backup extends Page
             $this->isBackingUp = false;
             $this->backupProgress = '';
 
-            Log::error('Backup failed: ' . $e->getMessage());
+            Log::error('Backup failed: '.$e->getMessage());
 
             Notification::make()
                 ->title('Backup Gagal!')
-                ->body('Terjadi kesalahan: ' . $e->getMessage())
+                ->body('Terjadi kesalahan: '.$e->getMessage())
                 ->danger()
                 ->duration(10000)
                 ->send();
@@ -127,7 +125,7 @@ class Backup extends Page
                 '/usr/local/bin/mysqldump',
                 '/usr/bin/mysqldump',
                 '/opt/homebrew/bin/mysqldump',
-                'mysqldump' // system PATH
+                'mysqldump', // system PATH
             ];
 
             $mysqldumpCmd = null;
@@ -147,11 +145,11 @@ class Backup extends Page
                 }
             }
 
-            if (!$mysqldumpCmd) {
+            if (! $mysqldumpCmd) {
                 return false;
             }
 
-            $dbConfig = config('database.connections.' . config('database.default'));
+            $dbConfig = config('database.connections.'.config('database.default'));
 
             $host = $dbConfig['host'];
             $port = $dbConfig['port'];
@@ -173,7 +171,7 @@ class Backup extends Page
 
             $output = [];
             $returnCode = 0;
-            exec($command . ' 2>&1', $output, $returnCode);
+            exec($command.' 2>&1', $output, $returnCode);
 
             if ($returnCode === 0 && File::exists($filePath) && File::size($filePath) > 0) {
                 return true;
@@ -200,15 +198,15 @@ class Backup extends Page
 
                 // Get all tables
                 $allTables = $schemaBuilder->getAllTables();
-                $tableNames = array_map(function($table) {
-                    return array_values((array)$table)[0];
+                $tableNames = array_map(function ($table) {
+                    return array_values((array) $table)[0];
                 }, $allTables);
 
                 // Sort tables by priority (critical tables first)
                 $prioritizedTables = $this->prioritizeTables($tableNames);
 
                 $sql = "-- Laravel Database Backup with Prioritized Tables\n";
-                $sql .= "-- Generated on: " . now()->format('Y-m-d H:i:s') . "\n\n";
+                $sql .= '-- Generated on: '.now()->format('Y-m-d H:i:s')."\n\n";
                 $sql .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
 
                 foreach ($prioritizedTables as $tableName) {
@@ -216,7 +214,7 @@ class Backup extends Page
                         // Export table structure
                         $createTable = DB::select("SHOW CREATE TABLE `{$tableName}`")[0];
                         $sql .= "DROP TABLE IF EXISTS `{$tableName}`;\n";
-                        $sql .= $createTable->{'Create Table'} . ";\n\n";
+                        $sql .= $createTable->{'Create Table'}.";\n\n";
 
                         // Export table data with chunking to handle large tables
                         $totalRows = DB::table($tableName)->count();
@@ -231,14 +229,14 @@ class Backup extends Page
                                 if ($rows->count() > 0) {
                                     $values = [];
                                     foreach ($rows as $row) {
-                                        $rowData = array_map(function($value) {
-                                            return is_null($value) ? 'NULL' : "'" . addslashes($value) . "'";
-                                        }, (array)$row);
-                                        $values[] = '(' . implode(', ', $rowData) . ')';
+                                        $rowData = array_map(function ($value) {
+                                            return is_null($value) ? 'NULL' : "'".addslashes($value)."'";
+                                        }, (array) $row);
+                                        $values[] = '('.implode(', ', $rowData).')';
                                     }
 
                                     $sql .= "INSERT INTO `{$tableName}` VALUES \n";
-                                    $sql .= implode(",\n", $values) . ";\n\n";
+                                    $sql .= implode(",\n", $values).";\n\n";
 
                                     $totalProcessed += $rows->count();
                                 }
@@ -262,7 +260,7 @@ class Backup extends Page
                             }
                         }
                     } catch (Exception $e) {
-                        Log::warning("Failed to backup table '{$tableName}': " . $e->getMessage());
+                        Log::warning("Failed to backup table '{$tableName}': ".$e->getMessage());
                         // Continue with other tables
                     }
                 }
@@ -288,13 +286,13 @@ class Backup extends Page
     {
         try {
             $sql = "-- Custom Database Backup with Prioritized Tables\n";
-            $sql .= "-- Generated on: " . now()->format('Y-m-d H:i:s') . "\n\n";
+            $sql .= '-- Generated on: '.now()->format('Y-m-d H:i:s')."\n\n";
             $sql .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
 
             // Get all tables using raw query
             $tables = DB::select('SHOW TABLES');
-            $tableNames = array_map(function($table) {
-                return array_values((array)$table)[0];
+            $tableNames = array_map(function ($table) {
+                return array_values((array) $table)[0];
             }, $tables);
 
             // Sort tables by priority
@@ -304,9 +302,9 @@ class Backup extends Page
                 try {
                     // Get table structure
                     $createTable = DB::select("SHOW CREATE TABLE `{$tableName}`");
-                    if (!empty($createTable)) {
+                    if (! empty($createTable)) {
                         $sql .= "DROP TABLE IF EXISTS `{$tableName}`;\n";
-                        $sql .= $createTable[0]->{'Create Table'} . ";\n\n";
+                        $sql .= $createTable[0]->{'Create Table'}.";\n\n";
                     }
 
                     // Get table data with chunking to handle large tables
@@ -324,21 +322,21 @@ class Backup extends Page
 
                                 foreach ($rows as $row) {
                                     $rowData = [];
-                                    foreach ((array)$row as $value) {
+                                    foreach ((array) $row as $value) {
                                         if (is_null($value)) {
                                             $rowData[] = 'NULL';
                                         } else {
-                                            $rowData[] = "'" . str_replace(["'", "\\"], ["\\'", "\\\\"], $value) . "'";
+                                            $rowData[] = "'".str_replace(["'", '\\'], ["\\'", '\\\\'], $value)."'";
                                         }
                                     }
-                                    $values[] = '(' . implode(', ', $rowData) . ')';
+                                    $values[] = '('.implode(', ', $rowData).')';
                                 }
 
                                 // Split into smaller chunks for INSERT statements
                                 $insertChunks = array_chunk($values, 100);
                                 foreach ($insertChunks as $chunk) {
                                     $sql .= "INSERT INTO `{$tableName}` VALUES \n";
-                                    $sql .= implode(",\n", $chunk) . ";\n\n";
+                                    $sql .= implode(",\n", $chunk).";\n\n";
                                 }
 
                                 $totalProcessed += $rows->count();
@@ -365,8 +363,8 @@ class Backup extends Page
 
                 } catch (Exception $e) {
                     // Skip table if error occurs but log it
-                    $sql .= "-- Error backing up table {$tableName}: " . $e->getMessage() . "\n\n";
-                    Log::warning("Failed to backup table '{$tableName}': " . $e->getMessage());
+                    $sql .= "-- Error backing up table {$tableName}: ".$e->getMessage()."\n\n";
+                    Log::warning("Failed to backup table '{$tableName}': ".$e->getMessage());
                 }
             }
 
@@ -374,12 +372,12 @@ class Backup extends Page
 
             File::put($filePath, $sql);
 
-            if (!File::exists($filePath) || File::size($filePath) === 0) {
+            if (! File::exists($filePath) || File::size($filePath) === 0) {
                 throw new Exception('Custom backup file tidak berhasil dibuat atau kosong');
             }
 
         } catch (Exception $e) {
-            throw new Exception('Semua metode backup gagal: ' . $e->getMessage());
+            throw new Exception('Semua metode backup gagal: '.$e->getMessage());
         }
     }
 
@@ -426,7 +424,7 @@ class Backup extends Page
 
         // Then add remaining tables (excluding large ones)
         foreach ($tableNames as $tableName) {
-            if (!in_array($tableName, $criticalTables) && !in_array($tableName, $largeTables)) {
+            if (! in_array($tableName, $criticalTables) && ! in_array($tableName, $largeTables)) {
                 $remaining[] = $tableName;
             }
         }
@@ -448,9 +446,9 @@ class Backup extends Page
     public function restoreDatabase(string $fileName)
     {
         try {
-            $backupFilePath = storage_path('app/backups/' . $fileName);
+            $backupFilePath = storage_path('app/backups/'.$fileName);
 
-            if (!File::exists($backupFilePath)) {
+            if (! File::exists($backupFilePath)) {
                 throw new Exception('File backup tidak ditemukan');
             }
 
@@ -459,6 +457,7 @@ class Backup extends Page
             // Try mysql command first
             if ($this->tryMysqlRestore($backupFilePath)) {
                 $this->finishRestore($fileName, 'MySQL command');
+
                 return;
             }
 
@@ -469,11 +468,11 @@ class Backup extends Page
         } catch (Exception $e) {
             $this->backupProgress = '';
 
-            Log::error('Restore failed: ' . $e->getMessage());
+            Log::error('Restore failed: '.$e->getMessage());
 
             Notification::make()
                 ->title('Restore Gagal!')
-                ->body('Terjadi kesalahan: ' . $e->getMessage())
+                ->body('Terjadi kesalahan: '.$e->getMessage())
                 ->danger()
                 ->duration(10000)
                 ->send();
@@ -491,7 +490,7 @@ class Backup extends Page
                 '/usr/local/bin/mysql',
                 '/usr/bin/mysql',
                 '/opt/homebrew/bin/mysql',
-                'mysql' // system PATH
+                'mysql', // system PATH
             ];
 
             $mysqlCmd = null;
@@ -511,11 +510,11 @@ class Backup extends Page
                 }
             }
 
-            if (!$mysqlCmd) {
+            if (! $mysqlCmd) {
                 return false;
             }
 
-            $dbConfig = config('database.connections.' . config('database.default'));
+            $dbConfig = config('database.connections.'.config('database.default'));
 
             $host = $dbConfig['host'];
             $port = $dbConfig['port'];
@@ -537,7 +536,7 @@ class Backup extends Page
 
             $output = [];
             $returnCode = 0;
-            exec($command . ' 2>&1', $output, $returnCode);
+            exec($command.' 2>&1', $output, $returnCode);
 
             return $returnCode === 0;
 
@@ -601,7 +600,7 @@ class Backup extends Page
                     if (str_contains($statement, 'INSERT INTO `users`') || str_contains($statement, 'INSERT INTO `settings`')) {
                         Log::info('Critical table data restored', [
                             'statement_type' => str_contains($statement, 'users') ? 'users' : 'settings',
-                            'statement_preview' => substr($statement, 0, 100) . '...'
+                            'statement_preview' => substr($statement, 0, 100).'...',
                         ]);
                     }
 
@@ -610,8 +609,8 @@ class Backup extends Page
 
                     // Log individual statement errors but continue
                     Log::warning('Failed to execute SQL statement during restore', [
-                        'statement' => substr($statement, 0, 200) . '...',
-                        'error' => $e->getMessage()
+                        'statement' => substr($statement, 0, 200).'...',
+                        'error' => $e->getMessage(),
                     ]);
 
                     // If it's a critical table, log as error but don't throw (data might still be restored)
@@ -622,7 +621,7 @@ class Backup extends Page
                         Log::error('Critical table restore failed', [
                             'table' => str_contains($statement, 'users') ? 'users' : 'settings',
                             'statement' => substr($statement, 0, 300),
-                            'error' => $e->getMessage()
+                            'error' => $e->getMessage(),
                         ]);
                     }
                 }
@@ -654,7 +653,7 @@ class Backup extends Page
 
             Log::info('Critical tables verification', [
                 'users_count' => $userCount,
-                'settings_count' => $settingsCount
+                'settings_count' => $settingsCount,
             ]);
 
             if ($userCount === 0) {
@@ -667,7 +666,7 @@ class Backup extends Page
 
         } catch (Exception $e) {
             Log::error('Failed to verify critical tables after restore', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -689,7 +688,7 @@ class Backup extends Page
                 continue;
             }
 
-            $cleanedSql .= $line . "\n";
+            $cleanedSql .= $line."\n";
         }
 
         // Split by semicolon but be careful with semicolons inside strings
@@ -701,7 +700,7 @@ class Backup extends Page
         for ($i = 0; $i < strlen($cleanedSql); $i++) {
             $char = $cleanedSql[$i];
 
-            if (!$inString && ($char === '"' || $char === "'")) {
+            if (! $inString && ($char === '"' || $char === "'")) {
                 $inString = true;
                 $stringDelimiter = $char;
             } elseif ($inString && $char === $stringDelimiter) {
@@ -715,9 +714,9 @@ class Backup extends Page
             $currentStatement .= $char;
 
             // If we hit a semicolon outside of a string, that's the end of a statement
-            if (!$inString && $char === ';') {
+            if (! $inString && $char === ';') {
                 $statement = trim($currentStatement);
-                if (!empty($statement)) {
+                if (! empty($statement)) {
                     $statements[] = $statement;
                 }
                 $currentStatement = '';
@@ -726,7 +725,7 @@ class Backup extends Page
 
         // Add any remaining statement
         $statement = trim($currentStatement);
-        if (!empty($statement)) {
+        if (! empty($statement)) {
             $statements[] = $statement;
         }
 
@@ -752,7 +751,7 @@ class Backup extends Page
 
         Log::info("Database restore completed successfully using {$method}", [
             'file_name' => $fileName,
-            'method' => $method
+            'method' => $method,
         ]);
     }
 
@@ -761,14 +760,15 @@ class Backup extends Page
      */
     public function downloadBackup(string $fileName)
     {
-        $backupFilePath = storage_path('app/backups/' . $fileName);
+        $backupFilePath = storage_path('app/backups/'.$fileName);
 
-        if (!File::exists($backupFilePath)) {
+        if (! File::exists($backupFilePath)) {
             Notification::make()
                 ->title('File Tidak Ditemukan!')
                 ->body('File backup tidak ditemukan')
                 ->danger()
                 ->send();
+
             return;
         }
 
@@ -782,7 +782,7 @@ class Backup extends Page
     {
         try {
             $backup = BackupModel::findOrFail($backupId);
-            $backupFilePath = storage_path('app/backups/' . $backup->file_path);
+            $backupFilePath = storage_path('app/backups/'.$backup->file_path);
 
             // Hapus file fisik
             if (File::exists($backupFilePath)) {
@@ -799,7 +799,7 @@ class Backup extends Page
                 ->send();
 
         } catch (Exception $e) {
-            Log::error('Delete backup failed: ' . $e->getMessage());
+            Log::error('Delete backup failed: '.$e->getMessage());
 
             Notification::make()
                 ->title('Gagal Menghapus!')
@@ -826,7 +826,7 @@ class Backup extends Page
             $oldBackups = BackupModel::where('created_at', '<', Carbon::now()->subDays(30))->get();
 
             foreach ($oldBackups as $backup) {
-                $backupFilePath = storage_path('app/backups/' . $backup->file_path);
+                $backupFilePath = storage_path('app/backups/'.$backup->file_path);
 
                 if (File::exists($backupFilePath)) {
                     File::delete($backupFilePath);
@@ -840,7 +840,7 @@ class Backup extends Page
             }
 
         } catch (Exception $e) {
-            Log::error('Cleanup old backups failed: ' . $e->getMessage());
+            Log::error('Cleanup old backups failed: '.$e->getMessage());
         }
     }
 
@@ -850,7 +850,7 @@ class Backup extends Page
     public function getBackups()
     {
         return BackupModel::orderBy('created_at', 'desc')->get()->map(function ($backup) {
-            $filePath = storage_path('app/backups/' . $backup->file_path);
+            $filePath = storage_path('app/backups/'.$backup->file_path);
             $fileExists = File::exists($filePath);
             $fileSize = $fileExists ? $this->formatBytes(File::size($filePath)) : 'N/A';
 
@@ -870,13 +870,13 @@ class Backup extends Page
      */
     private function formatBytes($bytes, $precision = 2)
     {
-        $units = array('B', 'KB', 'MB', 'GB', 'TB');
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
 
         for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
             $bytes /= 1024;
         }
 
-        return round($bytes, $precision) . ' ' . $units[$i];
+        return round($bytes, $precision).' '.$units[$i];
     }
 
     /**
@@ -902,11 +902,12 @@ class Backup extends Page
      */
     private function getDiskSpace($directory)
     {
-        if (!File::exists($directory)) {
+        if (! File::exists($directory)) {
             return null;
         }
 
         $bytes = disk_free_space($directory);
+
         return $this->formatBytes($bytes);
     }
 }

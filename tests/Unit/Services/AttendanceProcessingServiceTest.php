@@ -20,9 +20,13 @@ class AttendanceProcessingServiceTest extends TestCase
     use RefreshDatabase;
 
     private MockInterface $attendanceServiceMock;
+
     private AttendanceProcessingService $attendanceProcessingService;
+
     private Student $student;
+
     private Device $device;
+
     private AttendanceRule $rule;
 
     /**

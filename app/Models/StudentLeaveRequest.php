@@ -18,7 +18,7 @@ class StudentLeaveRequest extends Model
         'reason',
         'attachment',
         'submitted_by',
-        'via'
+        'via',
     ];
 
     protected $casts = [
@@ -27,7 +27,8 @@ class StudentLeaveRequest extends Model
         'via' => LeaveRequestViaEnum::class,
     ];
 
-    public function student() {
+    public function student()
+    {
         return $this->belongsTo(Student::class);
     }
 }

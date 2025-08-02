@@ -18,7 +18,7 @@ return new class extends Migration
             $table->boolean('is_public')->default(false)->after('description');
             $table->unsignedBigInteger('created_by')->nullable()->after('is_public');
             $table->unsignedBigInteger('updated_by')->nullable()->after('created_by');
-            
+
             $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
             $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
         });

@@ -48,7 +48,7 @@ class StudentAttendanceFactory extends Factory
             'time_in' => $timeIn,
             'time_out' => $timeOut,
             'status' => $status,
-            'photo_in' => ($status === AttendanceStatusEnum::HADIR || $status === AttendanceStatusEnum::TERLAMBAT) ? 'https://i.pravatar.cc/150?img=' . $this->faker->numberBetween(1, 70) : null,
+            'photo_in' => ($status === AttendanceStatusEnum::HADIR || $status === AttendanceStatusEnum::TERLAMBAT) ? 'https://i.pravatar.cc/150?img='.$this->faker->numberBetween(1, 70) : null,
             'device_id' => $randomDeviceId,
         ];
     }

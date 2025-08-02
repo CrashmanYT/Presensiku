@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 class AttendanceDataService
 {
-    public function fetchAttendances(Student | Teacher $user, Carbon $startDate, Carbon $endDate): Collection
+    public function fetchAttendances(Student|Teacher $user, Carbon $startDate, Carbon $endDate): Collection
     {
         $dateRange = [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')];
         $query = $user instanceof Student
@@ -32,17 +32,17 @@ class AttendanceDataService
 
         return Holiday::where(function ($query) use ($startDateStr, $endDateStr) {
             $query->whereBetween('start_date', [$startDateStr, $endDateStr])
-                  ->orWhereBetween('end_date', [$startDateStr, $endDateStr])
-                  ->orWhere(function ($q) use ($startDateStr, $endDateStr) {
-                      $q->where('start_date', '<=', $startDateStr)
+                ->orWhereBetween('end_date', [$startDateStr, $endDateStr])
+                ->orWhere(function ($q) use ($startDateStr, $endDateStr) {
+                    $q->where('start_date', '<=', $startDateStr)
                         ->where('end_date', '>=', $endDateStr);
-                  });
+                });
         })->get();
     }
 
-    public function fetchAttendanceRules(Student | Teacher $user)
+    public function fetchAttendanceRules(Student|Teacher $user)
     {
-        if (!($user instanceof Student) || !$user->class) {
+        if (! ($user instanceof Student) || ! $user->class) {
             return collect();
         }
 

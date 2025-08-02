@@ -5,11 +5,10 @@ namespace App\Livewire;
 use App\Services\AttendanceCalendarService;
 use App\Services\AttendanceDataService;
 use App\Services\UserFinderService;
-use App\Models\Student;
 use Carbon\Carbon;
-use Livewire\Component;
-use Livewire\Attributes\On;
 use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\On;
+use Livewire\Component;
 
 class RealtimeAttendanceDashboard extends Component
 {
@@ -36,22 +35,30 @@ class RealtimeAttendanceDashboard extends Component
 
     // Public properties
     public $currentUser = null;
+
     public $attendanceCalendar = [];
+
     public $currentMonth;
+
     public $currentYear;
+
     public $showDetails = false;
+
     public $lastScanTimestamp = null;
+
     public $lastScanId = null;
 
     // Services
     protected UserFinderService $userFinder;
+
     protected AttendanceDataService $attendanceDataService;
+
     protected AttendanceCalendarService $calendarService;
 
     // Event listeners
     protected $listeners = [
         'attendanceUpdated' => 'refreshData',
-        'echo:attendance-dashboard,user.scanned' => 'handleRealtimeUserScanned'
+        'echo:attendance-dashboard,user.scanned' => 'handleRealtimeUserScanned',
     ];
 
     public function boot(
@@ -84,7 +91,7 @@ class RealtimeAttendanceDashboard extends Component
 
     public function refreshData(): void
     {
-        $this->logInfo('RefreshData called at: ' . now());
+        $this->logInfo('RefreshData called at: '.now());
         $this->checkForNewScans();
 
         if ($this->currentUser) {
@@ -104,12 +111,11 @@ class RealtimeAttendanceDashboard extends Component
             }
         }
 
-
     }
 
     public function handleRealtimeUserScanned(array $event): void
     {
-        if (!empty($event['fingerprint_id'])) {
+        if (! empty($event['fingerprint_id'])) {
             $this->handleUserScanned($event['fingerprint_id']);
         }
     }
@@ -118,7 +124,9 @@ class RealtimeAttendanceDashboard extends Component
     public function handleUserScanned(string $fingerprintId): void
     {
         $user = $this->userFinder->findByFingerprint($fingerprintId);
-        if (!$user) return;
+        if (! $user) {
+            return;
+        }
 
         $this->currentUser = $user;
         $this->showDetails = true;
@@ -142,17 +150,20 @@ class RealtimeAttendanceDashboard extends Component
 
     public function testCalendar(): void
     {
-        if (!app()->environment('local')) return;
+        if (! app()->environment('local')) {
+            return;
+        }
 
         $student = $this->userFinder->findTestStudent();
-        if (!$student) {
+        if (! $student) {
             $this->logInfo('No student with attendance found for testing');
+
             return;
         }
 
         $this->logInfo('Test calendar triggered', [
             'student_name' => $student->name,
-            'fingerprint_id' => $student->fingerprint_id
+            'fingerprint_id' => $student->fingerprint_id,
         ]);
 
         $this->handleUserScanned($student->fingerprint_id);
@@ -164,7 +175,9 @@ class RealtimeAttendanceDashboard extends Component
 
     private function loadAttendanceCalendar(): void
     {
-        if (!$this->currentUser) return;
+        if (! $this->currentUser) {
+            return;
+        }
 
         [$startDate, $endDate] = $this->getMonthDateRange();
 
@@ -188,6 +201,7 @@ class RealtimeAttendanceDashboard extends Component
     private function getMonthDateRange(): array
     {
         $date = Carbon::create($this->currentYear, $this->currentMonth, 1);
+
         return [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()];
     }
 
@@ -235,13 +249,13 @@ class RealtimeAttendanceDashboard extends Component
 
     private function logInfo(string $message, array $context = []): void
     {
-        Log::info('[RealtimeAttendanceDashboard] ' . $message, $context);
+        Log::info('[RealtimeAttendanceDashboard] '.$message, $context);
     }
 
     public function render()
     {
         return view('livewire.realtime-attendance-dashboard', [
-            'monthName' => Carbon::create($this->currentYear, $this->currentMonth, 1)->format('F Y')
+            'monthName' => Carbon::create($this->currentYear, $this->currentMonth, 1)->format('F Y'),
         ])->layout('layouts.dashboard-standalone');
     }
 }

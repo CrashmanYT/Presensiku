@@ -7,8 +7,5 @@ use Illuminate\Http\Request;
 
 class IzinController extends Controller
 {
-    public function webhook(Request $request)
-    {
-
-    }
+    public function webhook(Request $request) {}
 }

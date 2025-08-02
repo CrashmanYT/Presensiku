@@ -2,11 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\AttendanceRule;
 use App\Models\Classes;
 use Faker\Factory as Faker;
+use Illuminate\Database\Seeder;
 
 class AttendanceRuleSeeder extends Seeder
 {

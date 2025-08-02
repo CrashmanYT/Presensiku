@@ -2,22 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\TemplateExport;
 use App\Models\Classes;
 use App\Models\Teacher;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TemplateController extends Controller
 {
     public function downloadStudentTemplate()
     {
         $headers = ['name', 'nis', 'class_name', 'gender', 'fingerprint_id', 'parent_whatsapp'];
-        
+
         // Get actual class names from database for sample data
         $classes = Classes::limit(3)->pluck('name')->toArray();
-        $sampleClasses = !empty($classes) ? $classes : ['12 IPA 1', '12 IPA 2', '12 IPS 1'];
-        
+        $sampleClasses = ! empty($classes) ? $classes : ['12 IPA 1', '12 IPA 2', '12 IPS 1'];
+
         $sampleData = [
             ['Ahmad Rizki', '2023001', $sampleClasses[0] ?? '12 IPA 1', 'L', '001', '+6281234567890'],
             ['Siti Nurhaliza', '2023002', $sampleClasses[0] ?? '12 IPA 1', 'P', '002', '+6281234567891'],
@@ -25,7 +24,7 @@ class TemplateController extends Controller
         ];
 
         return Excel::download(
-            new TemplateExport($headers, $sampleData), 
+            new TemplateExport($headers, $sampleData),
             'Template_Import_Siswa.xlsx'
         );
     }
@@ -33,7 +32,7 @@ class TemplateController extends Controller
     public function downloadTeacherTemplate()
     {
         $headers = ['name', 'nip', 'fingerprint_id', 'whatsapp_number'];
-        
+
         $sampleData = [
             ['Dr. Ahmad Malik', '196512151990031001', '101', '+6281234567800'],
             ['Siti Aminah S.Pd', '197203102000032002', '102', '+6281234567801'],
@@ -41,7 +40,7 @@ class TemplateController extends Controller
         ];
 
         return Excel::download(
-            new TemplateExport($headers, $sampleData), 
+            new TemplateExport($headers, $sampleData),
             'Template_Import_Guru.xlsx'
         );
     }
@@ -49,11 +48,11 @@ class TemplateController extends Controller
     public function downloadClassTemplate()
     {
         $headers = ['name', 'level', 'major', 'homeroom_teacher_name'];
-        
+
         // Get actual teacher names from database for sample data
         $teachers = Teacher::limit(3)->pluck('name')->toArray();
-        $sampleTeachers = !empty($teachers) ? $teachers : ['Dr. Ahmad Malik', 'Siti Aminah S.Pd', 'Budi Rahman M.Pd'];
-        
+        $sampleTeachers = ! empty($teachers) ? $teachers : ['Dr. Ahmad Malik', 'Siti Aminah S.Pd', 'Budi Rahman M.Pd'];
+
         $sampleData = [
             ['12 IPA 1', '12', 'IPA', $sampleTeachers[0] ?? 'Dr. Ahmad Malik'],
             ['12 IPA 2', '12', 'IPA', $sampleTeachers[1] ?? 'Siti Aminah S.Pd'],
@@ -61,7 +60,7 @@ class TemplateController extends Controller
         ];
 
         return Excel::download(
-            new TemplateExport($headers, $sampleData), 
+            new TemplateExport($headers, $sampleData),
             'Template_Import_Kelas.xlsx'
         );
     }

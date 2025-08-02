@@ -36,6 +36,6 @@ return [
     ],
     'webhook' => [
         'secret_token' => env('WEBHOOK_SECRET_TOKEN'),
-    ]
+    ],
 
 ];

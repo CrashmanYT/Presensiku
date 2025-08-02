@@ -4,7 +4,6 @@ namespace App\Filament\Imports;
 
 use App\Models\Classes;
 use App\Models\Student;
-use App\Enums\GenderEnum;
 use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Importer;
 use Filament\Actions\Imports\Models\Import;
@@ -20,17 +19,17 @@ class StudentImporter extends Importer
                 ->label('Nama')
                 ->requiredMapping()
                 ->rules(['required', 'string', 'max:255']),
-                
+
             ImportColumn::make('nis')
                 ->label('NIS')
                 ->requiredMapping()
                 ->rules(['required', 'string', 'max:20']),
-                
+
             ImportColumn::make('class_name')
                 ->label('Nama Kelas')
                 ->requiredMapping()
                 ->rules(['required', 'string']),
-                
+
             ImportColumn::make('gender')
                 ->label('Jenis Kelamin (L/P)')
                 ->requiredMapping()
@@ -42,11 +41,11 @@ class StudentImporter extends Importer
                         default => $state,
                     };
                 }),
-                
+
             ImportColumn::make('fingerprint_id')
                 ->label('ID Sidik Jari')
                 ->rules(['nullable', 'string', 'max:50']),
-                
+
             ImportColumn::make('parent_whatsapp')
                 ->label('WhatsApp Orang Tua')
                 ->rules(['nullable', 'string', 'max:20']),
@@ -64,7 +63,7 @@ class StudentImporter extends Importer
     protected function beforeSave(): void
     {
         // Find class by name and set class_id
-        if (!empty($this->data['class_name'])) {
+        if (! empty($this->data['class_name'])) {
             $class = Classes::where('name', trim($this->data['class_name']))->first();
             if ($class) {
                 $this->data['class_id'] = $class->id;
@@ -72,17 +71,17 @@ class StudentImporter extends Importer
                 throw new \Exception("Kelas '{$this->data['class_name']}' tidak ditemukan.");
             }
         }
-        
+
         // Remove class_name from data as it's not a database field
         unset($this->data['class_name']);
     }
 
     public static function getCompletedNotificationBody(Import $import): string
     {
-        $body = 'Import data siswa selesai. ' . number_format($import->successful_rows) . ' ' . str('siswa')->plural($import->successful_rows) . ' berhasil diimpor.';
+        $body = 'Import data siswa selesai. '.number_format($import->successful_rows).' '.str('siswa')->plural($import->successful_rows).' berhasil diimpor.';
 
         if ($failedRowsCount = $import->getFailedRowsCount()) {
-            $body .= ' ' . number_format($failedRowsCount) . ' ' . str('siswa')->plural($failedRowsCount) . ' gagal diimpor.';
+            $body .= ' '.number_format($failedRowsCount).' '.str('siswa')->plural($failedRowsCount).' gagal diimpor.';
         }
 
         return $body;

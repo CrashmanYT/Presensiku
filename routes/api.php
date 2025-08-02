@@ -10,7 +10,7 @@ Route::get('/user', function (Request $request) {
 
 // Webhook routes for fingerprint devices
 Route::post('/webhook/fingerprint', [WebhookController::class, 'handleAttendance']);
-//Route::post('/webhook/test-scan', [WebhookController::class, 'testScan']);
+// Route::post('/webhook/test-scan', [WebhookController::class, 'testScan']);
 
 // Fingerspot webhook (active route)
 Route::post('/webhook/fingerspot', [WebhookController::class, 'handleAttendance']);

@@ -3,18 +3,18 @@
 namespace App\Exports;
 
 use App\Models\TeacherAttendance;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
-use Carbon\Carbon;
 
-class TeacherAttendanceExport implements FromQuery, WithHeadings, WithMapping, WithChunkReading, ShouldAutoSize, WithEvents
+class TeacherAttendanceExport implements FromQuery, ShouldAutoSize, WithChunkReading, WithEvents, WithHeadings, WithMapping
 {
     protected $filters;
 
@@ -32,19 +32,19 @@ class TeacherAttendanceExport implements FromQuery, WithHeadings, WithMapping, W
             ->orderBy('id', 'desc');
 
         // Apply filters if provided
-        if (!empty($this->filters['from_date'])) {
+        if (! empty($this->filters['from_date'])) {
             $query->whereDate('date', '>=', $this->filters['from_date']);
         }
 
-        if (!empty($this->filters['to_date'])) {
+        if (! empty($this->filters['to_date'])) {
             $query->whereDate('date', '<=', $this->filters['to_date']);
         }
 
-        if (!empty($this->filters['teacher_ids'])) {
+        if (! empty($this->filters['teacher_ids'])) {
             $query->whereIn('teacher_id', $this->filters['teacher_ids']);
         }
 
-        if (!empty($this->filters['status'])) {
+        if (! empty($this->filters['status'])) {
             $query->whereIn('status', $this->filters['status']);
         }
 
@@ -62,7 +62,7 @@ class TeacherAttendanceExport implements FromQuery, WithHeadings, WithMapping, W
             'Jam Keluar',
             'Status',
             'Perangkat',
-            'Dibuat Pada'
+            'Dibuat Pada',
         ];
     }
 
@@ -92,15 +92,15 @@ class TeacherAttendanceExport implements FromQuery, WithHeadings, WithMapping, W
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function(AfterSheet $event) {
+            AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
-                
+
                 // Get the highest row and column
                 $highestRow = $sheet->getHighestRow();
                 $highestColumn = $sheet->getHighestColumn();
-                
+
                 // Style the header row
-                $sheet->getStyle('A1:' . $highestColumn . '1')->applyFromArray([
+                $sheet->getStyle('A1:'.$highestColumn.'1')->applyFromArray([
                     'font' => [
                         'bold' => true,
                         'size' => 12,
@@ -121,10 +121,10 @@ class TeacherAttendanceExport implements FromQuery, WithHeadings, WithMapping, W
                         ],
                     ],
                 ]);
-                
+
                 // Style data rows
                 if ($highestRow > 1) {
-                    $sheet->getStyle('A2:' . $highestColumn . $highestRow)->applyFromArray([
+                    $sheet->getStyle('A2:'.$highestColumn.$highestRow)->applyFromArray([
                         'borders' => [
                             'allBorders' => [
                                 'borderStyle' => Border::BORDER_THIN,
@@ -135,18 +135,18 @@ class TeacherAttendanceExport implements FromQuery, WithHeadings, WithMapping, W
                             'vertical' => Alignment::VERTICAL_CENTER,
                         ],
                     ]);
-                    
+
                     // Center align specific columns
-                    $sheet->getStyle('A2:A' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                    $sheet->getStyle('D2:D' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                    $sheet->getStyle('E2:F' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                    $sheet->getStyle('G2:G' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                    $sheet->getStyle('A2:A'.$highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                    $sheet->getStyle('D2:D'.$highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                    $sheet->getStyle('E2:F'.$highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                    $sheet->getStyle('G2:G'.$highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 }
-                
+
                 // Set row height
                 $sheet->getDefaultRowDimension()->setRowHeight(20);
                 $sheet->getRowDimension(1)->setRowHeight(25);
-                
+
                 // Freeze first row
                 $sheet->freezePane('A2');
             },

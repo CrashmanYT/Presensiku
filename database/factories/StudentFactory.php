@@ -32,7 +32,7 @@ class StudentFactory extends Factory
             'class_id' => Classes::factory(),
             'gender' => $this->faker->randomElement(GenderEnum::cases()),
             'fingerprint_id' => $this->faker->unique()->numerify('####'),
-            'photo' => 'https://i.pravatar.cc/150?img=' . $this->faker->numberBetween(1, 70),
+            'photo' => 'https://i.pravatar.cc/150?img='.$this->faker->numberBetween(1, 70),
             'parent_whatsapp' => $this->faker->phoneNumber(),
         ];
     }

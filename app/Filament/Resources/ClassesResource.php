@@ -2,33 +2,33 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ClassesResource\Pages;
-use App\Filament\Resources\ClassesResource\RelationManagers;
-use App\Models\Classes;
-use App\Helpers\ExportColumnHelper;
 use App\Filament\Imports\ClassesImporter;
-use Filament\Tables\Actions\ImportAction;
+use App\Filament\Resources\ClassesResource\Pages;
+use App\Helpers\ExportColumnHelper;
+use App\Models\Classes;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ImportAction;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
-use pxlrbt\FilamentExcel\Columns\Column;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 class ClassesResource extends Resource
 {
     protected static ?string $model = Classes::class;
+
     protected static ?string $navigationGroup = 'Manajemen Data';
+
     protected static ?string $navigationLabel = 'Data Kelas';
+
     protected static ?string $label = 'Data Kelas';
 
-
     protected static ?string $navigationIcon = 'heroicon-o-building-library';
+
     protected static ?int $navigationSort = 3;
 
     public static function getEloquentQuery(): Builder
@@ -117,8 +117,8 @@ class ClassesResource extends Resource
                             ->withColumns(
                                 ExportColumnHelper::getClassColumns()
                             )
-                            ->withFilename('Data Kelas.xlsx')
-                    ])
+                            ->withFilename('Data Kelas.xlsx'),
+                    ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -131,7 +131,7 @@ class ClassesResource extends Resource
                                 ->withColumns(
                                     ExportColumnHelper::getClassColumns()
                                 )
-                                ->withFilename('Data Kelas.xlsx')
+                                ->withFilename('Data Kelas.xlsx'),
                         ]),
                 ]),
             ]);

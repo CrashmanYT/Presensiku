@@ -130,6 +130,7 @@ class SettingsHelper
     public static function formatDate($date): string
     {
         $format = static::get('system.localization.date_format', 'd/m/Y');
+
         return $date instanceof \DateTime ? $date->format($format) : date($format, strtotime($date));
     }
 
@@ -141,7 +142,7 @@ class SettingsHelper
         $key = "notifications.whatsapp.templates.{$type}";
         $templates = static::get($key, []);
 
-        if (!is_array($templates) || empty($templates)) {
+        if (! is_array($templates) || empty($templates)) {
             return "Template pesan untuk '{$type}' tidak ditemukan atau kosong.";
         }
 
@@ -154,7 +155,7 @@ class SettingsHelper
         }
 
         foreach ($variables as $variable => $value) {
-            $templateString = str_replace('{' . $variable . '}', $value, $templateString);
+            $templateString = str_replace('{'.$variable.'}', $value, $templateString);
         }
 
         return $templateString;

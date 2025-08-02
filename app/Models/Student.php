@@ -17,30 +17,35 @@ class Student extends Model
         'gender',
         'fingerprint_id',
         'photo',
-        'parent_whatsapp'
+        'parent_whatsapp',
     ];
 
     protected $casts = [
         'gender' => GenderEnum::class,
     ];
 
-    public function class() {
+    public function class()
+    {
         return $this->belongsTo(Classes::class);
     }
 
-    public function attendances() {
+    public function attendances()
+    {
         return $this->hasMany(StudentAttendance::class);
     }
 
-    public function leaveRequests() {
+    public function leaveRequests()
+    {
         return $this->hasMany(StudentLeaveRequest::class);
     }
 
-    public function notifications() {
+    public function notifications()
+    {
         return $this->hasMany(Notification::class);
     }
 
-    public function disciplineRankings() {
+    public function disciplineRankings()
+    {
         return $this->hasMany(DisciplineRanking::class);
     }
 }

@@ -2,20 +2,20 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\DisciplineRanking;
 use App\Models\Classes;
+use App\Models\DisciplineRanking;
 use Carbon\Carbon;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Widgets\TableWidget as BaseWidget;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
 
 class LeastDisciplinedStudentsTable extends BaseWidget
 {
     protected static ?string $heading = 'Siswa Perlu Perhatian Khusus';
-    protected int | string | array $columnSpan = 'full';
+
+    protected int|string|array $columnSpan = 'full';
 
     protected function getTableQuery(): Builder
     {
@@ -89,6 +89,7 @@ class LeastDisciplinedStudentsTable extends BaseWidget
                             ->get()
                             ->mapWithKeys(function ($item) {
                                 $date = Carbon::createFromFormat('Y-m', $item->month);
+
                                 return [$item->month => $date->translatedFormat('F Y')];
                             })
                             ->toArray();

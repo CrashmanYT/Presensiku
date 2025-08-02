@@ -5,21 +5,22 @@ namespace App\Filament\Pages;
 use App\Filament\Exports\DailyAttendanceExporter;
 use App\Filament\Exports\SummaryAttendanceExporter;
 use App\Models\StudentAttendance;
+use Carbon\Carbon;
+use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-use Filament\Tables\Concerns\InteractsWithTable;
-use Filament\Tables\Contracts\HasTable;
-use Filament\Actions\Action;
 use Maatwebsite\Excel\Facades\Excel;
 
 class RekapitulasiAbsensi extends Page implements HasTable
 {
     use InteractsWithTable;
+
     protected static ?string $navigationIcon = 'heroicon-o-chart-pie';
 
     protected static string $view = 'filament.pages.rekapitulasi-absensi';
@@ -27,6 +28,7 @@ class RekapitulasiAbsensi extends Page implements HasTable
     protected static ?string $navigationGroup = 'Laporan & Analitik';
 
     protected static ?string $title = 'Rekapitulasi Absensi';
+
     protected static ?int $navigationSort = 2;
 
     protected static ?string $slug = 'laporan/rekapitulasi-absensi';
@@ -34,8 +36,11 @@ class RekapitulasiAbsensi extends Page implements HasTable
     public ?string $activeTab = 'harian';
 
     public $selectedMonth;
+
     public $selectedYear;
+
     public $startDate;
+
     public $endDate;
 
     public function mount(): void
@@ -84,7 +89,7 @@ class RekapitulasiAbsensi extends Page implements HasTable
                 break;
             case 'mingguan':
                 // Jika startDate atau endDate belum diatur oleh user, gunakan minggu ini
-                if (!$this->startDate || !$this->endDate) {
+                if (! $this->startDate || ! $this->endDate) {
                     $this->startDate = now()->startOfWeek()->toDateString();
                     $this->endDate = now()->endOfWeek()->toDateString();
                 }
@@ -133,35 +138,41 @@ class RekapitulasiAbsensi extends Page implements HasTable
                     ->label('Kehadiran Total (%)')
                     ->sortable()
                     ->getStateUsing(function ($record) {
-                        if (!isset($record->total_hari_absensi) || $record->total_hari_absensi == 0) {
+                        if (! isset($record->total_hari_absensi) || $record->total_hari_absensi == 0) {
                             return 0;
                         }
                         $total_hadir_tercatat = $record->total_hadir + $record->total_terlambat + $record->total_sakit + $record->total_izin;
+
                         return round(($total_hadir_tercatat / $record->total_hari_absensi) * 100, 2);
                     })
-                    ->formatStateUsing(fn ($state) => $state . '%')
+                    ->formatStateUsing(fn ($state) => $state.'%')
                     ->badge()
                     ->color(function ($state) {
-                        if ($state >= 90) return 'success';
-                        if ($state >= 75) return 'warning';
+                        if ($state >= 90) {
+                            return 'success';
+                        }
+                        if ($state >= 75) {
+                            return 'warning';
+                        }
+
                         return 'danger';
                     }),
             ];
         }
 
         return $table
-                ->query($query)
-                ->columns($columns)
-                ->paginated([10, 25, 50, 100])
-                ->defaultSort($this->activeTab === 'harian' ? 'student.name' : 'student_name', 'asc')
-                ->recordUrl(
-                    fn (object $record): string => \App\Filament\Resources\StudentResource::getUrl('view', ['record' => $record->student_id])
-                );
+            ->query($query)
+            ->columns($columns)
+            ->paginated([10, 25, 50, 100])
+            ->defaultSort($this->activeTab === 'harian' ? 'student.name' : 'student_name', 'asc')
+            ->recordUrl(
+                fn (object $record): string => \App\Filament\Resources\StudentResource::getUrl('view', ['record' => $record->student_id])
+            );
     }
 
     public function getSummaryData(string $startDate, string $endDate): Builder
     {
-        $query =  StudentAttendance::query()
+        $query = StudentAttendance::query()
             ->select(
                 'students.id as student_id', // <-- TAMBAHKAN BARIS INI
                 DB::raw('students.name as student_name'),
@@ -179,7 +190,7 @@ class RekapitulasiAbsensi extends Page implements HasTable
             // GROUP BY juga perlu menyertakan students.id
             ->groupBy('students.id', 'students.name', 'classes.name');
 
-       return $query;
+        return $query;
     }
 
     protected function getHeaderActions(): array
@@ -200,7 +211,7 @@ class RekapitulasiAbsensi extends Page implements HasTable
                         'bulanan' => 'Bulanan',
                         default => 'Rekap',
                     };
-                    $fileName = 'Rekapitulasi_Absensi_' . $period . '_' . $startDate . '_sd_' . $endDate . '.xlsx';
+                    $fileName = 'Rekapitulasi_Absensi_'.$period.'_'.$startDate.'_sd_'.$endDate.'.xlsx';
 
                     if ($this->activeTab === 'harian') {
                         return Excel::download(new DailyAttendanceExporter(

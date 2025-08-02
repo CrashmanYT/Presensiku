@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\HolidayResource\Pages;
 
 use App\Filament\Resources\HolidayResource;
-use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateHoliday extends CreateRecord

@@ -2,12 +2,9 @@
 
 namespace App\Providers;
 
-use Filament\Facades\Filament;
-use Filament\Support\Assets\Css;
-use Filament\Support\Facades\FilamentAsset;
-use Illuminate\Support\ServiceProvider;
 use App\Models\StudentAttendance;
 use App\Observers\StudentAttendanceObserver;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {

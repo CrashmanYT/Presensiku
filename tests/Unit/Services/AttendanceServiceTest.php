@@ -18,7 +18,9 @@ class AttendanceServiceTest extends TestCase
     use RefreshDatabase;
 
     private MockInterface $settingsHelperMock;
+
     private AttendanceService $attendanceService;
+
     private Classes $class;
 
     protected function setUp(): void

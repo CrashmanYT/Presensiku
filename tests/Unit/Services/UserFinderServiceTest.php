@@ -20,7 +20,7 @@ class UserFinderServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->userFinderService = new UserFinderService();
+        $this->userFinderService = new UserFinderService;
     }
 
     // --- Tes untuk findByFingerprint ---

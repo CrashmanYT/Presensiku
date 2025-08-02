@@ -7,31 +7,34 @@ use Illuminate\Database\Eloquent\Model;
 
 class Classes extends Model
 {
-
     use HasFactory;
-    
+
     protected $table = 'classes';
 
     protected $fillable = [
         'name',
         'level',
         'major',
-        'homeroom_teacher_nip'
+        'homeroom_teacher_nip',
     ];
 
-    public function homeroomTeacher() {
+    public function homeroomTeacher()
+    {
         return $this->belongsTo(Teacher::class, 'homeroom_teacher_nip', 'nip');
     }
 
-    public function students() {
+    public function students()
+    {
         return $this->hasMany(Student::class, 'class_id');
     }
 
-    public function attendanceRules() {
+    public function attendanceRules()
+    {
         return $this->hasMany(AttendanceRule::class, 'class_id');
     }
 
-    public function users() {
+    public function users()
+    {
         return $this->hasMany(User::class, 'class_id');
     }
 }

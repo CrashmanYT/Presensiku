@@ -3,40 +3,37 @@
 namespace App\Filament\Resources;
 
 use App\Enums\GenderEnum;
-use App\Filament\Exports\StudentExporter;
-use App\Helpers\ExportColumnHelper;
 use App\Filament\Imports\StudentImporter;
 use App\Filament\Resources\StudentResource\Pages;
-use App\Filament\Resources\StudentResource\RelationManagers;
+use App\Helpers\ExportColumnHelper;
 use App\Models\Classes;
 use App\Models\Student;
-use Filament\Tables\Actions\ImportAction;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Infolists\Infolist;
 use Filament\Infolists;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
+use Filament\Tables\Actions\ImportAction;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Maatwebsite\Excel\Excel;
-use pxlrbt\FilamentExcel\Actions\Pages\ExportAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
-use pxlrbt\FilamentExcel\Columns\Column;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 class StudentResource extends Resource
 {
     protected static ?string $model = Student::class;
+
     protected static ?string $navigationGroup = 'Manajemen Data';
+
     protected static ?string $navigationLabel = 'Data Murid';
+
     protected static ?string $label = 'Data Murid';
+
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+
     protected static ?int $navigationSort = 1;
-
-
 
     public static function getEloquentQuery(): Builder
     {
@@ -129,7 +126,7 @@ class StudentResource extends Resource
                             ->label('Jenis Kelamin')
                             ->options(GenderEnum::class)
                             ->multiple(),
-                    ])
+                    ]),
             ])
             ->filtersLayout(Tables\Enums\FiltersLayout::Modal)
             ->filtersFormWidth(MaxWidth::FiveExtraLarge)
@@ -138,19 +135,19 @@ class StudentResource extends Resource
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-                    Tables\Actions\BulkActionGroup::make([
-                        Tables\Actions\DeleteBulkAction::make(),
-                        ExportBulkAction::make('export')
-                            ->color('info')
-                            ->icon('heroicon-o-arrow-up-tray')
-                            ->exports([
-                                ExcelExport::make('data-murid')
-                                    ->withColumns(
-                                        ExportColumnHelper::getStudentColumns()
-                                    )
-                                    ->withFilename('Data Siswa.xlsx')
-                            ]),
-                    ]),
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                    ExportBulkAction::make('export')
+                        ->color('info')
+                        ->icon('heroicon-o-arrow-up-tray')
+                        ->exports([
+                            ExcelExport::make('data-murid')
+                                ->withColumns(
+                                    ExportColumnHelper::getStudentColumns()
+                                )
+                                ->withFilename('Data Siswa.xlsx'),
+                        ]),
+                ]),
             ])
             ->headerActions([
                 Tables\Actions\Action::make('download_template')
@@ -171,8 +168,8 @@ class StudentResource extends Resource
                     ->exports([
                         ExcelExport::make('form')->withColumns(
                             ExportColumnHelper::getStudentColumns()
-                        )
-                    ])
+                        ),
+                    ]),
             ]);
     }
 

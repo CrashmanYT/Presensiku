@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Enums\DayOfWeekEnum;
 use App\Filament\Resources\AttendanceRuleResource\Pages;
-use App\Filament\Resources\AttendanceRuleResource\RelationManagers;
 use App\Models\AttendanceRule;
 use Filament\Forms;
 use Filament\Forms\Components\Select;
@@ -16,24 +15,23 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\QueryBuilder;
 use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint;
 use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint\Operators\IsRelatedToOperator;
-use Filament\Tables\Filters\QueryBuilder\Constraints\SelectConstraint;
 use Filament\Tables\Filters\QueryBuilder\Constraints\TextConstraint;
-use Filament\Tables\Filters\QueryBuilder\Constraints\TextConstraint\Operators\ContainsOperator;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Log;
 
 class AttendanceRuleResource extends Resource
 {
     protected static ?string $model = AttendanceRule::class;
-    protected static ?string $navigationGroup = 'Pengaturan Sistem';
-    protected static ?string $label = 'Jadwal Absensi';
-    protected static ?string $navigationLabel = 'Jadwal Absensi';
-    protected static ?string $navigationIcon = 'heroicon-o-clock';
-    protected static ?int $navigationSort = 1;
 
+    protected static ?string $navigationGroup = 'Pengaturan Sistem';
+
+    protected static ?string $label = 'Jadwal Absensi';
+
+    protected static ?string $navigationLabel = 'Jadwal Absensi';
+
+    protected static ?string $navigationIcon = 'heroicon-o-clock';
+
+    protected static ?int $navigationSort = 1;
 
     public static function getEloquentQuery(): Builder
     {
@@ -91,10 +89,9 @@ class AttendanceRuleResource extends Resource
                     ->separator(',')
                     ->label('Jadwal Harian')
                     ->searchable()
-                    ->formatStateUsing(fn ($state) =>
-                        collect($state)
-                            ->map(fn ($day) => \App\Enums\DayOfWeekEnum::tryFrom($day)?->getLabel() ?? $day)
-                            ->implode(', ')
+                    ->formatStateUsing(fn ($state) => collect($state)
+                        ->map(fn ($day) => \App\Enums\DayOfWeekEnum::tryFrom($day)?->getLabel() ?? $day)
+                        ->implode(', ')
                     ),
                 Tables\Columns\TextColumn::make('date_override')
                     ->date()
@@ -140,14 +137,14 @@ class AttendanceRuleResource extends Resource
                             ),
                         TextConstraint::make('description')
                             ->label('Deskripsi'),
-                        ]),
+                    ]),
                 Filter::make('day_of_week')
                     ->label('Jadwal Harian')
                     ->form([
                         Select::make('day_of_week')
                             ->multiple()
                             ->options(DayOfWeekEnum::class)
-                            ->searchable()
+                            ->searchable(),
                     ])
                     ->query(function ($query, array $data) {
                         if (empty($data['day_of_week'])) {
@@ -159,7 +156,7 @@ class AttendanceRuleResource extends Resource
                                 $q->orWhereJsonContains('day_of_week', $day);
                             }
                         });
-                    })
+                    }),
 
             ])
             ->filtersLayout(FiltersLayout::Modal)

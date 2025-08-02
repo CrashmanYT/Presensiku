@@ -2,16 +2,13 @@
 
 namespace App\Filament\Exports;
 
-use App\Models\StudentAttendance;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
 class StudentAttendanceExporter implements FromQuery, WithHeadings, WithMapping
 {
-    public function __construct(protected \Illuminate\Database\Eloquent\Builder $query)
-    {
-    }
+    public function __construct(protected \Illuminate\Database\Eloquent\Builder $query) {}
 
     public function query()
     {

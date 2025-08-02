@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -18,7 +17,7 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'admin',
             'email' => 'admin@example.com',
-            'password' => 'password'
+            'password' => 'password',
         ]);
 
         $this->call([
@@ -32,7 +31,7 @@ class DatabaseSeeder extends Seeder
             TeacherAttendanceSeeder::class,
             StudentLeaveRequestSeeder::class,
             TeacherLeaveRequestSeeder::class,
-//            HolidaySeeder::class,
+            //            HolidaySeeder::class,
         ]);
     }
 }

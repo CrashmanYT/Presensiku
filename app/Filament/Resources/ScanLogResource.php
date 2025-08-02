@@ -3,25 +3,26 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ScanLogResource\Pages;
-use App\Filament\Resources\ScanLogResource\RelationManagers;
 use App\Models\ScanLog;
-use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ScanLogResource extends Resource
 {
     protected static ?string $model = ScanLog::class;
-    protected static ?string $navigationGroup = 'Laporan & Analitik';
-    protected static ?string $navigationLabel = 'Log Pindai';
-    protected static ?string $label = 'Log Pindai';
-    protected static ?string $navigationIcon = 'heroicon-o-signal';
-    protected static ?int $navigationSort = 4;
 
+    protected static ?string $navigationGroup = 'Laporan & Analitik';
+
+    protected static ?string $navigationLabel = 'Log Pindai';
+
+    protected static ?string $label = 'Log Pindai';
+
+    protected static ?string $navigationIcon = 'heroicon-o-signal';
+
+    protected static ?int $navigationSort = 4;
 
     public static function getEloquentQuery(): Builder
     {

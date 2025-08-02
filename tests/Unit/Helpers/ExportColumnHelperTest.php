@@ -17,7 +17,7 @@ class ExportColumnHelperTest extends TestCase
         $this->assertIsArray($columns);
         $this->assertContainsOnlyInstancesOf(Column::class, $columns);
 
-        $headings = collect($columns)->map(fn(Column $column) => $this->getHeading($column))->all();
+        $headings = collect($columns)->map(fn (Column $column) => $this->getHeading($column))->all();
         $this->assertEquals([
             'Nama',
             'NIS',
@@ -39,7 +39,7 @@ class ExportColumnHelperTest extends TestCase
         $this->assertIsArray($columns);
         $this->assertContainsOnlyInstancesOf(Column::class, $columns);
 
-        $headings = collect($columns)->map(fn(Column $column) => $this->getHeading($column))->all();
+        $headings = collect($columns)->map(fn (Column $column) => $this->getHeading($column))->all();
         $this->assertEquals([
             'Nama Siswa',
             'Kelas',
@@ -59,7 +59,7 @@ class ExportColumnHelperTest extends TestCase
         $this->assertIsArray($columns);
         $this->assertContainsOnlyInstancesOf(Column::class, $columns);
 
-        $headings = collect($columns)->map(fn(Column $column) => $this->getHeading($column))->all();
+        $headings = collect($columns)->map(fn (Column $column) => $this->getHeading($column))->all();
         $this->assertEquals([
             'Nama',
             'No Induk',
@@ -79,7 +79,7 @@ class ExportColumnHelperTest extends TestCase
         $this->assertIsArray($columns);
         $this->assertContainsOnlyInstancesOf(Column::class, $columns);
 
-        $headings = collect($columns)->map(fn(Column $column) => $this->getHeading($column))->all();
+        $headings = collect($columns)->map(fn (Column $column) => $this->getHeading($column))->all();
         $this->assertEquals([
             'Nama Guru',
             'Tanggal',
@@ -98,7 +98,7 @@ class ExportColumnHelperTest extends TestCase
         $this->assertIsArray($columns);
         $this->assertContainsOnlyInstancesOf(Column::class, $columns);
 
-        $headings = collect($columns)->map(fn(Column $column) => $this->getHeading($column))->all();
+        $headings = collect($columns)->map(fn (Column $column) => $this->getHeading($column))->all();
         $this->assertEquals([
             'Nama Kelas',
             'Level',

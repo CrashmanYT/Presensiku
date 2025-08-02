@@ -10,17 +10,17 @@ use Illuminate\Support\Facades\Log;
 
 class AttendanceService
 {
-
-
     protected SettingsHelper $settingsHelper;
+
     public function __construct(SettingsHelper $settingsHelper)
     {
         $this->settingsHelper = $settingsHelper;
     }
+
     /**
      * Get attendance rule for class and date
      */
-    public function getAttendanceRule(int | null $classId, Carbon $scanDateTime): ?AttendanceRule
+    public function getAttendanceRule(?int $classId, Carbon $scanDateTime): ?AttendanceRule
     {
         $scanDate = $scanDateTime->format('Y-m-d');
         $dayName = strtolower($scanDateTime->format('l'));
@@ -29,7 +29,7 @@ class AttendanceService
             Log::info('Getting attendance rule', [
                 'class_id' => $classId,
                 'scan_date' => $scanDate,
-                'day_name' => $dayName
+                'day_name' => $dayName,
             ]);
         }
 
@@ -54,12 +54,12 @@ class AttendanceService
         $defaultSettings = $this->settingsHelper->getAttendanceSettings();
 
         return new AttendanceRule([
-            'time_in_start' => $defaultSettings['time_in_start'] ?? "07:00:00",
-            'time_in_end' => $defaultSettings['time_in_end'] ?? "08:00:00",
-            'time_out_start' => $defaultSettings['time_out_start'] ?? "14:00:00",
-            'time_out_end' => $defaultSettings['time_out_end'] ?? "16:00:00",
-            "description" => "Jadwal Absensi Bawaan",
-            "day_of_week" => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+            'time_in_start' => $defaultSettings['time_in_start'] ?? '07:00:00',
+            'time_in_end' => $defaultSettings['time_in_end'] ?? '08:00:00',
+            'time_out_start' => $defaultSettings['time_out_start'] ?? '14:00:00',
+            'time_out_end' => $defaultSettings['time_out_end'] ?? '16:00:00',
+            'description' => 'Jadwal Absensi Bawaan',
+            'day_of_week' => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
         ]);
     }
 
@@ -82,7 +82,7 @@ class AttendanceService
             'time_in_start' => $timeInStart,
             'time_in_end' => $timeInEnd,
             'date_override' => $attendanceRule->date_override,
-            'day_of_week' => $attendanceRule->day_of_week
+            'day_of_week' => $attendanceRule->day_of_week,
         ]);
 
         // Check if there's a specific date override
@@ -96,17 +96,18 @@ class AttendanceService
         }
 
         Log::info('No matching rule found, defaulting to late');
+
         return AttendanceStatusEnum::TERLAMBAT;
     }
 
-    private function getDateOverrideRule(int | null $classId, string $scanDate): ?AttendanceRule
+    private function getDateOverrideRule(?int $classId, string $scanDate): ?AttendanceRule
     {
         return AttendanceRule::where('class_id', $classId)
             ->where('date_override', $scanDate)
             ->first();
     }
 
-    private function getDayOfWeekRule(int | null $classId, string $dayName): ?AttendanceRule
+    private function getDayOfWeekRule(?int $classId, string $dayName): ?AttendanceRule
     {
         return AttendanceRule::where('class_id', $classId)
             ->whereNull('date_override')

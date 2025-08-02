@@ -2,23 +2,24 @@
 
 namespace App\Filament\Resources\StudentResource\Widgets;
 
-use Filament\Widgets\ChartWidget;
-use App\Models\StudentAttendance;
 use Carbon\Carbon;
+use Filament\Widgets\ChartWidget;
 use Livewire\Attributes\Reactive;
-
 
 class StudentAttendanceChart extends ChartWidget
 {
     protected static ?string $heading = 'Ringkasan Kehadiran Bulanan';
 
     public ?\App\Models\Student $record = null;
+
     #[Reactive]
     public $selectedMonth;
+
     #[Reactive]
     public $selectedYear;
 
-    protected int | string | array $columnSpan = 1;
+    protected int|string|array $columnSpan = 1;
+
     protected function getType(): string
     {
         return 'doughnut';
@@ -69,4 +70,3 @@ class StudentAttendanceChart extends ChartWidget
         ];
     }
 }
-

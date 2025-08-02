@@ -16,22 +16,25 @@ class Device extends Model
         'serial_number',
         'type',
         'location',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
     ];
 
-    public function studentAttendances() {
+    public function studentAttendances()
+    {
         return $this->hasMany(StudentAttendance::class);
     }
 
-    public function teacherAttendances() {
+    public function teacherAttendances()
+    {
         return $this->hasMany(TeacherAttendance::class);
     }
 
-    public function scanLogs() {
+    public function scanLogs()
+    {
         return $this->hasMany(ScanLog::class);
     }
 }

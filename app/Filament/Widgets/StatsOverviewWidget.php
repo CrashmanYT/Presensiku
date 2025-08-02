@@ -46,7 +46,7 @@ class StatsOverviewWidget extends BaseWidget
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::today()->subDays($i)->format('Y-m-d');
             $dayData = $trendData->get($date, collect());
-            
+
             $presentTrend[] = $dayData->where('status', 'hadir')->first()->count ?? 0;
             $lateTrend[] = $dayData->where('status', 'terlambat')->first()->count ?? 0;
             $absentTrend[] = $dayData->where('status', 'tidak_hadir')->first()->count ?? 0;

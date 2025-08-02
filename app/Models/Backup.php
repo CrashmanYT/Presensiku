@@ -14,12 +14,12 @@ class Backup extends Model
         'file_path',
         'restored',
         'file_size',
-        'description'
+        'description',
     ];
 
     protected $casts = [
         'restored' => 'boolean',
-        'file_size' => 'integer'
+        'file_size' => 'integer',
     ];
 
     /**
@@ -27,7 +27,7 @@ class Backup extends Model
      */
     public function getFullPathAttribute(): string
     {
-        return storage_path('app/backups/' . $this->file_path);
+        return storage_path('app/backups/'.$this->file_path);
     }
 
     /**
@@ -43,11 +43,12 @@ class Backup extends Model
      */
     public function getFormattedFileSizeAttribute(): string
     {
-        if (!$this->file_exists) {
+        if (! $this->file_exists) {
             return 'N/A';
         }
 
         $bytes = File::size($this->full_path);
+
         return $this->formatBytes($bytes);
     }
 
@@ -56,13 +57,13 @@ class Backup extends Model
      */
     private function formatBytes($bytes, $precision = 2)
     {
-        $units = array('B', 'KB', 'MB', 'GB', 'TB');
-        
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+
         for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
             $bytes /= 1024;
         }
-        
-        return round($bytes, $precision) . ' ' . $units[$i];
+
+        return round($bytes, $precision).' '.$units[$i];
     }
 
     /**

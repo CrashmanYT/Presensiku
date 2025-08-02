@@ -39,11 +39,10 @@ class ClassesImporter extends Importer
         ];
     }
 
-
     protected function beforeSave(): void
     {
         // Find homeroom teacher by name and set homeroom_teacher_nip
-        if (!empty($this->data['homeroom_teacher_name'])) {
+        if (! empty($this->data['homeroom_teacher_name'])) {
             $teacher = Teacher::where('name', trim($this->data['homeroom_teacher_name']))->first();
             if ($teacher) {
                 $this->data['homeroom_teacher_nip'] = $teacher->nip;
@@ -65,7 +64,7 @@ class ClassesImporter extends Importer
         $data = $this->data;
 
         // Find homeroom teacher by name and set homeroom_teacher_nip
-        if (!empty($data['homeroom_teacher_name'])) {
+        if (! empty($data['homeroom_teacher_name'])) {
             $teacher = Teacher::where('name', $data['homeroom_teacher_name'])->first();
             if ($teacher) {
                 $data['homeroom_teacher_nip'] = $teacher->nip;
@@ -90,10 +89,10 @@ class ClassesImporter extends Importer
 
     public static function getCompletedNotificationBody(Import $import): string
     {
-        $body = 'Import data kelas selesai. ' . number_format($import->successful_rows) . ' ' . str('kelas')->plural($import->successful_rows) . ' berhasil diimpor.';
+        $body = 'Import data kelas selesai. '.number_format($import->successful_rows).' '.str('kelas')->plural($import->successful_rows).' berhasil diimpor.';
 
         if ($failedRowsCount = $import->getFailedRowsCount()) {
-            $body .= ' ' . number_format($failedRowsCount) . ' ' . str('kelas')->plural($failedRowsCount) . ' gagal diimpor.';
+            $body .= ' '.number_format($failedRowsCount).' '.str('kelas')->plural($failedRowsCount).' gagal diimpor.';
         }
 
         return $body;

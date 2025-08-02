@@ -2,11 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Classes;
 use App\Models\Teacher;
 use Faker\Factory as Faker;
+use Illuminate\Database\Seeder;
 
 class ClassSeeder extends Seeder
 {
@@ -25,7 +24,7 @@ class ClassSeeder extends Seeder
             foreach ($majors as $major) {
                 for ($i = 1; $i <= 3; $i++) { // Create 3 classes for each level and major combination
                     Classes::create([
-                        'name' => $level . ' ' . $major . ' ' . $i,
+                        'name' => $level.' '.$major.' '.$i,
                         'level' => $level,
                         'major' => $major,
                         'homeroom_teacher_nip' => $faker->randomElement($teachers->pluck('nip')),

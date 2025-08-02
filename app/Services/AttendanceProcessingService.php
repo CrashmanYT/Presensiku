@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Models\AttendanceRule;
 use App\Models\Device;
 use App\Models\Student;
-use App\Models\Teacher;
 use App\Models\StudentAttendance;
+use App\Models\Teacher;
 use App\Models\TeacherAttendance;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -31,7 +31,7 @@ class AttendanceProcessingService
 
         $attendance = $this->findExistingAttendance($user, $scanDateTime->toDateString());
 
-        if (!$attendance) {
+        if (! $attendance) {
             return $this->createNewAttendance($user, $scanDateTime, $attendanceRule, $device);
         }
 
@@ -48,7 +48,7 @@ class AttendanceProcessingService
 
     private function createNewAttendance(Student|Teacher $user, Carbon $scanDateTime, AttendanceRule $attendanceRule, Device $device): JsonResponse
     {
-        $model = $user instanceof Student ? new StudentAttendance() : new TeacherAttendance();
+        $model = $user instanceof Student ? new StudentAttendance : new TeacherAttendance;
         $foreignKey = $user instanceof Student ? 'student_id' : 'teacher_id';
 
         $model->{$foreignKey} = $user->id;
@@ -74,7 +74,7 @@ class AttendanceProcessingService
             return $this->buildAlreadyCheckedInResponse($user, $attendance);
         }
 
-        if (!$attendance->time_out) {
+        if (! $attendance->time_out) {
             return $this->processCheckout($user, $attendance, $scanDateTime);
         }
 
@@ -91,7 +91,7 @@ class AttendanceProcessingService
         return response()->json([
             'status' => 'success',
             'message' => 'Scan keluar berhasil',
-            'data' => $this->formatResponseData($user, $attendance)
+            'data' => $this->formatResponseData($user, $attendance),
         ]);
     }
 
@@ -100,17 +100,18 @@ class AttendanceProcessingService
         return response()->json([
             'status' => 'success',
             'message' => $message,
-            'data' => $this->formatResponseData($user, $attendance)
+            'data' => $this->formatResponseData($user, $attendance),
         ]);
     }
 
     private function buildAlreadyCheckedInResponse(Student|Teacher $user, $attendance): JsonResponse
     {
         Log::info('User already checked in', ['user_id' => $user->id]);
+
         return response()->json([
             'status' => 'info',
             'message' => 'Anda sudah melakukan absensi masuk',
-            'data' => $this->formatResponseData($user, $attendance)
+            'data' => $this->formatResponseData($user, $attendance),
         ], 409);
     }
 
@@ -119,7 +120,7 @@ class AttendanceProcessingService
         return response()->json([
             'status' => 'info',
             'message' => 'Anda sudah melakukan scan masuk dan keluar hari ini',
-            'data' => $this->formatResponseData($user, $attendance)
+            'data' => $this->formatResponseData($user, $attendance),
         ], 409);
     }
 

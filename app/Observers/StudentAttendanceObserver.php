@@ -2,10 +2,10 @@
 
 namespace App\Observers;
 
-use App\Models\StudentAttendance;
-use App\Models\DisciplineRanking;
 use App\Helpers\SettingsHelper;
+use App\Models\DisciplineRanking;
 use App\Models\Student;
+use App\Models\StudentAttendance;
 use Carbon\Carbon;
 
 class StudentAttendanceObserver
@@ -39,7 +39,7 @@ class StudentAttendanceObserver
             if ($oldStatusValue) {
                 $this->updateRanking($studentAttendance->student, $studentAttendance->date, $oldStatusValue, 'decrement');
             }
-            
+
             // Tambahkan (increment) skor untuk status baru
             $this->updateRanking($studentAttendance->student, $studentAttendance->date, $newStatusValue, 'increment');
         }
@@ -72,10 +72,10 @@ class StudentAttendanceObserver
     /**
      * Method utama untuk memperbarui data peringkat disiplin.
      *
-     * @param Student $student Siswa yang terlibat.
-     * @param string $date Tanggal absensi untuk menentukan bulan.
-     * @param string $status Status kehadiran (hadir, terlambat, dll.).
-     * @param string $operation Tipe operasi: 'increment' atau 'decrement'.
+     * @param  Student  $student  Siswa yang terlibat.
+     * @param  string  $date  Tanggal absensi untuk menentukan bulan.
+     * @param  string  $status  Status kehadiran (hadir, terlambat, dll.).
+     * @param  string  $operation  Tipe operasi: 'increment' atau 'decrement'.
      */
     private function updateRanking(Student $student, string $date, string $status, string $operation): void
     {
@@ -105,7 +105,7 @@ class StudentAttendanceObserver
         };
 
         // Jika statusnya adalah izin atau sakit, tidak ada yang perlu diubah
-        if (!$columnToUpdate) {
+        if (! $columnToUpdate) {
             return;
         }
 
@@ -123,7 +123,7 @@ class StudentAttendanceObserver
     /**
      * Menghitung ulang skor total berdasarkan data terbaru.
      *
-     * @param DisciplineRanking $ranking Data peringkat yang akan dihitung ulang.
+     * @param  DisciplineRanking  $ranking  Data peringkat yang akan dihitung ulang.
      */
     private function recalculateTotalScore(DisciplineRanking $ranking): void
     {
@@ -133,7 +133,7 @@ class StudentAttendanceObserver
             ($ranking->total_present * $scores['hadir']) +
             ($ranking->total_late * $scores['terlambat']) +
             ($ranking->total_absent * $scores['tidak_hadir']);
-            // Skor untuk izin dan sakit adalah 0, jadi tidak perlu dihitung
+        // Skor untuk izin dan sakit adalah 0, jadi tidak perlu dihitung
 
         $ranking->update(['score' => $totalScore]);
         $ranking->save();

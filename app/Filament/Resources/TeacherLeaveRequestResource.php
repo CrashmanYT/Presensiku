@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Enums\LeaveRequestViaEnum;
 use App\Filament\Resources\TeacherLeaveRequestResource\Pages;
-use App\Filament\Resources\TeacherLeaveRequestResource\RelationManagers;
 use App\Models\TeacherLeaveRequest;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
@@ -20,16 +19,19 @@ use Filament\Tables\Filters\QueryBuilder\Constraints\SelectConstraint;
 use Filament\Tables\Filters\QueryBuilder\Constraints\TextConstraint;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class TeacherLeaveRequestResource extends Resource
 {
     protected static ?string $model = TeacherLeaveRequest::class;
 
     protected static ?string $navigationGroup = 'Manajemen Absensi';
+
     protected static ?string $navigationLabel = 'Izin Guru';
-    protected static ?string $label = "Izin Guru";
+
+    protected static ?string $label = 'Izin Guru';
+
     protected static ?string $navigationIcon = 'heroicon-o-envelope';
+
     protected static ?int $navigationSort = 4;
 
     public static function getEloquentQuery(): Builder
@@ -136,8 +138,8 @@ class TeacherLeaveRequestResource extends Resource
                         SelectConstraint::make('via')
                             ->label('Via')
                             ->options(LeaveRequestViaEnum::class)
-                            ->multiple()
-                    ])
+                            ->multiple(),
+                    ]),
             ])
             ->filtersLayout(FiltersLayout::Modal)
             ->filtersFormWidth('5xl')

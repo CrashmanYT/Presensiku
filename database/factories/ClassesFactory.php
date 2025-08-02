@@ -26,7 +26,7 @@ class ClassesFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->unique()->word() . ' Class',
+            'name' => $this->faker->unique()->word().' Class',
             'level' => $this->faker->randomElement(['X', 'XI', 'XII']),
             'major' => $this->faker->randomElement(['IPA', 'IPS', 'Bahasa']),
             'homeroom_teacher_nip' => Teacher::factory()->create()->nip,

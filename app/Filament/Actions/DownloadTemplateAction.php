@@ -2,10 +2,10 @@
 
 namespace App\Filament\Actions;
 
+use App\Exports\TemplateExport;
 use Filament\Tables\Actions\Action;
 use Illuminate\Http\Response;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\TemplateExport;
 
 class DownloadTemplateAction
 {
@@ -30,7 +30,7 @@ class DownloadTemplateAction
                     ['Ahmad Rizki', '2023001', '12 IPA 1', 'L', '001', '+6281234567890'],
                     ['Siti Nurhaliza', '2023002', '12 IPA 1', 'P', '002', '+6281234567891'],
                     ['Budi Santoso', '2023003', '12 IPS 1', 'L', '003', '+6281234567892'],
-                ]
+                ],
             ],
             'teacher' => [
                 'filename' => 'Template_Import_Guru.xlsx',
@@ -39,7 +39,7 @@ class DownloadTemplateAction
                     ['Dr. Ahmad Malik', '196512151990031001', '101', '+6281234567800'],
                     ['Siti Aminah S.Pd', '197203102000032002', '102', '+6281234567801'],
                     ['Budi Rahman M.Pd', '198005151995121003', '103', '+6281234567802'],
-                ]
+                ],
             ],
             'class' => [
                 'filename' => 'Template_Import_Kelas.xlsx',
@@ -48,18 +48,18 @@ class DownloadTemplateAction
                     ['12 IPA 1', '12', 'IPA', 'Dr. Ahmad Malik'],
                     ['12 IPA 2', '12', 'IPA', 'Siti Aminah S.Pd'],
                     ['12 IPS 1', '12', 'IPS', 'Budi Rahman M.Pd'],
-                ]
-            ]
+                ],
+            ],
         ];
 
-        if (!isset($templates[$type])) {
+        if (! isset($templates[$type])) {
             abort(404, 'Template not found');
         }
 
         $template = $templates[$type];
-        
+
         return Excel::download(
-            new TemplateExport($template['headers'], $template['sample_data']), 
+            new TemplateExport($template['headers'], $template['sample_data']),
             $template['filename']
         );
     }

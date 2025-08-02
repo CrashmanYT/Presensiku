@@ -3,16 +3,16 @@
 namespace App\Filament\Widgets;
 
 use App\Models\StudentAttendance;
-use Carbon\CarbonPeriod;
-use Filament\Widgets\ChartWidget;
 use Carbon\Carbon;
+use Filament\Widgets\ChartWidget;
 
 class AttendanceChartWidget extends ChartWidget
 {
     protected static ?string $heading = 'Statistik Kehadiran Siswa';
 
     protected static ?int $sort = 2;
-    protected int | string | array $columnSpan = 'full';
+
+    protected int|string|array $columnSpan = 'full';
 
     public ?string $filter = 'last_7_days'; // Default filter value
 
@@ -38,10 +38,10 @@ class AttendanceChartWidget extends ChartWidget
         $endDate = Carbon::today();
         $startDate = match ($this->filter) {
             'last_30_days' => Carbon::today()->subDays(29),
-            'this_month'   => Carbon::today()->startOfMonth(),
-            'last_month'   => Carbon::today()->subMonthNoOverflow()->startOfMonth(),
-            'last_3_months'=> Carbon::today()->subMonthsNoOverflow(2)->startOfMonth(),
-            default        => Carbon::today()->subDays(6),
+            'this_month' => Carbon::today()->startOfMonth(),
+            'last_month' => Carbon::today()->subMonthNoOverflow()->startOfMonth(),
+            'last_3_months' => Carbon::today()->subMonthsNoOverflow(2)->startOfMonth(),
+            default => Carbon::today()->subDays(6),
         };
 
         if ($this->filter === 'last_month') {

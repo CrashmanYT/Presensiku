@@ -18,17 +18,18 @@ class Notification extends Model
         'recipient',
         'content',
         'status',
-        'sent_at'
+        'sent_at',
     ];
 
     protected $casts = [
         'sent_at' => 'datetime',
         'type' => NotificationTypeEnum::class,
         'recipient' => NotificationRecipientEnum::class,
-        'status' => NotificationStatusEnum::class
+        'status' => NotificationStatusEnum::class,
     ];
 
-    public function students() {
+    public function students()
+    {
         return $this->hasMany(Student::class);
     }
 }

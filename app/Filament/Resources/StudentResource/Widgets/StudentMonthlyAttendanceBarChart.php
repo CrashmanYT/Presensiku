@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\StudentResource\Widgets;
 
-use Filament\Widgets\ChartWidget;
 use App\Models\StudentAttendance;
 use Carbon\Carbon;
+use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Reactive;
 
@@ -24,7 +24,7 @@ class StudentMonthlyAttendanceBarChart extends ChartWidget
 
     protected function getData(): array
     {
-        if (!$this->record || !$this->record->id) {
+        if (! $this->record || ! $this->record->id) {
             return [
                 'labels' => [],
                 'datasets' => [],
@@ -60,7 +60,7 @@ class StudentMonthlyAttendanceBarChart extends ChartWidget
             $monthName = Carbon::create(null, $i, 1)->format('F');
             $labels[] = $monthName;
 
-            $data = $monthlyData->get($i, (object)[
+            $data = $monthlyData->get($i, (object) [
                 'total_hadir' => 0,
                 'total_terlambat' => 0,
                 'total_tidak_hadir' => 0,
