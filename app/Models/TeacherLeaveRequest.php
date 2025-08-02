@@ -15,6 +15,7 @@ class TeacherLeaveRequest extends Model
         'type',
         'start_date',
         'end_date',
+        'attachment',
         'reason',
         'submitted_by',
         'via'

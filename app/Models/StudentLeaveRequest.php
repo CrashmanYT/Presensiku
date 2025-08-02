@@ -16,6 +16,7 @@ class StudentLeaveRequest extends Model
         'start_date',
         'end_date',
         'reason',
+        'attachment',
         'submitted_by',
         'via'
     ];

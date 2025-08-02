@@ -57,10 +57,10 @@ class LeaveRequestWebhookTest extends TestCase
             'end_date' => '2025-08-03',
         ]);
 
-        // Pastikan data absensi disinkronkan
+        // Pastikan data absensi disinkronkan (hanya untuk hari kerja)
         $this->assertDatabaseHas('student_attendances', ['date' => '2025-08-01', 'status' => 'sakit']);
-        $this->assertDatabaseHas('student_attendances', ['date' => '2025-08-02', 'status' => 'sakit']);
-        $this->assertDatabaseHas('student_attendances', ['date' => '2025-08-03', 'status' => 'sakit']);
+        $this->assertDatabaseMissing('student_attendances', ['date' => '2025-08-02']); // Weekend
+        $this->assertDatabaseMissing('student_attendances', ['date' => '2025-08-03']); // Weekend
     }
 
     /** @test */
@@ -149,5 +149,118 @@ class LeaveRequestWebhookTest extends TestCase
             'end_date' => '2025-08-10',
             'type' => 'izin',
         ]);
+    }
+
+    /** @test */
+    public function it_correctly_splits_an_existing_leave_request_when_a_new_one_is_in_the_middle()
+    {
+        // 1. Buat data izin lama yang panjang (1-10 Agustus)
+        StudentLeaveRequest::factory()->create([
+            'student_id' => $this->student->id,
+            'start_date' => '2025-08-01',
+            'end_date' => '2025-08-10',
+            'type' => 'sakit',
+            'reason' => 'Sakit demam',
+        ]);
+
+        // 2. Siapkan payload untuk izin baru di tengah-tengah (4-6 Agustus)
+        $payload = [
+            'identifier' => '12345',
+            'type' => 'Izin',
+            'start_date' => '2025-08-04',
+            'end_date' => '2025-08-06',
+            'reason' => 'Acara keluarga',
+        ];
+
+        // 3. Kirim request
+        $this->withHeaders(['X-Webhook-Secret' => $this->secretToken])
+            ->postJson($this->studentWebhookUrl, $payload)
+            ->assertStatus(200);
+
+        // 4. Verifikasi hasilnya
+        // Pastikan record lama terpotong menjadi bagian pertama (1-3 Agustus)
+        $this->assertDatabaseHas('student_leave_requests', [
+            'student_id' => $this->student->id,
+            'type' => 'sakit',
+            'start_date' => '2025-08-01',
+            'end_date' => '2025-08-03',
+        ]);
+
+        // Pastikan record baru dibuat (4-6 Agustus)
+        $this->assertDatabaseHas('student_leave_requests', [
+            'student_id' => $this->student->id,
+            'type' => 'izin',
+            'start_date' => '2025-08-04',
+            'end_date' => '2025-08-06',
+        ]);
+
+        // Pastikan sisa dari record lama menjadi record baru (7-10 Agustus)
+        $this->assertDatabaseHas('student_leave_requests', [
+            'student_id' => $this->student->id,
+            'type' => 'sakit',
+            'start_date' => '2025-08-07',
+            'end_date' => '2025-08-10',
+        ]);
+
+        // Pastikan hanya ada 3 record untuk siswa ini
+        $this->assertDatabaseCount('student_leave_requests', 3);
+    }
+
+    /** @test */
+    public function it_skips_weekends_and_holidays_when_syncing_attendance()
+    {
+        // Friday, August 1, 2025, to Tuesday, August 5, 2025
+        // This range includes a weekend (Aug 2, Aug 3)
+        $startDate = '2025-08-01'; // Friday
+        $endDate = '2025-08-05';   // Tuesday
+
+        // Let's make Monday a public holiday
+        $holidayDate = '2025-08-04'; // Monday
+        \App\Models\Holiday::factory()->create([
+            'start_date' => $holidayDate,
+            'end_date' => $holidayDate,
+            'description' => 'Test Holiday'
+        ]);
+
+        $payload = [
+            'identifier' => '12345',
+            'type' => 'Sakit',
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'reason' => 'Flu',
+        ];
+
+        $this->withHeaders(['X-Webhook-Secret' => $this->secretToken])
+            ->postJson($this->studentWebhookUrl, $payload)
+            ->assertStatus(200);
+
+        // Assert that attendance WAS created for the working days
+        $this->assertDatabaseHas('student_attendances', [
+            'student_id' => $this->student->id,
+            'date' => '2025-08-01', // Friday
+            'status' => 'sakit',
+        ]);
+        $this->assertDatabaseHas('student_attendances', [
+            'student_id' => $this->student->id,
+            'date' => '2025-08-05', // Tuesday
+            'status' => 'sakit',
+        ]);
+
+        // Assert that attendance was NOT created for the weekend and holiday
+        $this->assertDatabaseMissing('student_attendances', [
+            'student_id' => $this->student->id,
+            'date' => '2025-08-02', // Saturday
+        ]);
+        $this->assertDatabaseMissing('student_attendances', [
+            'student_id' => $this->student->id,
+            'date' => '2025-08-03', // Sunday
+        ]);
+        $this->assertDatabaseMissing('student_attendances', [
+            'student_id' => $this->student->id,
+            'date' => $holidayDate, // Monday (Holiday)
+        ]);
+
+        // Finally, ensure only 2 attendance records were created in total for this request
+        $this->assertDatabaseCount('student_attendances', 2);
     }
 }
