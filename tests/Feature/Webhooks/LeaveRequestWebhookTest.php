@@ -6,6 +6,7 @@ use App\Models\Student;
 use App\Models\StudentAttendance;
 use App\Models\StudentLeaveRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class LeaveRequestWebhookTest extends TestCase
@@ -30,7 +31,7 @@ class LeaveRequestWebhookTest extends TestCase
         $this->student = Student::factory()->create(['nis' => '12345']);
     }
 
-    /** @test */
+    #[Test]
     public function it_successfully_creates_a_leave_request_and_syncs_attendance()
     {
         $payload = [
@@ -63,7 +64,7 @@ class LeaveRequestWebhookTest extends TestCase
         $this->assertDatabaseMissing('student_attendances', ['date' => '2025-08-03']); // Weekend
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_request_with_invalid_secret_token()
     {
         $payload = ['identifier' => '12345'];
@@ -75,7 +76,7 @@ class LeaveRequestWebhookTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_request_with_invalid_data()
     {
         $payload = [
@@ -93,7 +94,7 @@ class LeaveRequestWebhookTest extends TestCase
                  ->assertJsonValidationErrors(['type', 'end_date']);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_not_found_if_student_does_not_exist()
     {
         $payload = [
@@ -111,7 +112,7 @@ class LeaveRequestWebhookTest extends TestCase
                  ->assertJson(['message' => 'Siswa Dengan NIS Tersebut Tidak Ditemukan']);
     }
 
-    /** @test */
+    #[Test]
     public function it_correctly_trims_and_updates_overlapping_leave_requests()
     {
         // Buat data izin lama di database: 1 - 7 Agustus (Sakit)
@@ -151,7 +152,7 @@ class LeaveRequestWebhookTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_correctly_splits_an_existing_leave_request_when_a_new_one_is_in_the_middle()
     {
         // 1. Buat data izin lama yang panjang (1-10 Agustus)
@@ -206,7 +207,7 @@ class LeaveRequestWebhookTest extends TestCase
         $this->assertDatabaseCount('student_leave_requests', 3);
     }
 
-    /** @test */
+    #[Test]
     public function it_skips_weekends_and_holidays_when_syncing_attendance()
     {
         // Friday, August 1, 2025, to Tuesday, August 5, 2025

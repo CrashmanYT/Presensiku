@@ -10,6 +10,7 @@ use App\Services\AttendanceService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery\MockInterface;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class AttendanceServiceTest extends TestCase
@@ -36,7 +37,7 @@ class AttendanceServiceTest extends TestCase
 
     // --- Tes untuk getAttendanceRule ---
 
-    /** @test */
+    #[Test]
     public function it_should_return_the_date_override_rule_if_it_exists()
     {
         // Arrange: Siapkan dua aturan yang berpotensi konflik
@@ -65,7 +66,7 @@ class AttendanceServiceTest extends TestCase
         $this->assertEquals('Aturan Khusus Tanggal 4 Agustus', $foundRule->description);
     }
 
-    /** @test */
+    #[Test]
     public function it_should_return_the_day_of_week_rule_if_no_override_exists()
     {
         // Arrange
@@ -93,7 +94,7 @@ class AttendanceServiceTest extends TestCase
         $this->assertEquals('Aturan Senin', $foundRule->description);
     }
 
-    /** @test */
+    #[Test]
     public function it_should_return_a_default_rule_from_settings_if_no_specific_rule_is_found()
     {
         // Arrange
@@ -123,7 +124,7 @@ class AttendanceServiceTest extends TestCase
 
     // --- Tes untuk checkAttendanceStatus ---
 
-    /** @test */
+    #[Test]
     public function it_should_return_on_time_status_if_scan_is_within_the_allowed_time_range()
     {
         // Arrange
@@ -141,7 +142,7 @@ class AttendanceServiceTest extends TestCase
         $this->assertEquals(AttendanceStatusEnum::HADIR, $status);
     }
 
-    /** @test */
+    #[Test]
     public function it_should_return_late_status_if_scan_is_outside_the_allowed_time_range()
     {
         // Arrange

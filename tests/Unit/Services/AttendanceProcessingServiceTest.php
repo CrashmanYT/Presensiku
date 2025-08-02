@@ -12,6 +12,7 @@ use App\Services\AttendanceService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery\MockInterface;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class AttendanceProcessingServiceTest extends TestCase
@@ -54,7 +55,7 @@ class AttendanceProcessingServiceTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_should_create_new_attendance_for_the_first_scan_of_the_day()
     {
         // Arrange: Siapkan kondisi tes
@@ -82,7 +83,7 @@ class AttendanceProcessingServiceTest extends TestCase
         $this->assertEquals('Scan masuk berhasil', $response->getData()->message);
     }
 
-    /** @test */
+    #[Test]
     public function it_should_set_status_to_on_time_for_a_timely_check_in()
     {
         // Arrange
@@ -106,7 +107,7 @@ class AttendanceProcessingServiceTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_should_set_status_to_late_for_a_late_check_in()
     {
         // Arrange
@@ -130,7 +131,7 @@ class AttendanceProcessingServiceTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_should_process_a_checkout_if_user_has_already_checked_in()
     {
         // Arrange: Buat dulu data absensi masuk di database
@@ -162,7 +163,7 @@ class AttendanceProcessingServiceTest extends TestCase
         $this->assertEquals('Scan keluar berhasil', $response->getData()->message);
     }
 
-    /** @test */
+    #[Test]
     public function it_should_return_already_checked_in_message_for_duplicate_scan_before_checkout_time()
     {
         // Arrange: Buat data absensi masuk
@@ -195,7 +196,7 @@ class AttendanceProcessingServiceTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_should_return_already_completed_message_if_user_has_already_checked_out()
     {
         // Arrange: Buat data absensi yang sudah lengkap (masuk dan pulang)
