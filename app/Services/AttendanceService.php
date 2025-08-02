@@ -51,7 +51,7 @@ class AttendanceService
 
     private function createDefaultRuleFromSettings(): AttendanceRule
     {
-        $defaultSettings = SettingsHelper::getAttendanceSettings();
+        $defaultSettings = $this->settingsHelper->getAttendanceSettings();
 
         return new AttendanceRule([
             'time_in_start' => $defaultSettings['time_in_start'] ?? "07:00:00",
