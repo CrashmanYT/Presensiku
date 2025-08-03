@@ -46,23 +46,21 @@
         <div class="flex items-center justify-center min-h-screen">
             <div class="text-center">
                 <div class="mb-8">
-                    <div class="mx-auto w-32 h-32 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-4">
-                        <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                        </svg>
+                    <div class="mx-auto w-32 h-32 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                        <img src="{{ asset('storage/logostm.png') }}" alt="Logo SMK" class="w-28 h-28 object-contain rounded-full">
                     </div>
                 </div>
                 <h1 class="text-4xl font-bold text-gray-800 mb-4">Sistem Absensi Digital</h1>
                 <p class="text-xl text-gray-600 mb-8">Silakan lakukan scan fingerprint untuk melihat informasi kehadiran</p>
 
                 <!-- Test button - only show in local environment -->
-                @if(app()->environment('local'))
+                {{-- @if(app()->environment('local'))
                     <div class="mb-4">
                         <button wire:click="testCalendar" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                             Test Kalender
                         </button>
                     </div>
-                @endif
+                @endif --}}
                 <div class="animate-pulse">
                     <div class="bg-white p-6 rounded-lg shadow-lg inline-block">
                         <svg class="w-12 h-12 text-blue-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">

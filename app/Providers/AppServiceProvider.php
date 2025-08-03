@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\StudentAttendance;
 use App\Observers\StudentAttendanceObserver;
+use Filament\Livewire\DatabaseNotifications;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,5 +23,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         StudentAttendance::observe(StudentAttendanceObserver::class);
+        DatabaseNotifications::trigger('filament.notifications.database-notifications-trigger');
     }
 }

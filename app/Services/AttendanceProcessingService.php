@@ -2,13 +2,16 @@
 
 namespace App\Services;
 
+use App\Enums\AttendanceStatusEnum;
 use App\Models\AttendanceRule;
 use App\Models\Device;
 use App\Models\Student;
 use App\Models\StudentAttendance;
 use App\Models\Teacher;
 use App\Models\TeacherAttendance;
+use App\Models\User;
 use Carbon\Carbon;
+use Filament\Notifications\Notification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
@@ -55,8 +58,13 @@ class AttendanceProcessingService
         $model->time_in = $scanDateTime;
         $model->date = $scanDateTime->toDateString();
         $model->device_id = $device->id;
-        $model->status = $this->attendanceService->checkAttendanceStatus($scanDateTime, $attendanceRule);
+        $status = $this->attendanceService->checkAttendanceStatus($scanDateTime, $attendanceRule);
+        $model->status = $status;
         $model->save();
+
+        if ($status === AttendanceStatusEnum::TERLAMBAT) {
+            $this->sendLateNotification($user, $scanDateTime);
+        }
 
         Log::info('New attendance record created', ['user_id' => $user->id, 'status' => $model->status->value]);
         broadcast(new \App\Events\UserScanned($user->fingerprint_id));
@@ -93,6 +101,25 @@ class AttendanceProcessingService
             'message' => 'Scan keluar berhasil',
             'data' => $this->formatResponseData($user, $attendance),
         ]);
+    }
+
+    private function sendLateNotification(Student|Teacher $user, Carbon $scanDateTime): void
+    {
+        $recipients = User::whereHas('roles', function ($query) {
+            $query->where('name', 'admin');
+        })->get();
+
+        $userName = $user->name;
+        $scanTime = $scanDateTime->format('H:i');
+
+        $notification = Notification::make()
+            ->title('Siswa Terlambat')
+            ->body("{$userName} tercatat terlambat pada jam {$scanTime}.")
+            ->warning();
+
+        foreach ($recipients as $recipient) {
+            $notification->sendToDatabase($recipient);
+        }
     }
 
     private function buildSuccessResponse(Student|Teacher $user, $attendance, string $message): JsonResponse

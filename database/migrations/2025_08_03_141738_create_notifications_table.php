@@ -11,14 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Drop the existing table first if it exists
+        Schema::dropIfExists('notifications');
+        
+        // Create Laravel Notifications table
         Schema::create('notifications', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('student_id')->constrained('students')->onDelete('cascade');
-            $table->enum('type', ['izin', 'tidak_hadir', 'keterlambatan', 'rekap']);
-            $table->enum('recipient', ['orang_tua', 'wali_kelas', 'kesiswaan']);
-            $table->text('content');
-            $table->enum('status', ['sent', 'failed']);
-            $table->timestamp('sent_at')->nullable();
+            $table->uuid('id')->primary();
+            $table->string('type');
+            $table->morphs('notifiable');
+            $table->text('data');
+            $table->timestamp('read_at')->nullable();
             $table->timestamps();
         });
     }

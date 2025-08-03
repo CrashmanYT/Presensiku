@@ -7,6 +7,7 @@ use App\Models\DisciplineRanking;
 use App\Models\Student;
 use App\Models\StudentAttendance;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class StudentAttendanceObserver
 {
@@ -15,7 +16,13 @@ class StudentAttendanceObserver
      */
     public function created(StudentAttendance $studentAttendance): void
     {
-        $this->updateRanking($studentAttendance->student, $studentAttendance->date, $studentAttendance->status->value, 'increment');
+        try {
+            if ($studentAttendance->student) {
+                $this->updateRanking($studentAttendance->student, $studentAttendance->date, $studentAttendance->status->value, 'increment');
+            }
+        } catch (\Exception $e) {
+            Log::error('Error in StudentAttendanceObserver created method: ' . $e->getMessage(), ['exception' => $e]);
+        }
     }
 
     /**
@@ -23,25 +30,25 @@ class StudentAttendanceObserver
      */
     public function updated(StudentAttendance $studentAttendance): void
     {
-        if ($studentAttendance->isDirty('status')) {
-            $originalStatus = $studentAttendance->getOriginal('status');
-            $newStatus = $studentAttendance->status; // Ini adalah objek Enum
+        try {
+            if ($studentAttendance->isDirty('status') && $studentAttendance->student) {
+                $originalStatus = $studentAttendance->getOriginal('status');
+                $newStatus = $studentAttendance->status;
 
-            // SOLUSI: Pastikan status lama adalah string
-            $oldStatusValue = $originalStatus instanceof \App\Enums\AttendanceStatusEnum
-                ? $originalStatus->value
-                : $originalStatus;
+                $oldStatusValue = $originalStatus instanceof \App\Enums\AttendanceStatusEnum
+                    ? $originalStatus->value
+                    : $originalStatus;
 
-            // Pastikan status baru adalah string
-            $newStatusValue = $newStatus->value;
+                $newStatusValue = $newStatus->value;
 
-            // Batalkan (decrement) skor untuk status lama
-            if ($oldStatusValue) {
-                $this->updateRanking($studentAttendance->student, $studentAttendance->date, $oldStatusValue, 'decrement');
+                if ($oldStatusValue) {
+                    $this->updateRanking($studentAttendance->student, $studentAttendance->date, $oldStatusValue, 'decrement');
+                }
+
+                $this->updateRanking($studentAttendance->student, $studentAttendance->date, $newStatusValue, 'increment');
             }
-
-            // Tambahkan (increment) skor untuk status baru
-            $this->updateRanking($studentAttendance->student, $studentAttendance->date, $newStatusValue, 'increment');
+        } catch (\Exception $e) {
+            Log::error('Error in StudentAttendanceObserver updated method: ' . $e->getMessage(), ['exception' => $e]);
         }
     }
 
@@ -50,7 +57,13 @@ class StudentAttendanceObserver
      */
     public function deleted(StudentAttendance $studentAttendance): void
     {
-        $this->updateRanking($studentAttendance->student, $studentAttendance->date, $studentAttendance->status->value, 'decrement');
+        try {
+            if ($studentAttendance->student) {
+                $this->updateRanking($studentAttendance->student, $studentAttendance->date, $studentAttendance->status->value, 'decrement');
+            }
+        } catch (\Exception $e) {
+            Log::error('Error in StudentAttendanceObserver deleted method: ' . $e->getMessage(), ['exception' => $e]);
+        }
     }
 
     /**

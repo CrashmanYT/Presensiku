@@ -10,8 +10,11 @@ use App\Models\StudentLeaveRequest;
 use App\Models\Teacher;
 use App\Models\TeacherAttendance;
 use App\Models\TeacherLeaveRequest;
+use App\Models\User;
 use Carbon\Carbon;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class LeaveRequestService
 {
@@ -20,28 +23,39 @@ class LeaveRequestService
      */
     public function processFromWebhook(Student|Teacher $user, array $data): void
     {
-        DB::beginTransaction();
+        Log::info('Starting leave request process from webhook.', ['user' => $user->name]);
         try {
-            $newStartDate = Carbon::parse($data['start_date']);
-            $newEndDate = Carbon::parse($data['end_date']);
+            DB::transaction(function () use ($user, $data) {
+                $newStartDate = Carbon::parse($data['start_date']);
+                $newEndDate = Carbon::parse($data['end_date']);
 
-            if ($user instanceof Student) {
-                $leaveRequestModel = new StudentLeaveRequest;
-                $attendanceModelClass = StudentAttendance::class;
-                $foreignKey = 'student_id';
-            } else {
-                $leaveRequestModel = new TeacherLeaveRequest;
-                $attendanceModelClass = TeacherAttendance::class;
-                $foreignKey = 'teacher_id';
-            }
+                if ($user instanceof Student) {
+                    $leaveRequestModel = new StudentLeaveRequest;
+                    $attendanceModelClass = StudentAttendance::class;
+                    $foreignKey = 'student_id';
+                } else {
+                    $leaveRequestModel = new TeacherLeaveRequest;
+                    $attendanceModelClass = TeacherAttendance::class;
+                    $foreignKey = 'teacher_id';
+                }
 
-            $this->handleOverlaps($leaveRequestModel, $user->id, $newStartDate, $newEndDate);
-            $this->createLeaveRequest($leaveRequestModel, $user->id, $data);
-            $this->syncToAttendance(new $attendanceModelClass, $foreignKey, $user->id, $newStartDate, $newEndDate, $data['type']);
+                $this->handleOverlaps($leaveRequestModel, $user->id, $newStartDate, $newEndDate);
+                $this->createLeaveRequest($leaveRequestModel, $user->id, $data);
+                $this->syncToAttendance(new $attendanceModelClass, $foreignKey, $user->id, $newStartDate, $newEndDate, $data['type']);
+            });
 
-            DB::commit();
+            // Send notification only after the main transaction is successfully committed
+            DB::afterCommit(function () use ($user, $data) {
+                $this->sendLeaveRequestNotification($user, $data);
+            });
+
+            Log::info('Successfully processed leave request from webhook.');
         } catch (\Exception $e) {
-            DB::rollBack();
+            Log::error('Failed to process leave request from webhook: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'data' => $data,
+                'exception' => $e,
+            ]);
             throw $e;
         }
     }
@@ -147,5 +161,69 @@ class LeaveRequestService
             );
             $currentDate->addDay();
         }
+    }
+
+    private function sendLeaveRequestNotification(Student|Teacher $user, array $data): void
+    {
+        Log::info('Attempting to send leave request notification.');
+        
+        // Get all admin users
+        $recipients = User::whereHas('roles', function ($query) {
+            $query->where('name', 'admin');
+        })->get();
+
+        // If no admin users found, get all users as fallback
+        if ($recipients->isEmpty()) {
+            $recipients = User::all();
+            Log::warning('No admin users found, sending notifications to all users.');
+        }
+
+        Log::info('Found ' . $recipients->count() . ' recipients for notification.');
+
+        $userName = $user->name;
+        $userType = $user instanceof Student ? 'Siswa' : 'Guru';
+        $userIdentifier = $user instanceof Student ? $user->nis : $user->nip;
+        $leaveType = ucfirst(strtolower($data['type']));
+        $startDate = Carbon::parse($data['start_date'])->format('d/m/Y');
+        $endDate = Carbon::parse($data['end_date'])->format('d/m/Y');
+
+        $title = '📝 Pengajuan Izin Baru dari Google Form';
+        $body = "{$userType} {$userName} ({$userIdentifier}) mengajukan {$leaveType} dari {$startDate} sampai {$endDate}. Alasan: {$data['reason']}";
+        
+        $notificationData = [
+            'user_type' => $userType,
+            'user_name' => $userName,
+            'user_identifier' => $userIdentifier,
+            'leave_type' => $leaveType,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'reason' => $data['reason'],
+            'source' => 'google_form_webhook'
+        ];
+
+        // Send both Filament notification and Laravel notification to each recipient
+        foreach ($recipients as $recipient) {
+            Log::info('Sending notification to: ' . $recipient->email);
+            
+            try {
+                // Send Filament notification (for immediate display)
+                Notification::make()
+                    ->title($title)
+                    ->body($body)
+                    ->success()
+                    ->icon('heroicon-o-document-text')
+                    ->iconColor('success')
+                    ->duration(10000) // 10 seconds
+                    ->sendToDatabase($recipient);
+                
+                // Send Laravel notification (for database persistence)
+                $recipient->notify(new \App\Notifications\LeaveRequestNotification($title, $body, $notificationData));
+                    
+                Log::info('Successfully sent both notifications to: ' . $recipient->email);
+            } catch (\Exception $e) {
+                Log::error('Failed to send notification to: ' . $recipient->email . '. Error: ' . $e->getMessage());
+            }
+        }
+        Log::info('Finished sending leave request notifications.');
     }
 }

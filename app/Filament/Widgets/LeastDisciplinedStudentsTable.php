@@ -6,6 +6,7 @@ use App\Models\Classes;
 use App\Models\DisciplineRanking;
 use Carbon\Carbon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -106,6 +107,8 @@ class LeastDisciplinedStudentsTable extends BaseWidget
                         return $query->when($data['value'], fn ($query, $value) => $query->where('students.class_id', $value));
                     }),
             ])
+            ->filtersLayout(filtersLayout: FiltersLayout::AboveContent)
+            ->filtersFormColumns('2')
             ->defaultSort('score', 'asc')
             ->paginated([10, 25, 50])
             ->striped()

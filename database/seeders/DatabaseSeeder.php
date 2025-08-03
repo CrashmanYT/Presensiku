@@ -33,5 +33,6 @@ class DatabaseSeeder extends Seeder
             TeacherLeaveRequestSeeder::class,
             //            HolidaySeeder::class,
         ]);
+    $this->call(RolesAndAdminSeeder::class);
     }
 }

@@ -24,6 +24,11 @@ class ScanLogResource extends Resource
 
     protected static ?int $navigationSort = 4;
 
+    public static function canViewAny(): bool
+    {
+        return false;
+    }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->with(['device']);
@@ -94,4 +99,7 @@ class ScanLogResource extends Resource
             'edit' => Pages\EditScanLog::route('/{record}/edit'),
         ];
     }
+
+
+
 }

@@ -41,7 +41,7 @@ class WebhookController extends Controller
     public function handleAttendance(WebhookAttendanceRequest $request): JsonResponse
     {
         $fingerprintId = $request->getFingerprintId();
-        $scanDateTime = Carbon::parse($request->getScanTime());
+        $scanDateTime = now();
         $device = $this->deviceRepository->getOrCreateByCloudId($request->getCloudId());
 
         $user = $this->userRepository->findByFingerprintId($fingerprintId);
