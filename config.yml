@@ -1,0 +1,9 @@
+tunnel: d3b9790-750c-49a9-b253-8b88d21facc4
+credentials-file: /Users/muhammadshaflyp.d/.cloudflared/d3b92790-750c-49a9-b253-8b88d21facc4.json
+
+ingress:
+  # Gunakan subdomain agar lebih rapi, misalnya 'dev.asamedia.online'
+  - hostname: dev2.asateknologi.online
+    service: http://localhost:8000
+  # Aturan fallback untuk menangani permintaan yang tidak cocok
+  - service: http_status:404
