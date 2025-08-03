@@ -40,17 +40,20 @@ class TeacherAttendance extends Model
 
     public function detectScanType(Carbon $scanTime, AttendanceRule $attendanceRule): ?string
     {
-        if (! $this->time_in) {
-            if ($scanTime->toDateTime()->format('H:i:s') > $this->time_in
-                && $scanTime->toDateTime()->format('H:i:s') < $this->time_out) {
-                return 'in';
-            }
+        $scanTimeFormatted = $scanTime->format('H:i:s');
+        $timeInStart = Carbon::parse($attendanceRule->time_in_start)->format('H:i:s');
+        $timeInEnd = Carbon::parse($attendanceRule->time_in_end)->format('H:i:s');
+        $timeOutStart = Carbon::parse($attendanceRule->time_out_start)->format('H:i:s');
+        $timeOutEnd = Carbon::parse($attendanceRule->time_out_end)->format('H:i:s');
+
+        // If no time_in recorded yet and scan time is within check-in window
+        if (! $this->time_in && $scanTimeFormatted >= $timeInStart && $scanTimeFormatted <= $timeInEnd) {
+            return 'in';
         }
-        if (! $this->time_out) {
-            if ($scanTime->toDateTime()->format('H:i:s') > $this->time_in
-                && $scanTime->toDateTime()->format('H:i:s') < $this->time_out) {
-                return 'out';
-            }
+
+        // If time_in exists but no time_out and scan time is within check-out window
+        if ($this->time_in && ! $this->time_out && $scanTimeFormatted >= $timeOutStart && $scanTimeFormatted <= $timeOutEnd) {
+            return 'out';
         }
 
         return null;

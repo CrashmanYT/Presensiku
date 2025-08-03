@@ -24,6 +24,10 @@ class LeaveRequestService
     public function processFromWebhook(Student|Teacher $user, array $data): void
     {
         Log::info('Starting leave request process from webhook.', ['user' => $user->name]);
+        
+        // Validate required fields
+        $this->validateWebhookData($data);
+        
         try {
             DB::transaction(function () use ($user, $data) {
                 $newStartDate = Carbon::parse($data['start_date']);
@@ -167,8 +171,8 @@ class LeaveRequestService
     {
         Log::info('Attempting to send leave request notification.');
         
-        // Get all admin users
-        $recipients = User::whereHas('roles', function ($query) {
+        // Get all admin users with roles preloaded to avoid N+1 queries
+        $recipients = User::with('roles')->whereHas('roles', function ($query) {
             $query->where('name', 'admin');
         })->get();
 
@@ -225,5 +229,43 @@ class LeaveRequestService
             }
         }
         Log::info('Finished sending leave request notifications.');
+    }
+
+    /**
+     * Validate webhook data to prevent security issues and data corruption
+     */
+    private function validateWebhookData(array $data): void
+    {
+        $requiredFields = ['start_date', 'end_date', 'type', 'reason'];
+        
+        foreach ($requiredFields as $field) {
+            if (!isset($data[$field]) || empty($data[$field])) {
+                throw new \InvalidArgumentException("Required field '{$field}' is missing or empty");
+            }
+        }
+        
+        // Validate date formats
+        try {
+            $startDate = Carbon::parse($data['start_date']);
+            $endDate = Carbon::parse($data['end_date']);
+        } catch (\Exception $e) {
+            throw new \InvalidArgumentException("Invalid date format: " . $e->getMessage());
+        }
+        
+        // Validate date logic
+        if ($startDate->gt($endDate)) {
+            throw new \InvalidArgumentException("Start date cannot be after end date");
+        }
+        
+        // Validate leave type
+        $validTypes = ['izin', 'sakit'];
+        if (!in_array(strtolower($data['type']), $validTypes)) {
+            throw new \InvalidArgumentException("Invalid leave type. Must be one of: " . implode(', ', $validTypes));
+        }
+        
+        // Validate reason length
+        if (strlen($data['reason']) > 1000) {
+            throw new \InvalidArgumentException("Reason cannot exceed 1000 characters");
+        }
     }
 }

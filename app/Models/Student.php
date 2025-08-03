@@ -5,10 +5,11 @@ namespace App\Models;
 use App\Enums\GenderEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
 
 class Student extends Model
 {
-    use HasFactory;
+    use HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
@@ -41,7 +42,7 @@ class Student extends Model
 
     public function notifications()
     {
-        return $this->hasMany(Notification::class);
+        return $this->morphMany(\Illuminate\Notifications\DatabaseNotification::class, 'notifiable');
     }
 
     public function disciplineRankings()

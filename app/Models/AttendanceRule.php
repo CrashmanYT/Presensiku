@@ -22,10 +22,10 @@ class AttendanceRule extends Model
 
     protected $casts = [
         'date_override' => 'date',
-        'time_in_start' => 'datetime',
-        'time_in_end' => 'datetime',
-        'time_out_start' => 'datetime',
-        'time_out_end' => 'datetime',
+        'time_in_start' => 'datetime:H:i:s',
+        'time_in_end' => 'datetime:H:i:s',
+        'time_out_start' => 'datetime:H:i:s',
+        'time_out_end' => 'datetime:H:i:s',
         'day_of_week' => 'array',
     ];
 
