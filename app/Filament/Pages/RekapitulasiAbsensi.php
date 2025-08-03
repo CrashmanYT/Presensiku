@@ -45,12 +45,16 @@ class RekapitulasiAbsensi extends Page implements HasTable
     public $endDate;
 
     public $selectedDate;
-
+    public $selectedWeek; // Tambahkan properti untuk minggu yang dipilih
+    public $weekMonth; // Tambahkan properti untuk bulan dari minggu yang dipilih
+    
     public function mount(): void
     {
         $this->selectedMonth = now()->month;
         $this->selectedYear = now()->year;
         $this->selectedDate = now()->toDateString();
+        $this->selectedWeek = now()->weekOfMonth;
+        $this->weekMonth = now()->month;
         $this->updateDateRange();
     }
 
@@ -90,6 +94,18 @@ class RekapitulasiAbsensi extends Page implements HasTable
         $this->resetTable();
     }
 
+    public function updatedSelectedWeek(): void
+    {
+        $this->updateDateRange();
+        $this->resetTable();
+    }
+    
+    public function updatedWeekMonth(): void
+    {
+        $this->updateDateRange();
+        $this->resetTable();
+    }
+    
     protected function updateDateRange(): void
     {
         switch ($this->activeTab) {
@@ -98,10 +114,18 @@ class RekapitulasiAbsensi extends Page implements HasTable
                 $this->endDate = $this->selectedDate;
                 break;
             case 'mingguan':
-                // Jika startDate atau endDate belum diatur oleh user, gunakan minggu ini
-                if (! $this->startDate || ! $this->endDate) {
+                // Gunakan minggu yang dipilih dan bulan untuk menentukan rentang tanggal
+                if ($this->selectedWeek && $this->weekMonth) {
+                    $date = Carbon::create($this->selectedYear, $this->weekMonth, 1);
+                    $date->addWeeks($this->selectedWeek - 1); // Minggu ke-1 dimulai dari 0
+                    $this->startDate = $date->startOfWeek()->toDateString();
+                    $this->endDate = $date->endOfWeek()->toDateString();
+                } else {
+                    // Jika belum dipilih, gunakan minggu ini
                     $this->startDate = now()->startOfWeek()->toDateString();
                     $this->endDate = now()->endOfWeek()->toDateString();
+                    $this->selectedWeek = now()->weekOfMonth;
+                    $this->weekMonth = now()->month;
                 }
                 break;
             case 'bulanan':

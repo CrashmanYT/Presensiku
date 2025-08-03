@@ -55,19 +55,22 @@
     @if ($activeTab === 'mingguan')
         <div class="flex items-center gap-4 mt-4">
             <x-filament::input.wrapper class="w-full md:w-1/2">
-                <x-filament::input
-                    type="date"
-                    wire:model.live="startDate"
-                    id="startDate"
-                />
+                <x-filament::input.select wire:model.live="selectedWeek">
+                    @foreach (range(1, 5) as $week)
+                        <option value="{{ $week }}">Minggu Ke-{{ $week }}</option>
+                    @endforeach
+                </x-filament::input.select>
             </x-filament::input.wrapper>
             <x-filament::input.wrapper class="w-full md:w-1/2">
-                <x-filament::input
-                    type="date"
-                    wire:model.live="endDate"
-                    id="endDate"
-                />
+                <x-filament::input.select wire:model.live="weekMonth">
+                    @foreach (range(1, 12) as $month)
+                        <option value="{{ $month }}">Bulan {{ \Carbon\Carbon::create()->month($month)->format('F') }}</option>
+                    @endforeach
+                </x-filament::input.select>
             </x-filament::input.wrapper>
+        </div>
+        <div class="text-sm text-gray-500 mt-2">
+            Rentang tanggal: {{ \Carbon\Carbon::parse($startDate)->format('d F Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d F Y') }}
         </div>
     @endif
 
