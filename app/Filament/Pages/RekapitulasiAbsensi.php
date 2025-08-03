@@ -7,6 +7,7 @@ use App\Filament\Exports\SummaryAttendanceExporter;
 use App\Models\StudentAttendance;
 use Carbon\Carbon;
 use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -43,11 +44,20 @@ class RekapitulasiAbsensi extends Page implements HasTable
 
     public $endDate;
 
+    public $selectedDate;
+
     public function mount(): void
     {
         $this->selectedMonth = now()->month;
         $this->selectedYear = now()->year;
+        $this->selectedDate = now()->toDateString();
         $this->updateDateRange();
+    }
+
+    public function updatedSelectedDate(): void
+    {
+        $this->updateDateRange();
+        $this->resetTable();
     }
 
     public function updatedActiveTab(): void
@@ -84,8 +94,8 @@ class RekapitulasiAbsensi extends Page implements HasTable
     {
         switch ($this->activeTab) {
             case 'harian':
-                $this->startDate = now()->toDateString();
-                $this->endDate = now()->toDateString();
+                $this->startDate = $this->selectedDate;
+                $this->endDate = $this->selectedDate;
                 break;
             case 'mingguan':
                 // Jika startDate atau endDate belum diatur oleh user, gunakan minggu ini
@@ -224,5 +234,27 @@ class RekapitulasiAbsensi extends Page implements HasTable
                     }
                 }),
         ];
+    }
+
+    protected function getFormSchema(): array
+    {
+        if ($this->activeTab === 'harian') {
+            return [
+                DatePicker::make('selectedDate')
+                    ->label('Pilih Tanggal')
+                    ->displayFormat('d F Y')
+                    ->format('Y-m-d')
+                    ->default(now())
+                    ->native(false)
+                    ->closeOnDateSelection()
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(function () {
+                        $this->updatedSelectedDate();
+                    }),
+            ];
+        }
+
+        return [];
     }
 }

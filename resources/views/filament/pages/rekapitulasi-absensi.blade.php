@@ -24,6 +24,12 @@
         </x-filament::tabs.item>
     </x-filament::tabs>
 
+    @if ($activeTab === 'harian')
+        <div class="mt-4">
+            {{ $this->form }}
+        </div>
+    @endif
+
     @if ($activeTab === 'bulanan')
         <div class="flex items-center gap-4 mt-4">
             <x-filament::input.wrapper class="w-full md:w-1/2">
