@@ -110,6 +110,7 @@ class AttendanceProcessingService
         })->get();
 
         $userName = $user->name;
+        // Time will now be formatted in Asia/Makassar timezone automatically
         $scanTime = $scanDateTime->format('H:i');
 
         $notification = Notification::make()
@@ -154,6 +155,7 @@ class AttendanceProcessingService
     private function formatResponseData(Student|Teacher $user, $attendance): array
     {
         $userNameKey = $user instanceof Student ? 'student_name' : 'teacher_name';
+        
         $data = [
             $userNameKey => $user->name,
             'time_in' => $attendance->time_in ? $attendance->time_in->format('H:i:s') : null,
