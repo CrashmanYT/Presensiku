@@ -156,16 +156,13 @@ class RekapitulasiAbsensi extends Page implements HasTable
         } else { // Untuk 'mingguan' dan 'bulanan'
             $query = $this->getSummaryData($this->startDate, $this->endDate);
             $columns = [
-                TextColumn::make('student_name')->label('Nama Siswa')->searchable()->sortable()->formatStateUsing(fn ($state, $record) => $record->student_name),
-                TextColumn::make('class_name')->label('Kelas')->searchable()->sortable()->formatStateUsing(fn ($state, $record) => $record->class_name),
-                TextColumn::make('total_hadir')->label('Hadir')->sortable()->formatStateUsing(fn ($state, $record) => $record->total_hadir),
-                TextColumn::make('total_terlambat')->label('Terlambat')->sortable()->formatStateUsing(fn ($state, $record) => $record->total_terlambat),
-                TextColumn::make('total_tidak_hadir')->label('Alpa')->sortable()->formatStateUsing(fn ($state, $record) => $record->total_tidak_hadir),
-                TextColumn::make('total_sakit')->label('Sakit')->sortable()->formatStateUsing(fn ($state, $record) => $record->total_sakit),
-                TextColumn::make('total_izin')
-                    ->label('Izin')
-                    ->sortable()
-                    ->formatStateUsing(fn ($state, $record) => $record->total_izin),
+                TextColumn::make('student_name')->label('Nama Siswa')->searchable(['students.name'])->sortable('students.name'),
+                TextColumn::make('class_name')->label('Kelas')->searchable(['classes.name'])->sortable('classes.name'),
+                TextColumn::make('total_hadir')->label('Hadir')->sortable(),
+                TextColumn::make('total_terlambat')->label('Terlambat')->sortable(),
+                TextColumn::make('total_tidak_hadir')->label('Alpa')->sortable(),
+                TextColumn::make('total_sakit')->label('Sakit')->sortable(),
+                TextColumn::make('total_izin')->label('Izin')->sortable(),
 
                 // Kolom Persentase Kehadiran Total
                 TextColumn::make('persentase_kehadiran_total')
@@ -198,7 +195,7 @@ class RekapitulasiAbsensi extends Page implements HasTable
             ->query($query)
             ->columns($columns)
             ->paginated([10, 25, 50, 100])
-            ->defaultSort($this->activeTab === 'harian' ? 'student.name' : 'student_name', 'asc')
+            ->defaultSort($this->activeTab === 'harian' ? 'student.name' : 'students.name', 'asc')
             ->recordUrl(
                 fn (object $record): string => \App\Filament\Resources\StudentResource::getUrl('view', ['record' => $record->student_id])
             );
