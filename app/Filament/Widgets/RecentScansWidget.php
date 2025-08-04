@@ -12,7 +12,6 @@ class RecentScansWidget extends BaseWidget
 
     protected static ?int $sort = 3;
 
-    protected int|string|array $columnSpan = 'full';
 
     protected function getTableQuery(): \Illuminate\Database\Eloquent\Builder
     {

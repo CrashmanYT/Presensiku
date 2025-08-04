@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Filament\Widgets\AttendanceChartWidget;
 use App\Filament\Widgets\RecentScansWidget;
 use App\Filament\Widgets\StatsOverviewWidget;
+use App\Filament\Widgets\StudentMonthlyAttendanceChart;
 use Filament\Pages\Dashboard as BaseDashboard;
 
 class Dashboard extends BaseDashboard
@@ -26,7 +27,13 @@ class Dashboard extends BaseDashboard
         return [
             StatsOverviewWidget::class,
             AttendanceChartWidget::class,
+            StudentMonthlyAttendanceChart::class,
             RecentScansWidget::class,
         ];
+    }
+
+    public function getHeaderWidgetsColumns(): int|string|array
+    {
+        return 2;
     }
 }
