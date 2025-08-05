@@ -9,12 +9,10 @@ use Filament\Widgets\TableWidget as BaseWidget;
 class RecentScansWidget extends BaseWidget
 {
     protected static ?string $heading = 'Scan Terbaru';
-    
 
     protected static ?int $sort = 3;
 
-    protected int | string | array $columnSpan = 'full';
-
+    protected int|string|array $columnSpan = 'full';
 
     protected function getTableQuery(): \Illuminate\Database\Eloquent\Builder
     {

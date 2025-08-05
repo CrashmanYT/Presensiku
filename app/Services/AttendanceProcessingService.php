@@ -155,7 +155,7 @@ class AttendanceProcessingService
     private function formatResponseData(Student|Teacher $user, $attendance): array
     {
         $userNameKey = $user instanceof Student ? 'student_name' : 'teacher_name';
-        
+
         $data = [
             $userNameKey => $user->name,
             'time_in' => $attendance->time_in ? $attendance->time_in->format('H:i:s') : null,

@@ -12,7 +12,6 @@ class AttendanceChartWidget extends ChartWidget
 
     protected static ?int $sort = 2;
 
-
     public ?string $filter = 'last_7_days'; // Default filter value
 
     protected function getFilters(): ?array

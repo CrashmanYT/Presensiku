@@ -16,7 +16,7 @@ class CreateTeacherLeaveRequest extends CreateRecord
         return Notification::make()
             ->success()
             ->title('Izin guru berhasil ditambahkan')
-            ->body('Data izin untuk guru ' . $this->record->teacher->name . ' telah berhasil disimpan.')
+            ->body('Data izin untuk guru '.$this->record->teacher->name.' telah berhasil disimpan.')
             ->duration(5000);
     }
 
@@ -26,7 +26,7 @@ class CreateTeacherLeaveRequest extends CreateRecord
         Notification::make()
             ->success()
             ->title('Izin Guru Berhasil Ditambahkan')
-            ->body('Izin untuk guru ' . $this->record->teacher->name . ' (' . ucfirst($this->record->type) . ') dari tanggal ' . $this->record->start_date->format('d/m/Y') . ' sampai ' . $this->record->end_date->format('d/m/Y') . ' telah berhasil disimpan.')
+            ->body('Izin untuk guru '.$this->record->teacher->name.' ('.ucfirst($this->record->type).') dari tanggal '.$this->record->start_date->format('d/m/Y').' sampai '.$this->record->end_date->format('d/m/Y').' telah berhasil disimpan.')
             ->sendToDatabase(Auth::user());
     }
 }

@@ -16,7 +16,7 @@ class CreateStudentLeaveRequest extends CreateRecord
         return Notification::make()
             ->success()
             ->title('Izin siswa berhasil ditambahkan')
-            ->body('Data izin untuk siswa ' . $this->record->student->name . ' telah berhasil disimpan.')
+            ->body('Data izin untuk siswa '.$this->record->student->name.' telah berhasil disimpan.')
             ->duration(5000);
     }
 
@@ -26,7 +26,7 @@ class CreateStudentLeaveRequest extends CreateRecord
         Notification::make()
             ->success()
             ->title('Izin Siswa Berhasil Ditambahkan')
-            ->body('Izin untuk siswa ' . $this->record->student->name . ' (' . ucfirst($this->record->type) . ') dari tanggal ' . $this->record->start_date->format('d/m/Y') . ' sampai ' . $this->record->end_date->format('d/m/Y') . ' telah berhasil disimpan.')
+            ->body('Izin untuk siswa '.$this->record->student->name.' ('.ucfirst($this->record->type).') dari tanggal '.$this->record->start_date->format('d/m/Y').' sampai '.$this->record->end_date->format('d/m/Y').' telah berhasil disimpan.')
             ->sendToDatabase(Auth::user());
     }
 }

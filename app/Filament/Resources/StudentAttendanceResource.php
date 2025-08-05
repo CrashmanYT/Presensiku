@@ -80,7 +80,7 @@ class StudentAttendanceResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->defaultSort('date',  'desc')
+            ->defaultSort('date', 'desc')
             ->filters([
                 SelectFilter::make('Nama')
                     ->relationship('student', 'name')

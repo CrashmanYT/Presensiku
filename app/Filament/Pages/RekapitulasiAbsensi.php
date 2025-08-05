@@ -45,9 +45,11 @@ class RekapitulasiAbsensi extends Page implements HasTable
     public $endDate;
 
     public $selectedDate;
+
     public $selectedWeek; // Tambahkan properti untuk minggu yang dipilih
+
     public $weekMonth; // Tambahkan properti untuk bulan dari minggu yang dipilih
-    
+
     public function mount(): void
     {
         $this->selectedMonth = now()->month;
@@ -99,13 +101,13 @@ class RekapitulasiAbsensi extends Page implements HasTable
         $this->updateDateRange();
         $this->resetTable();
     }
-    
+
     public function updatedWeekMonth(): void
     {
         $this->updateDateRange();
         $this->resetTable();
     }
-    
+
     protected function updateDateRange(): void
     {
         switch ($this->activeTab) {

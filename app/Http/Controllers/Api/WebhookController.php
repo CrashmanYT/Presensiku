@@ -12,7 +12,6 @@ use App\Models\Student;
 use App\Models\Teacher;
 use App\Services\AttendanceProcessingService;
 use App\Services\LeaveRequestService;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 

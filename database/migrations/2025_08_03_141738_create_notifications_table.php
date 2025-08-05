@@ -13,7 +13,7 @@ return new class extends Migration
     {
         // Drop the existing table first if it exists
         Schema::dropIfExists('notifications');
-        
+
         // Create Laravel Notifications table
         Schema::create('notifications', function (Blueprint $table) {
             $table->uuid('id')->primary();

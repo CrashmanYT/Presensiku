@@ -99,7 +99,4 @@ class ScanLogResource extends Resource
             'edit' => Pages\EditScanLog::route('/{record}/edit'),
         ];
     }
-
-
-
 }

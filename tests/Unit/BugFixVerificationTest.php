@@ -2,15 +2,15 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
+use App\Models\AttendanceRule;
+use App\Models\Classes;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Models\TeacherAttendance;
-use App\Models\AttendanceRule;
-use App\Models\Classes;
 use App\Services\LeaveRequestService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class BugFixVerificationTest extends TestCase
 {
@@ -24,7 +24,7 @@ class BugFixVerificationTest extends TestCase
         // Create test data
         $class = Classes::factory()->create();
         $teacher = Teacher::factory()->create();
-        
+
         $attendanceRule = AttendanceRule::create([
             'class_id' => $class->id,
             'time_in_start' => '07:00:00',
@@ -60,7 +60,7 @@ class BugFixVerificationTest extends TestCase
     public function test_attendance_rule_time_casting_fix()
     {
         $class = Classes::factory()->create();
-        
+
         $attendanceRule = AttendanceRule::create([
             'class_id' => $class->id,
             'time_in_start' => '07:00:00',
@@ -105,7 +105,7 @@ class BugFixVerificationTest extends TestCase
     {
         $class = Classes::factory()->create();
         $student = Student::factory()->create(['class_id' => $class->id]);
-        $service = new LeaveRequestService();
+        $service = new LeaveRequestService;
 
         // Test with invalid data (missing required fields)
         $invalidData = [
@@ -145,7 +145,7 @@ class BugFixVerificationTest extends TestCase
 
         // Try to create duplicate - should fail due to unique constraint
         $this->expectException(\Illuminate\Database\QueryException::class);
-        
+
         \App\Models\StudentAttendance::create([
             'student_id' => $student->id,
             'date' => $date,

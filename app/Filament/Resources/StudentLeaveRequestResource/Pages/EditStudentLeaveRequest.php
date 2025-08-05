@@ -25,7 +25,7 @@ class EditStudentLeaveRequest extends EditRecord
         return Notification::make()
             ->success()
             ->title('Izin siswa berhasil diperbarui')
-            ->body('Data izin untuk siswa ' . $this->record->student->name . ' telah berhasil diperbarui.')
+            ->body('Data izin untuk siswa '.$this->record->student->name.' telah berhasil diperbarui.')
             ->duration(5000);
     }
 
@@ -35,7 +35,7 @@ class EditStudentLeaveRequest extends EditRecord
         Notification::make()
             ->success()
             ->title('Izin Siswa Berhasil Diperbarui')
-            ->body('Izin untuk siswa ' . $this->record->student->name . ' (' . ucfirst($this->record->type) . ') dari tanggal ' . $this->record->start_date->format('d/m/Y') . ' sampai ' . $this->record->end_date->format('d/m/Y') . ' telah berhasil diperbarui.')
+            ->body('Izin untuk siswa '.$this->record->student->name.' ('.ucfirst($this->record->type).') dari tanggal '.$this->record->start_date->format('d/m/Y').' sampai '.$this->record->end_date->format('d/m/Y').' telah berhasil diperbarui.')
             ->sendToDatabase(Auth::user());
     }
 }
