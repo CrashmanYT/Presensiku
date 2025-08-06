@@ -25,6 +25,9 @@ use Filament\Tables\Enums\FiltersLayout;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use App\Jobs\ExportRekapitulasiAbsensiJob;
+use Auth;
+use Filament\Notifications\Notification;
 use Maatwebsite\Excel\Facades\Excel;
 
 class RekapitulasiAbsensi extends Page implements HasTable
@@ -408,16 +411,23 @@ class RekapitulasiAbsensi extends Page implements HasTable
                     ->label('Export Excel')
                     ->color('success')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->action(function () use ($fileName) {
-                        return \Maatwebsite\Excel\Facades\Excel::download(
-                            new RekapitulasiAbsensiExport(
-                                $this->activeTab,
-                                $this->startDate,
-                                $this->endDate,
-                                $this->selectedClassId
-                            ),
-                            $fileName
+                    ->action(function () {
+                        // Kembalikan perilaku: dispatch job ekspor terantri dan tampilkan notifikasi mulai.
+                        $this->updateDateRange();
+
+                        \App\Jobs\ExportRekapitulasiAbsensiJob::dispatch(
+                            $this->activeTab,
+                            $this->startDate,
+                            $this->endDate,
+                            $this->selectedClassId,
+                            \Auth::user()
                         );
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Ekspor Dimulai')
+                            ->body('Proses ekspor rekapitulasi absensi sedang berjalan di latar belakang. Anda akan diberi tahu jika sudah selesai.')
+                            ->success()
+                            ->send();
                     }),
             ]);
     }
