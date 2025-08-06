@@ -9,8 +9,9 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class RekapitulasiAbsensiExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
+class RekapitulasiAbsensiExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize, WithChunkReading
 {
     protected string $activeTab;
     protected string $startDate;
@@ -98,5 +99,10 @@ class RekapitulasiAbsensiExport implements FromQuery, WithHeadings, WithMapping,
             $row->total_izin,
             $persentase_kehadiran . '%',
         ];
+    }
+
+    public function chunkSize(): int
+    {
+        return 500;
     }
 }

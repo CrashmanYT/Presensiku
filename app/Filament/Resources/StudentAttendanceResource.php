@@ -16,10 +16,6 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
-use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
-use pxlrbt\FilamentExcel\Columns\Column;
-use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 class StudentAttendanceResource extends Resource
 {
@@ -161,25 +157,7 @@ class StudentAttendanceResource extends Resource
                 //                    ])
             ])
             ->headerActions([
-                ExportAction::make('export')
-                    ->label('Export Data Absensi Siswa')
-                    ->icon('heroicon-o-arrow-up-tray')
-                    ->color('info')
-                    ->exports([
-                        ExcelExport::make('absensi-siswa')
-                            ->withColumns(
-                                ExportColumnHelper::getStudentAttendanceColumns()
-                            )
-                            ->withFilename('Data Absensi Siswa.xlsx')
-                            ->modifyQueryUsing(function ($query) {
-                                return $query->with(['student.class', 'device'])
-                                    ->select('student_attendances.*')
-                                    ->orderBy('date', 'desc')
-                                    ->orderBy('id', 'desc');
-                            })
-                            ->queue()
-                            ->chunkSize(1000),
-                    ]),
+                
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -188,24 +166,7 @@ class StudentAttendanceResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    ExportBulkAction::make('export')
-                        ->color('info')
-                        ->icon('heroicon-o-arrow-up-tray')
-                        ->exports([
-                            ExcelExport::make('absensi-siswa-bulk')
-                                ->withColumns(
-                                    ExportColumnHelper::getStudentAttendanceColumns()
-                                )
-                                ->withFilename('Data Absensi Siswa (Terpilih).xlsx')
-                                ->modifyQueryUsing(function ($query) {
-                                    return $query->with(['student.class', 'device'])
-                                        ->select('student_attendances.*')
-                                        ->orderBy('date', 'desc')
-                                        ->orderBy('id', 'desc');
-                                })
-                                ->queue()
-                                ->chunkSize(1000),
-                        ]),
+                    
                 ]),
             ]);
     }

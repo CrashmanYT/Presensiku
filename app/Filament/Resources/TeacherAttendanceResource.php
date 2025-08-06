@@ -20,9 +20,6 @@ use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint\Oper
 use Filament\Tables\Filters\QueryBuilder\Constraints\SelectConstraint;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
-use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
-use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 class TeacherAttendanceResource extends Resource
 {
@@ -154,25 +151,7 @@ class TeacherAttendanceResource extends Resource
             ->filtersFormWidth('5xl')
             ->filtersFormColumns(2)
             ->headerActions([
-                ExportAction::make('export')
-                    ->label('Export Data Absensi Guru')
-                    ->icon('heroicon-o-arrow-up-tray')
-                    ->color('info')
-                    ->exports([
-                        ExcelExport::make('absensi-guru')
-                            ->withColumns(
-                                ExportColumnHelper::getTeacherAttendanceColumns()
-                            )
-                            ->withFilename('Data Absensi Guru.xlsx')
-                            ->modifyQueryUsing(function ($query) {
-                                return $query->with(['teacher', 'device'])
-                                    ->select('teacher_attendances.*')
-                                    ->orderBy('date', 'desc')
-                                    ->orderBy('id', 'desc');
-                            })
-                            ->queue()
-                            ->chunkSize(1000),
-                    ]),
+                
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -181,24 +160,7 @@ class TeacherAttendanceResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    ExportBulkAction::make('export')
-                        ->color('info')
-                        ->icon('heroicon-o-arrow-up-tray')
-                        ->exports([
-                            ExcelExport::make('absensi-guru-bulk')
-                                ->withColumns(
-                                    ExportColumnHelper::getTeacherAttendanceColumns()
-                                )
-                                ->withFilename('Data Absensi Guru (Terpilih).xlsx')
-                                ->modifyQueryUsing(function ($query) {
-                                    return $query->with(['teacher', 'device'])
-                                        ->select('teacher_attendances.*')
-                                        ->orderBy('date', 'desc')
-                                        ->orderBy('id', 'desc');
-                                })
-                                ->queue()
-                                ->chunkSize(1000),
-                        ]),
+                    
                 ]),
             ]);
     }
