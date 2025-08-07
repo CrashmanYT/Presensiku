@@ -108,31 +108,10 @@ class ClassesResource extends Resource
                     ->importer(ClassesImporter::class)
                     ->color('success')
                     ->icon('heroicon-o-arrow-down-tray'),
-                ExportAction::make('export')
-                    ->label('Export Data Kelas')
-                    ->icon('heroicon-o-arrow-up-tray')
-                    ->color('info')
-                    ->exports([
-                        ExcelExport::make('data-kelas')
-                            ->withColumns(
-                                ExportColumnHelper::getClassColumns()
-                            )
-                            ->withFilename('Data Kelas.xlsx'),
-                    ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    ExportBulkAction::make('export')
-                        ->color('info')
-                        ->icon('heroicon-o-arrow-up-tray')
-                        ->exports([
-                            ExcelExport::make('data-kelas')
-                                ->withColumns(
-                                    ExportColumnHelper::getClassColumns()
-                                )
-                                ->withFilename('Data Kelas.xlsx'),
-                        ]),
                 ]),
             ]);
     }

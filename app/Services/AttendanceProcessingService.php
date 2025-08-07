@@ -46,7 +46,22 @@ class AttendanceProcessingService
         $model = $user instanceof Student ? StudentAttendance::class : TeacherAttendance::class;
         $foreignKey = $user instanceof Student ? 'student_id' : 'teacher_id';
 
-        return $model::where($foreignKey, $user->id)->where('date', $scanDate)->first();
+        Log::debug('findExistingAttendance: Checking for existing attendance.', [
+            'model' => $model,
+            'foreign_key' => $foreignKey,
+            'user_id' => $user->id,
+            'scan_date' => $scanDate
+        ]);
+
+        $attendance = $model::where($foreignKey, $user->id)->where('date', $scanDate)->first();
+
+        if ($attendance) {
+            Log::debug('findExistingAttendance: Existing attendance found.', ['attendance_id' => $attendance->id]);
+        } else {
+            Log::debug('findExistingAttendance: No existing attendance found.');
+        }
+
+        return $attendance;
     }
 
     private function createNewAttendance(Student|Teacher $user, Carbon $scanDateTime, AttendanceRule $attendanceRule, Device $device): JsonResponse

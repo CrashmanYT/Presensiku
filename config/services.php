@@ -18,6 +18,8 @@ return [
         'token' => env('POSTMARK_TOKEN'),
     ],
 
+
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
@@ -37,5 +39,12 @@ return [
     'webhook' => [
         'secret_token' => env('WEBHOOK_SECRET_TOKEN'),
     ],
+
+    'kirimi' => [
+        'user_code' => env('KIRIMI_USER_CODE'),
+        'secret' => env('KIRIMI_SECRET'),
+        'device_id' => env('KIRIMI_DEVICE_ID'),
+
+    ]
 
 ];

@@ -137,16 +137,6 @@ class StudentResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    ExportBulkAction::make('export')
-                        ->color('info')
-                        ->icon('heroicon-o-arrow-up-tray')
-                        ->exports([
-                            ExcelExport::make('data-murid')
-                                ->withColumns(
-                                    ExportColumnHelper::getStudentColumns()
-                                )
-                                ->withFilename('Data Siswa.xlsx'),
-                        ]),
                 ]),
             ])
             ->headerActions([
@@ -161,15 +151,6 @@ class StudentResource extends Resource
                     ->importer(StudentImporter::class)
                     ->color('success')
                     ->icon('heroicon-o-arrow-down-tray'),
-                \pxlrbt\FilamentExcel\Actions\Tables\ExportAction::make('export')
-                    ->label('Export Data Murid')
-                    ->icon('heroicon-o-arrow-up-tray')
-                    ->color('info')
-                    ->exports([
-                        ExcelExport::make('form')->withColumns(
-                            ExportColumnHelper::getStudentColumns()
-                        ),
-                    ]),
             ]);
     }
 

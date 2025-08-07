@@ -93,29 +93,10 @@ class TeacherResource extends Resource
                     ->importer(TeacherImporter::class)
                     ->color('success')
                     ->icon('heroicon-o-arrow-down-tray'),
-                ExportAction::make('export')
-                    ->label('Export Data Guru')
-                    ->icon('heroicon-o-arrow-up-tray')
-                    ->color('info')
-                    ->exports([
-                        ExcelExport::make('form')->withColumns(
-                            ExportColumnHelper::getTeacherColumns()
-                        )->withFilename('Data Guru'),
-                    ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    ExportBulkAction::make('export')
-                        ->color('info')
-                        ->icon('heroicon-o-arrow-up-tray')
-                        ->exports([
-                            ExcelExport::make('data-guru')
-                                ->withColumns(
-                                    ExportColumnHelper::getTeacherColumns()
-                                )
-                                ->withFilename('Data Guru.xlsx'),
-                        ]),
                 ]),
             ]);
     }

@@ -2,6 +2,8 @@
 
 namespace App\Observers;
 
+use App\Enums\AttendanceStatusEnum;
+use App\Events\StudentAttendanceUpdated;
 use App\Helpers\SettingsHelper;
 use App\Models\DisciplineRanking;
 use App\Models\Student;
@@ -11,15 +13,28 @@ use Illuminate\Support\Facades\Log;
 
 class StudentAttendanceObserver
 {
+    // Define the statuses that should trigger a WhatsApp notification
+    private const WHATSAPP_NOTIFY_STATUSES = [
+        AttendanceStatusEnum::TIDAK_HADIR,
+        AttendanceStatusEnum::IZIN,
+        AttendanceStatusEnum::TERLAMBAT,
+        AttendanceStatusEnum::SAKIT,
+    ];
+
     /**
      * Handle the StudentAttendance "created" event.
      */
     public function created(StudentAttendance $studentAttendance): void
     {
         try {
+            if (in_array($studentAttendance->status, self::WHATSAPP_NOTIFY_STATUSES)) {
+                StudentAttendanceUpdated::dispatch($studentAttendance);
+            }
+
             if ($studentAttendance->student) {
                 $this->updateRanking($studentAttendance->student, $studentAttendance->date, $studentAttendance->status->value, 'increment');
             }
+
         } catch (\Exception $e) {
             Log::error('Error in StudentAttendanceObserver created method: ' . $e->getMessage(), ['exception' => $e]);
         }
@@ -34,7 +49,6 @@ class StudentAttendanceObserver
             if ($studentAttendance->isDirty('status') && $studentAttendance->student) {
                 $originalStatus = $studentAttendance->getOriginal('status');
                 $newStatus = $studentAttendance->status;
-
                 $oldStatusValue = $originalStatus instanceof \App\Enums\AttendanceStatusEnum
                     ? $originalStatus->value
                     : $originalStatus;

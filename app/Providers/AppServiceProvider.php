@@ -6,6 +6,9 @@ use App\Models\StudentAttendance;
 use App\Observers\StudentAttendanceObserver;
 use Filament\Livewire\DatabaseNotifications;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Event;
+use App\Events\StudentAttendanceUpdated;
+use App\Listeners\SendWhatsappNotification;
 
 class AppServiceProvider extends ServiceProvider
 {
