@@ -26,9 +26,10 @@ class StudentAttendanceSeeder extends Seeder
                 $timeOut = $faker->time('H:i:s', '16:00:00');
                 $status = $faker->randomElement(['hadir', 'terlambat', 'tidak_hadir', 'izin', 'sakit']);
 
-                StudentAttendance::create([
+                StudentAttendance::updateOrInsert([
                     'student_id' => $student->id,
                     'date' => $date->format('Y-m-d'),
+                ],[
                     'time_in' => $timeIn,
                     'time_out' => $timeOut,
                     'status' => $status,

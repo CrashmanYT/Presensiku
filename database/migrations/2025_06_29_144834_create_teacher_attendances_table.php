@@ -23,6 +23,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['teacher_id', 'date']);
+            $table->unique(['teacher_id', 'date']);
 
         });
     }

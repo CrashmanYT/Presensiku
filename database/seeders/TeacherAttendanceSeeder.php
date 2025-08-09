@@ -26,7 +26,10 @@ class TeacherAttendanceSeeder extends Seeder
                 $timeOut = $faker->time('H:i:s', '15:00:00');
                 $status = $faker->randomElement(['hadir', 'terlambat', 'tidak_hadir', 'izin', 'sakit']);
 
-                TeacherAttendance::create([
+                TeacherAttendance::updateOrInsert([
+                    'teacher_id' => $teacher->id,
+                    'date' => $date->format('Y-m-d'),
+                ],[
                     'teacher_id' => $teacher->id,
                     'date' => $date->format('Y-m-d'),
                     'time_in' => $timeIn,
