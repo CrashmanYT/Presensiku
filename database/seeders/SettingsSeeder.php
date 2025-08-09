@@ -143,9 +143,19 @@ class SettingsSeeder extends Seeder
 
             // WhatsApp Templates
             [
-                'key' => 'notifications.whatsapp.templates.late',
+                'key' => 'notifications.whatsapp.templates',
                 'value' => json_encode([
-                    ['message' => 'Yth. Bapak/Ibu, ananda {nama_siswa} tercatat terlambat hari ini. Jam masuk: {jam_masuk}, seharusnya: {jam_seharusnya}.'],
+                    'late' => [
+                        ['message' => 'Yth. Bapak/Ibu, ananda {nama_siswa} tercatat terlambat hari ini. Jam masuk: {jam_masuk}, seharusnya: {jam_seharusnya}.'],
+                        ['message' => 'Halo {nama_siswa}, kamu terlambat masuk sekolah hari ini.'],
+                    ],
+                    'absent' => [
+                        ['message' => 'Yth. Bapak/Ibu, ananda {nama_siswa} tidak tercatat hadir di sekolah pada tanggal {tanggal}. Mohon konfirmasinya.'],
+                        ['message' => 'Anak anda {nama_siswa} tidak hadir hari ini.'],
+                    ],
+                    'permit' => [
+                        ['message' => 'Pengajuan Izin Ananda {nama_siswa} berhasil tercatat di sistem'],
+                    ],
                 ]),
                 'type' => 'json',
                 'group_name' => 'notifications',

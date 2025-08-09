@@ -89,18 +89,6 @@ class SettingsHelper
     }
 
     /**
-     * WhatsApp Templates
-     */
-    public static function getWhatsAppTemplates(): array
-    {
-        return [
-            'late' => static::get('notifications.whatsapp.templates.late', []),
-            'absent' => static::get('notifications.whatsapp.templates.absent', []),
-            'present' => static::get('notifications.whatsapp.templates.present', []),
-        ];
-    }
-
-    /**
      * Get all public settings (for frontend/dashboard use)
      */
     public static function getPublicSettings(): array
@@ -135,30 +123,61 @@ class SettingsHelper
     }
 
     /**
+     * WhatsApp Templates
+     */
+    public static function getWhatsAppTemplates(): array
+    {
+        return static::get('notifications.whatsapp.templates', [
+            'late' => [],
+            'absent' => [],
+            'permit' => [],
+        ]);
+    }
+
+    /**
      * Get WhatsApp message template with variables replaced
      */
     public static function getWhatsAppMessage(string $type, array $variables = []): string
     {
-        $key = "notifications.whatsapp.templates.{$type}";
-        $templates = static::get($key, []);
+        $templates = static::getWhatsAppTemplates();
 
-        if (! is_array($templates) || empty($templates)) {
+        if (! isset($templates[$type]) || ! is_array($templates[$type]) || empty($templates[$type])) {
             return "Template pesan untuk '{$type}' tidak ditemukan atau kosong.";
         }
 
-        // Pick a random template from the repeater
-        $randomTemplate = $templates[array_rand($templates)];
+        $randomTemplate = $templates[$type][array_rand($templates[$type])];
         $templateString = $randomTemplate['message'] ?? '';
 
         if (empty($templateString)) {
             return "Format template pesan untuk '{$type}' tidak valid.";
         }
 
+        // Replace variables in the template string
         foreach ($variables as $variable => $value) {
             $templateString = str_replace('{'.$variable.'}', $value, $templateString);
         }
-
         return $templateString;
+
+        // $key = "notifications.whatsapp.templates.{$type}";
+        // $templates = static::get($key, []);
+
+        // if (! is_array($templates) || empty($templates)) {
+        //     return "Template pesan untuk '{$type}' tidak ditemukan atau kosong.";
+        // }
+
+        // // Pick a random template from the repeater
+        // $randomTemplate = $templates[array_rand($templates)];
+        // $templateString = $randomTemplate['message'] ?? '';
+
+        // if (empty($templateString)) {
+        //     return "Format template pesan untuk '{$type}' tidak valid.";
+        // }
+
+        // foreach ($variables as $variable => $value) {
+        //     $templateString = str_replace('{'.$variable.'}', $value, $templateString);
+        // }
+
+        // return $templateString;
     }
 
     /**

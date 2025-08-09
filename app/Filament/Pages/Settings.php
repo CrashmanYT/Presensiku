@@ -222,7 +222,6 @@ class Settings extends Page
                                 Forms\Components\Textarea::make('message')
                                     ->label('Isi Pesan')
                                     ->rows(3)
-                                    ->default('Yth. Bapak/Ibu, ananda {nama_siswa} tercatat terlambat hari ini. Jam masuk: {jam_masuk}, seharusnya: {jam_seharusnya}.')
                                     ->helperText('Variabel: {nama_siswa}, {jam_masuk}, {jam_seharusnya}, {kelas}'),
                             ]),
                         Forms\Components\Repeater::make('notifications.whatsapp.templates.absent')
@@ -238,23 +237,21 @@ class Settings extends Page
                                 Forms\Components\Textarea::make('message')
                                     ->label('Isi Pesan')
                                     ->rows(3)
-                                    ->default('Yth. Bapak/Ibu, ananda {nama_siswa} tidak tercatat hadir di sekolah pada tanggal {tanggal}. Mohon konfirmasinya.')
                                     ->helperText('Variabel: {nama_siswa}, {tanggal}, {kelas}'),
                             ]),
-                        Forms\Components\Repeater::make('notifications.whatsapp.templates.present')
-                            ->label('Pesan Hadir')
+                        Forms\Components\Repeater::make('notifications.whatsapp.templates.permit')
+                            ->label('Pesan Izin')
                             ->reorderableWithButtons()
                             ->collapsible()
                             ->cloneable()
                             ->deleteAction(
                                 fn (Action $action) => $action->requiresConfirmation(),
                             )
-                            ->addActionLabel('Tambah Template Hadir')
+                            ->addActionLabel('Tambah Template Izin')
                             ->schema([
                                 Forms\Components\Textarea::make('message')
                                     ->label('Isi Pesan')
                                     ->rows(3)
-                                    ->default('Informasi: Ananda {nama_siswa} telah tercatat hadir di sekolah pada jam {jam_masuk}.')
                                     ->helperText('Variabel: {nama_siswa}, {jam_masuk}, {kelas}'),
                             ]),
                     ]),
