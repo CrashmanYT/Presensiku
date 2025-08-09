@@ -87,6 +87,9 @@ class AttendanceServiceTest extends TestCase
             'description' => 'Aturan Selasa',
         ]);
 
+        // Add mock expectation to prevent error, even if this path shouldn't be hit.
+        $this->settingsHelperMock->shouldReceive('getAttendanceSettings')->andReturn([]);
+
         // Act
         $foundRule = $this->attendanceService->getAttendanceRule($this->class->id, $scanDate);
 

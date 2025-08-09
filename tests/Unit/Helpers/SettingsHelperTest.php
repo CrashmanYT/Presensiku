@@ -76,10 +76,17 @@ class SettingsHelperTest extends TestCase
     #[Test]
     public function it_returns_correct_whatsapp_templates()
     {
-        $template = [['message' => 'Test message']];
-        SettingsHelper::set('notifications.whatsapp.templates.late', $template, 'json');
+        $lateTemplate = [['message' => 'Test message']];
+        $fullTemplateStructure = [
+            'late' => $lateTemplate,
+            'absent' => [],
+            'permit' => [],
+        ];
+
+        SettingsHelper::set('notifications.whatsapp.templates', $fullTemplateStructure, 'json');
+
         $settings = SettingsHelper::getWhatsAppTemplates();
-        $this->assertEquals($template, $settings['late']);
+        $this->assertEquals($lateTemplate, $settings['late']);
     }
 
     #[Test]
@@ -113,8 +120,14 @@ class SettingsHelperTest extends TestCase
     #[Test]
     public function it_gets_a_whatsapp_message_with_variables_replaced()
     {
-        $template = [['message' => 'Hello, {name}!']];
-        SettingsHelper::set('notifications.whatsapp.templates.greeting', $template, 'json');
+        $greetingTemplate = [['message' => 'Hello, {name}!']];
+        $fullTemplateStructure = [
+            'greeting' => $greetingTemplate,
+            'late' => [],
+            'absent' => [],
+            'permit' => [],
+        ];
+        SettingsHelper::set('notifications.whatsapp.templates', $fullTemplateStructure, 'json');
 
         $message = SettingsHelper::getWhatsAppMessage('greeting', ['name' => 'World']);
         $this->assertEquals('Hello, World!', $message);
