@@ -3,7 +3,14 @@
 namespace App\Filament\Resources\StudentAttendanceResource\Pages;
 
 use App\Filament\Resources\StudentAttendanceResource;
+use App\Enums\AttendanceStatusEnum;
+use App\Jobs\ExportStudentAttendanceJob;
+use App\Models\Classes;
+use Filament\Actions\Action;
 use Filament\Actions;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Notifications\Notification;
 use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Tables\Columns\TextColumn;
@@ -16,6 +23,44 @@ class ListStudentAttendances extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('export_excel')
+                ->label('Export Excel')
+                ->color('success')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->form([
+                    DatePicker::make('from_date')
+                        ->label('Dari Tanggal')
+                        ->required(),
+                    DatePicker::make('to_date')
+                        ->label('Sampai Tanggal')
+                        ->required(),
+                    Select::make('class_ids')
+                        ->label('Kelas')
+                        ->multiple()
+                        ->options(Classes::pluck('name', 'id'))
+                        ->placeholder('Semua Kelas'),
+                    Select::make('status')
+                        ->label('Status')
+                        ->multiple()
+                        ->options(collect(AttendanceStatusEnum::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()]))
+                        ->placeholder('Semua Status'),
+                ])
+                ->action(function (array $data) {
+                    $filters = [
+                        'from_date' => $data['from_date'],
+                        'to_date' => $data['to_date'],
+                        'class_ids' => $data['class_ids'],
+                        'status' => $data['status'],
+                    ];
+
+                    ExportStudentAttendanceJob::dispatch($filters, auth()->user());
+
+                    Notification::make()
+                        ->title('Ekspor Dimulai')
+                        ->body('Proses ekspor absensi siswa sedang berjalan di latar belakang. Anda akan diberi tahu jika sudah selesai.')
+                        ->success()
+                        ->send();
+                }),
             Actions\CreateAction::make(),
         ];
     }
