@@ -1,0 +1,73 @@
+<?php
+
+namespace App\Console\Commands;
+
+use App\Enums\AttendanceStatusEnum;
+use App\Events\StudentAttendanceUpdated;
+use App\Models\StudentAttendance;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
+
+class SendAbsentNotifications extends Command
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'attendance:send-absent-notifications';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Find all students marked as absent for the day and trigger a notification for them.';
+
+    /**
+     * Execute the console command.
+     */
+    public function handle(): void
+    {
+        $this->info('Starting to process absent students for notification...');
+        Log::info('Running SendAbsentNotifications command.');
+
+        $today = now()->toDateString();
+
+        $absentAttendances = StudentAttendance::query()
+            ->where('date', $today)
+            ->where('status', AttendanceStatusEnum::TIDAK_HADIR)
+            // Optional: Add a check to prevent re-notifying if you add a 'notification_sent_at' column in the future
+            // ->whereNull('notification_sent_at') 
+            ->with('student') // Eager load student to prevent N+1 queries
+            ->get();
+
+        if ($absentAttendances->isEmpty()) {
+            $this->info('No absent students found for today. Nothing to do.');
+            Log::info('No absent students found for today.');
+            return;
+        }
+
+        $this->info("Found {$absentAttendances->count()} absent students. Dispatching events...");
+
+        foreach ($absentAttendances as $attendance) {
+            try {
+                // Dispatch the event to reuse the existing notification logic
+                StudentAttendanceUpdated::dispatch($attendance);
+                Log::info("Dispatched StudentAttendanceUpdated event for attendance ID: {$attendance->id}");
+
+                // Optional: Mark as notified if you add the column
+                // $attendance->update(['notification_sent_at' => now()]);
+
+            } catch (\Exception $e) {
+                Log::error("Failed to dispatch notification for attendance ID: {$attendance->id}", [
+                    'error' => $e->getMessage(),
+                ]);
+                $this->error("Failed to process student: {$attendance->student->name} (ID: {$attendance->student_id})");
+            }
+        }
+
+        $this->info('Finished processing absent students.');
+        Log::info('Finished SendAbsentNotifications command.');
+    }
+}

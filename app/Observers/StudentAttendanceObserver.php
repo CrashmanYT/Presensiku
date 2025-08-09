@@ -15,7 +15,6 @@ class StudentAttendanceObserver
 {
     // Define the statuses that should trigger a WhatsApp notification
     private const WHATSAPP_NOTIFY_STATUSES = [
-        'tidak_hadir',
         'izin',
         'terlambat',
         'sakit',
