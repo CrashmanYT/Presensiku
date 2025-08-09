@@ -9,8 +9,8 @@ use App\Services\WhatsappService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
+use App\Helpers\SettingsHelper;
 use Illuminate\Support\Facades\Log;
-use App\Models\Setting;
 
 class SendWhatsappNotification implements ShouldQueue
 {
@@ -47,10 +47,14 @@ class SendWhatsappNotification implements ShouldQueue
 
         $message = $this->buildMessage($attendance);
 
-        if ($parentPhoneNumber) {
+        if ($parentPhoneNumber && !empty($message)) {
             $this->whatsappService->sendMessage($parentPhoneNumber, $message);
         } else {
-            Log::info("SendWhatsappNotification: Parent phone number not found for student: {$student->name}");
+            if (empty($message)) {
+                Log::info("SendWhatsappNotification: Message is empty, not sending for student: {$student->name}");
+            } else {
+                Log::info("SendWhatsappNotification: Parent phone number not found for student: {$student->name}");
+            }
         }
 
         // if ($homeroomTeacherPhoneNumber) {
@@ -66,34 +70,41 @@ class SendWhatsappNotification implements ShouldQueue
         $studentName = $attendance->student->name ?? 'Siswa Tidak Dikenal';
         $className = $attendance->student->class->name ?? 'Kelas Tidak Dikenal';
         $date = Carbon::parse($attendance->date)->translatedFormat('d F Y');
-        $status = $attendance->status;
+        $status = $attendance->status; // Enum instance
 
-        // Tentukan kunci setting berdasarkan status
-        $templateKey = 'whatsapp_template_' . $status->value;
+        // Map attendance status to template type in settings
+        $statusMap = [
+            'terlambat' => 'late',
+            'tidak_hadir' => 'absent',
+            'izin' => 'permit',
+            'sakit' => 'permit', // 'sakit' uses the 'permit' template.
+        ];
 
-        // Ambil template dari database, dengan fallback ke template default jika tidak ditemukan
-        $template = Setting::get($templateKey, Setting::get('whatsapp_template_default', ''));
+        $templateType = $statusMap[$status->value] ?? null;
 
-        // Jika template masih kosong, berikan pesan default
-        if (empty($template)) {
-            return "Pemberitahuan Absensi:\nNama: {$studentName}\nKelas: {$className}\nTanggal: {$date}\nStatus: " . ucfirst(str_replace('_', ' ', $status->value)) . ".\nMohon periksa aplikasi untuk detail lebih lanjut.";
+        // If no template is defined for this status (e.g., 'hadir'), do not send a message.
+        if (!$templateType) {
+            return '';
         }
 
-        if ($status === AttendanceStatusEnum::IZIN) {
-            return "Izin Atas Nama {$studentName} Berhasil Masuk!";
-        }
+        // Prepare variables for the template
+        $variables = [
+            'nama_siswa' => $studentName,
+            'kelas' => $className,
+            'tanggal' => $date,
+            'jam_masuk' => $attendance->time_in ? $attendance->time_in->format('H:i') : '-',
+            'jam_seharusnya' => '-', // Placeholder, as attendance rule is not available here.
+        ];
 
-        // Ganti placeholder
-        $message = str_replace(
-            ['{student_name}', '{class_name}', '{date}', '{status}'],
-            [
-                $studentName,
-                $className,
-                $date,
-                ucfirst(str_replace('_', ' ', $status->value)),
-            ],
-            $template
-        );
+        // Get the message from the helper, which handles random template picking and variable replacement
+        $message = SettingsHelper::getWhatsAppMessage($templateType, $variables);
+
+        // If the template is not found or empty, the helper returns a default error message.
+        // We can check for this and return an empty string to avoid sending error messages to parents.
+        if (str_contains($message, 'tidak ditemukan atau kosong')) {
+            Log::warning("WhatsApp template not found for type: {$templateType}");
+            return '';
+        }
 
         return $message;
     }

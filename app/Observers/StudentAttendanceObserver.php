@@ -15,10 +15,10 @@ class StudentAttendanceObserver
 {
     // Define the statuses that should trigger a WhatsApp notification
     private const WHATSAPP_NOTIFY_STATUSES = [
-        AttendanceStatusEnum::TIDAK_HADIR,
-        AttendanceStatusEnum::IZIN,
-        AttendanceStatusEnum::TERLAMBAT,
-        AttendanceStatusEnum::SAKIT,
+        'tidak_hadir',
+        'izin',
+        'terlambat',
+        'sakit',
     ];
 
     /**
@@ -27,7 +27,7 @@ class StudentAttendanceObserver
     public function created(StudentAttendance $studentAttendance): void
     {
         try {
-            if (in_array($studentAttendance->status, self::WHATSAPP_NOTIFY_STATUSES)) {
+            if (in_array($studentAttendance->status->value, self::WHATSAPP_NOTIFY_STATUSES)) {
                 StudentAttendanceUpdated::dispatch($studentAttendance);
             }
 
