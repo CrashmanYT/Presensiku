@@ -44,6 +44,7 @@ jobs:
       - name: Configure Environment for Testing
         run: |
           cp .env.example .env
+          php artisan config:clear
           echo "DB_CONNECTION=sqlite" >> .env
           echo "DB_DATABASE=:memory:" >> .env
           echo "CACHE_DRIVER=array" >> .env
