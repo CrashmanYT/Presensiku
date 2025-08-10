@@ -42,7 +42,7 @@ class MarkStudentsAsAbsentTest extends TestCase
         ]);
 
         // 2. Execute the command
-        $this->artisan('attendance:mark-absent')
+        $this->artisan('attendance:mark-absent --force')
             ->expectsOutput('Starting to mark absent students...')
             ->expectsOutput('Found 1 students without an attendance record. Marking them as absent...')
             ->assertExitCode(0);
@@ -68,7 +68,7 @@ class MarkStudentsAsAbsentTest extends TestCase
 
         Student::factory()->create();
 
-        $this->artisan('attendance:mark-absent')
+        $this->artisan('attendance:mark-absent --force')
             ->expectsOutput('Today is a weekend. No action taken.')
             ->assertExitCode(0);
 
@@ -92,7 +92,7 @@ class MarkStudentsAsAbsentTest extends TestCase
         ]);
 
         // 2. Execute the command
-        $this->artisan('attendance:mark-absent')
+        $this->artisan('attendance:mark-absent --force')
             ->expectsOutput('Today is a holiday. No action taken.')
             ->assertExitCode(0);
 
@@ -116,7 +116,7 @@ class MarkStudentsAsAbsentTest extends TestCase
         ]);
 
         // 2. Execute the command
-        $this->artisan('attendance:mark-absent')
+        $this->artisan('attendance:mark-absent --force')
             ->expectsOutput('All students have an attendance record for today. Nothing to do.')
             ->assertExitCode(0);
 

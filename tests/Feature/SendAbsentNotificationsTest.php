@@ -53,7 +53,7 @@ class SendAbsentNotificationsTest extends TestCase
         ]);
 
         // 3. Execute the Artisan command
-        $this->artisan('attendance:send-absent-notifications')
+        $this->artisan('attendance:send-absent-notifications --force')
             ->expectsOutput('Starting to process absent students for notification...')
             ->expectsOutput('Found 1 absent students. Dispatching events...')
             ->expectsOutput('Finished processing absent students.')
@@ -89,7 +89,7 @@ class SendAbsentNotificationsTest extends TestCase
         ]);
 
         // 3. Execute the command
-        $this->artisan('attendance:send-absent-notifications')
+        $this->artisan('attendance:send-absent-notifications --force')
             ->expectsOutput('No absent students found for today. Nothing to do.')
             ->assertExitCode(0);
 

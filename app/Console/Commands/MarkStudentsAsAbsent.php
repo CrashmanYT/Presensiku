@@ -17,7 +17,7 @@ class MarkStudentsAsAbsent extends Command
      *
      * @var string
      */
-    protected $signature = 'attendance:mark-absent';
+    protected $signature = 'attendance:mark-absent {--force : Force execution regardless of time}';
 
     /**
      * The console command description.
@@ -31,14 +31,16 @@ class MarkStudentsAsAbsent extends Command
      */
     public function handle(): void
     {
-        // Check if it's the right time to run this command
-        $absentNotificationTime = SettingsHelper::get('notifications.absent.notification_time', '09:00');
-        $targetTime = \Carbon\Carbon::parse($absentNotificationTime)->subMinutes(5);
-        $currentTime = now();
-        
-        // Only run if we're within 1 minute of the target time
-        if (abs($currentTime->diffInMinutes($targetTime)) > 1) {
-            return; // Exit silently if it's not time yet
+        // Check if it's the right time to run this command (unless forced)
+        if (!$this->option('force')) {
+            $absentNotificationTime = SettingsHelper::get('notifications.absent.notification_time', '09:00');
+            $targetTime = \Carbon\Carbon::parse($absentNotificationTime)->subMinutes(5);
+            $currentTime = now();
+            
+            // Only run if we're within 1 minute of the target time
+            if (abs($currentTime->diffInMinutes($targetTime)) > 1) {
+                return; // Exit silently if it's not time yet
+            }
         }
         
         $this->info('Starting to mark absent students...');
