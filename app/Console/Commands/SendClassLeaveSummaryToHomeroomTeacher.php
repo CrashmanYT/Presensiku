@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Helpers\SettingsHelper;
 use App\Models\StudentAttendance;
 use App\Services\WhatsappService;
 use Illuminate\Console\Command;
@@ -28,6 +29,16 @@ class SendClassLeaveSummaryToHomeroomTeacher extends Command
      */
     public function handle(WhatsappService $whatsappService)
     {
+        // Check if it's the right time to run this command
+        $timeInEnd = SettingsHelper::get('attendance.defaults.time_in_end', '08:00');
+        $targetTime = \Carbon\Carbon::parse($timeInEnd);
+        $currentTime = now();
+        
+        // Only run if we're within 1 minute of the target time
+        if (abs($currentTime->diffInMinutes($targetTime)) > 1) {
+            return; // Exit silently if it's not time yet
+        }
+        
         $this->info('Starting to process daily leave summaries for homeroom teachers...');
         Log::info('Running SendClassLeaveSummaryToHomeroomTeacher command.');
 

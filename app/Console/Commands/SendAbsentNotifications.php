@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\AttendanceStatusEnum;
 use App\Events\StudentAttendanceUpdated;
+use App\Helpers\SettingsHelper;
 use App\Models\StudentAttendance;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -29,6 +30,16 @@ class SendAbsentNotifications extends Command
      */
     public function handle(): void
     {
+        // Check if it's the right time to run this command
+        $absentNotificationTime = SettingsHelper::get('notifications.absent.notification_time', '09:00');
+        $targetTime = \Carbon\Carbon::parse($absentNotificationTime);
+        $currentTime = now();
+        
+        // Only run if we're within 1 minute of the target time
+        if (abs($currentTime->diffInMinutes($targetTime)) > 1) {
+            return; // Exit silently if it's not time yet
+        }
+        
         $this->info('Starting to process absent students for notification...');
         Log::info('Running SendAbsentNotifications command.');
 
