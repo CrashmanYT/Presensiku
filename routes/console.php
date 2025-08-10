@@ -21,3 +21,10 @@ Schedule::command(MarkStudentsAsAbsent::class)->dailyAt(
 
 // Schedule the command to send absent notifications.
 Schedule::command(SendAbsentNotifications::class)->dailyAt($absentNotificationTime);
+
+// Get the configured default end time for check-in.
+$timeInEnd = SettingsHelper::get('attendance.defaults.time_in_end', '08:00');
+
+// Schedule the command to send a summary of sick/permit students to homeroom teachers.
+// Runs daily at the configured end of check-in time.
+Schedule::command(\App\Console\Commands\SendClassLeaveSummaryToHomeroomTeacher::class)->dailyAt($timeInEnd);

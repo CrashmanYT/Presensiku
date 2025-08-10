@@ -55,7 +55,7 @@ class SettingsHelper
             'enabled' => (bool) static::get('notifications.enabled', true),
             'absent_notification_time' => static::get('notifications.absent.notification_time', '09:00'),
             'channels' => static::get('notifications.channels', ['whatsapp']),
-            'wa_api_key' => static::get('notifications.whatsapp.api_key', ''),
+            'wa_device_id' => static::get('notifications.whatsapp.device_id', ''),
             'student_affairs_number' => static::get('notifications.whatsapp.student_affairs_number', ''),
             'administration_number' => static::get('notifications.whatsapp.administration_number', ''),
         ];

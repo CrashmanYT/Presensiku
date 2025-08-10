@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\SettingsHelper;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -16,7 +17,7 @@ class WhatsappService {
     {
         $this->userCode = config('services.kirimi.user_code');
         $this->secret = config('services.kirimi.secret');
-        $this->deviceId = config('services.kirimi.device_id');
+        $this->deviceId = SettingsHelper::get('notifications.whatsapp.device_id');
         $this->baseUrl = 'https://api.kirimi.id/v1';
     }
 

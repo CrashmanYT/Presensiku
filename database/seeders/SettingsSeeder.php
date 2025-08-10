@@ -83,11 +83,11 @@ class SettingsSeeder extends Seeder
                 'is_public' => false,
             ],
             [
-                'key' => 'notifications.whatsapp.api_key',
-                'value' => '',
+                'key' => 'notifications.whatsapp.device_id',
+                'value' => config('services.kirimi.device_id'),
                 'type' => 'string',
                 'group_name' => 'notifications',
-                'description' => 'WhatsApp API Key.',
+                'description' => 'Device ID dari layanan Kirimi.id.',
                 'is_public' => false,
             ],
             [
