@@ -52,11 +52,16 @@ jobs:
           echo "APP_ENV=testing" >> .env
           echo "APP_DEBUG=true" >> .env
           echo "DB_CONNECTION=sqlite" >> .env
-          echo "DB_DATABASE=:memory:" >> .env
+          echo "DB_DATABASE=${{ github.workspace }}/database/database.sqlite" >> .env
           echo "DB_FOREIGN_KEYS=false" >> .env
           echo "CACHE_DRIVER=array" >> .env
           echo "SESSION_DRIVER=array" >> .env
           echo "QUEUE_CONNECTION=sync" >> .env
+
+      - name: Prepare SQLite database
+        run: |
+          mkdir -p database
+          touch database/database.sqlite
 
       - name: Clear configuration cache
         run: |
