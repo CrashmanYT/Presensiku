@@ -58,13 +58,27 @@ jobs:
         run: php artisan key:generate --ansi
         
       - name: Clear configuration cache
-        run: php artisan config:clear
+        run: |
+          php artisan config:clear
+          php artisan cache:clear
+          php artisan route:clear
+          php artisan view:clear
+
+      - name: Verify database configuration
+        run: php artisan tinker --execute="echo 'DB Connection: ' . config('database.default') . PHP_EOL; echo 'DB Database: ' . config('database.connections.sqlite.database') . PHP_EOL;"
 
       - name: Run Migrations
         run: php artisan migrate
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: :memory:
 
       - name: Build Assets
         run: npm run build
 
       - name: Run Tests
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: sqlite
+          DB_DATABASE: :memory:
         run: ./vendor/bin/phpunit
