@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Helpers\SettingsHelper;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -10,18 +9,23 @@ use Illuminate\Support\Facades\Log;
 class WhatsappService {
     protected string $userCode;
     protected string $secret;
-    protected string $deviceId;
+    protected ?string $deviceId;
     protected string $baseUrl;
 
     public function __construct() 
     {
         $this->userCode = config('services.kirimi.user_code');
         $this->secret = config('services.kirimi.secret');
-        $this->deviceId = SettingsHelper::get('notifications.whatsapp.device_id');
+        $this->deviceId = config('services.kirimi.device_id');
         $this->baseUrl = 'https://api.kirimi.id/v1';
     }
 
     public function sendMessage(string $receiver, string $message) {
+        if (empty($this->deviceId)) {
+            Log::warning('WhatsApp message not sent: Device ID is not configured.');
+            return ['success' => false, 'error' => 'Device ID is not configured.'];
+        }
+
         try {
             $response = Http::post("{$this->baseUrl}/send-message", [
                 'user_code' => $this->userCode,

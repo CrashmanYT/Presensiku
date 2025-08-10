@@ -149,10 +149,7 @@ class Settings extends Page
                             ->label('Waktu Notifikasi Tidak Hadir')
                             ->default('09:00')
                             ->helperText('Waktu untuk mengirim notifikasi otomatis jika siswa tidak hadir.'),
-                        Forms\Components\TextInput::make('notifications.whatsapp.device_id')
-                            ->label('WhatsApp Device ID')
-                            ->required()
-                            ->helperText('Device ID yang didapat dari layanan Kirimi.id.'),
+                        
                         Forms\Components\TextInput::make('notifications.whatsapp.student_affairs_number')
                             ->label('Nomor WA Kesiswaan/BK')
                             ->tel()

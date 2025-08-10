@@ -83,14 +83,6 @@ class SettingsSeeder extends Seeder
                 'is_public' => false,
             ],
             [
-                'key' => 'notifications.whatsapp.device_id',
-                'value' => config('services.kirimi.device_id'),
-                'type' => 'string',
-                'group_name' => 'notifications',
-                'description' => 'Device ID dari layanan Kirimi.id.',
-                'is_public' => false,
-            ],
-            [
                 'key' => 'notifications.whatsapp.student_affairs_number',
                 'value' => '',
                 'type' => 'string',
@@ -162,27 +154,6 @@ class SettingsSeeder extends Seeder
                 'description' => 'Template pesan keterlambatan.',
                 'is_public' => false,
             ],
-            [
-                'key' => 'notifications.whatsapp.templates.absent',
-                'value' => json_encode([
-                    ['message' => 'Yth. Bapak/Ibu, ananda {nama_siswa} tidak tercatat hadir di sekolah pada tanggal {tanggal}. Mohon konfirmasinya.'],
-                ]),
-                'type' => 'json',
-                'group_name' => 'notifications',
-                'description' => 'Template pesan tidak hadir (alpa).',
-                'is_public' => false,
-            ],
-            [
-                'key' => 'notifications.whatsapp.templates.present',
-                'value' => json_encode([
-                    ['message' => 'Informasi: Ananda {nama_siswa} telah tercatat hadir di sekolah pada jam {jam_masuk}.'],
-                ]),
-                'type' => 'json',
-                'group_name' => 'notifications',
-                'description' => 'Template pesan hadir.',
-                'is_public' => false,
-            ],
-
             // Discipline Score Settings
             [
                 'key' => 'discipline.scores.hadir',
