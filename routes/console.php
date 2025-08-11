@@ -21,3 +21,6 @@ Schedule::command(SendAbsentNotifications::class)->everyMinute();
 
 // Check every minute if it's time to send class leave summary
 Schedule::command(\App\Console\Commands\SendClassLeaveSummaryToHomeroomTeacher::class)->everyMinute();
+
+// Check every minute if it's time to send monthly discipline summary to Student Affairs (self-gated by time)
+Schedule::command(\App\Console\Commands\SendMonthlyStudentDisciplineSummary::class)->everyMinute();

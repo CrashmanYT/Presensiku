@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2",
         "croustibat/filament-jobs-monitor": "^2.6",
+        "dompdf/dompdf": "^2.0",
         "filament/filament": "^3.3",
         "filament/notifications": "^3.3",
         "filament/widgets": "^3.3",

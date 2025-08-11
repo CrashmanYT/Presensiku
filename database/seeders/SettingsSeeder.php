@@ -99,6 +99,64 @@ class SettingsSeeder extends Seeder
                 'is_public' => false,
             ],
 
+            // Monthly Summary to Student Affairs (Kesiswaan)
+            [
+                'key' => 'notifications.whatsapp.monthly_summary.enabled',
+                'value' => '1',
+                'type' => 'boolean',
+                'group_name' => 'notifications',
+                'description' => 'Aktifkan pengiriman ringkasan bulanan siswa ke kesiswaan.',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'notifications.whatsapp.monthly_summary.thresholds.min_total_late',
+                'value' => '3',
+                'type' => 'integer',
+                'group_name' => 'notifications',
+                'description' => 'Minimal jumlah keterlambatan per bulan agar siswa masuk ringkasan.',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'notifications.whatsapp.monthly_summary.thresholds.min_total_absent',
+                'value' => '2',
+                'type' => 'integer',
+                'group_name' => 'notifications',
+                'description' => 'Minimal jumlah ketidakhadiran (alpa) per bulan agar siswa masuk ringkasan.',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'notifications.whatsapp.monthly_summary.thresholds.min_score',
+                'value' => '-5',
+                'type' => 'integer',
+                'group_name' => 'notifications',
+                'description' => 'Skor disiplin minimum (lebih kecil/sama dari nilai ini) agar siswa masuk ringkasan.',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'notifications.whatsapp.monthly_summary.limit',
+                'value' => '50',
+                'type' => 'integer',
+                'group_name' => 'notifications',
+                'description' => 'Batas maksimal jumlah siswa dalam ringkasan bulanan.',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'notifications.whatsapp.monthly_summary.output',
+                'value' => 'pdf_attachment',
+                'type' => 'string',
+                'group_name' => 'notifications',
+                'description' => 'Format keluaran ringkasan bulanan: text | pdf_link | pdf_attachment.',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'notifications.whatsapp.monthly_summary.send_time',
+                'value' => '07:30',
+                'type' => 'string',
+                'group_name' => 'notifications',
+                'description' => 'Waktu kirim otomatis pada tanggal 1 setiap bulan (format HH:MM).',
+                'is_public' => false,
+            ],
+
             // System Settings
             [
                 'key' => 'system.localization.timezone',

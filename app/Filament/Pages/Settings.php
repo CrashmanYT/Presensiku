@@ -160,6 +160,51 @@ class Settings extends Page
                             ->tel()
                             ->placeholder('6281234567890')
                             ->helperText('Nomor WhatsApp untuk menerima notifikasi internal terkait guru.'),
+
+                        Forms\Components\Fieldset::make('Ringkasan Bulanan ke Kesiswaan')
+                            ->schema([
+                                Forms\Components\Toggle::make('notifications.whatsapp.monthly_summary.enabled')
+                                    ->label('Aktifkan Ringkasan Bulanan')
+                                    ->default(true)
+                                    ->helperText('Jika aktif, sistem akan mengirim ringkasan bulanan siswa ke nomor kesiswaan.'),
+                                Forms\Components\TimePicker::make('notifications.whatsapp.monthly_summary.send_time')
+                                    ->label('Waktu Kirim Otomatis (Tanggal 1)')
+                                    ->seconds(false)
+                                    ->default('07:30')
+                                    ->helperText('Format HH:MM. Sistem akan mengirim pada tanggal 1 setiap bulan di sekitar waktu ini.'),
+                                Forms\Components\Select::make('notifications.whatsapp.monthly_summary.output')
+                                    ->label('Format Ringkasan')
+                                    ->options([
+                                        'text' => 'Teks WhatsApp',
+                                        'pdf_link' => 'Tautan PDF',
+                                        'pdf_attachment' => 'Lampiran PDF',
+                                    ])
+                                    ->default('text')
+                                    ->helperText('Pilih format pengiriman ringkasan ke kesiswaan.'),
+                                Forms\Components\Grid::make(2)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('notifications.whatsapp.monthly_summary.thresholds.min_total_late')
+                                            ->label('Min. Keterlambatan/Bulan')
+                                            ->numeric()
+                                            ->default(3)
+                                            ->helperText('Siswa dengan total terlambat per bulan >= nilai ini akan diikutkan.'),
+                                        Forms\Components\TextInput::make('notifications.whatsapp.monthly_summary.thresholds.min_total_absent')
+                                            ->label('Min. Alpa/Bulan')
+                                            ->numeric()
+                                            ->default(2)
+                                            ->helperText('Siswa dengan total tidak hadir (alpa) per bulan >= nilai ini akan diikutkan.'),
+                                        Forms\Components\TextInput::make('notifications.whatsapp.monthly_summary.thresholds.min_score')
+                                            ->label('Skor Minimum')
+                                            ->numeric()
+                                            ->default(-5)
+                                            ->helperText('Siswa dengan skor disiplin <= nilai ini akan diikutkan.'),
+                                        Forms\Components\TextInput::make('notifications.whatsapp.monthly_summary.limit')
+                                            ->label('Batas Jumlah Siswa')
+                                            ->numeric()
+                                            ->default(50)
+                                            ->helperText('Jumlah maksimum siswa yang akan dikirim dalam ringkasan (akan dipotong jika melebihi).'),
+                                    ]),
+                            ]),
                     ]),
 
                 // System Settings

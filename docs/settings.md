@@ -19,6 +19,11 @@ Gunakan helper `SettingsHelper::get(string $key, mixed $default = null)` untuk m
 - `notifications.whatsapp.student_affairs_number` (string, default ``) — Nomor WA Kesiswaan/BK
 - `notifications.whatsapp.administration_number` (string, default ``) — Nomor WA Tata Usaha (TU)
 - `notifications.whatsapp.templates` (json) — Template pesan (late/absent/permit)
+- `notifications.whatsapp.monthly_summary.enabled` (boolean, default `1`) — Aktifkan kirim ringkasan bulanan ke kesiswaan
+- `notifications.whatsapp.monthly_summary.thresholds.min_total_late` (int, default `3`) — Minimal terlambat/bulan agar masuk ringkasan
+- `notifications.whatsapp.monthly_summary.thresholds.min_total_absent` (int, default `2`) — Minimal alpa/bulan agar masuk ringkasan
+- `notifications.whatsapp.monthly_summary.thresholds.min_score` (int, default `-5`) — Skor maksimum (<=) agar masuk ringkasan
+- `notifications.whatsapp.monthly_summary.limit` (int, default `50`) — Batas jumlah siswa dalam ringkasan
 
 ### 3) system (localization)
 - `system.localization.timezone` (string, default `Asia/Jakarta`) — Zona waktu aplikasi

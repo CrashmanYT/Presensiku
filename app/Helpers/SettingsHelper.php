@@ -195,4 +195,22 @@ class SettingsHelper
         static::clearCache();
         Setting::pluck('value', 'key')->toArray();
     }
+
+    /**
+     * Monthly Summary Settings (for Student Affairs / Kesiswaan)
+     */
+    public static function getMonthlySummarySettings(): array
+    {
+        return [
+            'enabled' => (bool) static::get('notifications.whatsapp.monthly_summary.enabled', true),
+            'output' => (string) static::get('notifications.whatsapp.monthly_summary.output', 'text'),
+            'thresholds' => [
+                'min_total_late' => (int) static::get('notifications.whatsapp.monthly_summary.thresholds.min_total_late', 3),
+                'min_total_absent' => (int) static::get('notifications.whatsapp.monthly_summary.thresholds.min_total_absent', 2),
+                'min_score' => (int) static::get('notifications.whatsapp.monthly_summary.thresholds.min_score', -5),
+            ],
+            'limit' => (int) static::get('notifications.whatsapp.monthly_summary.limit', 50),
+            'send_time' => (string) static::get('notifications.whatsapp.monthly_summary.send_time', '07:30'),
+        ];
+    }
 }
