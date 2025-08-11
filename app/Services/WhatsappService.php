@@ -34,7 +34,7 @@ class WhatsappService {
                 'receiver' => $receiver,
                 'message' => $message,
                 'enableTypingEffect' => true,
-                'typingSpeedMS' => 350,
+                'typingSpeedMs' => 350,
             ]);
 
             $responseData = $response->json();
@@ -86,19 +86,19 @@ class WhatsappService {
                 return ['success' => true, 'data' => $responseData];
             }
 
-            // Fallback: send-media with type=document
-            Log::warning('Primary document endpoint failed, trying media endpoint fallback.', ['response' => $responseData]);
+            // Fallback: use send-message with media_url as per Kirimi docs
+            Log::warning('Primary document endpoint failed, trying send-message with media_url fallback.', ['response' => $responseData]);
             $fallbackPayload = [
                 'user_code' => $this->userCode,
                 'secret' => $this->secret,
                 'device_id' => $this->deviceId,
                 'receiver' => $receiver,
-                'type' => 'document',
-                'url' => $documentUrl,
-                'caption' => $caption,
-                'fileName' => $fileName,
+                'message' => $caption ?? '',
+                'media_url' => $documentUrl,
+                'enableTypingEffect' => true,
+                'typingSpeedMs' => 350,
             ];
-            $fallbackResponse = Http::post("{$this->baseUrl}/send-media", $fallbackPayload);
+            $fallbackResponse = Http::post("{$this->baseUrl}/send-message", $fallbackPayload);
             $fallbackData = $fallbackResponse->json();
             if ($fallbackResponse->successful()) {
                 Log::info("WhatsApp document sent via media endpoint to {$receiver}.", ['response' => $fallbackData]);
