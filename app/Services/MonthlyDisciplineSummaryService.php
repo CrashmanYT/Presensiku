@@ -8,6 +8,7 @@ use App\Services\MonthlySummary\CandidateFinder;
 use App\Services\MonthlySummary\PdfReportService;
 use App\Services\MonthlySummary\TextMessageFormatter;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -158,6 +159,21 @@ class MonthlyDisciplineSummaryService
 
             if ($dryRun) {
                 $output->writeln("[DRY-RUN] Akan mengirim lampiran PDF ke {$receiver}: {$publicUrl}");
+                return SymfonyCommand::SUCCESS;
+            }
+
+            // Preflight: ensure the public URL is reachable (avoid Kirimi failing with 404/Page Not Found)
+            try {
+                $probe = Http::timeout(10)->head($publicUrl);
+            } catch (\Throwable $e) {
+                $probe = null;
+            }
+            if (!$probe || !$probe->successful()) {
+                $status = $probe?->status() ?? 'n/a';
+                $output->writeln("URL PDF tidak dapat diakses (status: {$status}). Mengirim tautan sebagai pesan teks.");
+                $fallbackMessage = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$publicUrl}";
+                $this->whatsappService->sendMessage($receiver, $fallbackMessage);
+                $output->writeln('Tautan PDF telah dikirim sebagai pesan teks ke kesiswaan.');
                 return SymfonyCommand::SUCCESS;
             }
 
