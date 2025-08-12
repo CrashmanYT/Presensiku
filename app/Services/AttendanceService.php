@@ -152,7 +152,7 @@ class AttendanceService
     private function getDateOverrideRule(?int $classId, string $scanDate): ?AttendanceRule
     {
         return AttendanceRule::where('class_id', $classId)
-            ->where('date_override', $scanDate)
+            ->whereDate('date_override', '=' , $scanDate)
             ->first();
     }
 

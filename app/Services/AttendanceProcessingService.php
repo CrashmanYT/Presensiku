@@ -117,7 +117,7 @@ class AttendanceProcessingService
         $foreignKey = $user instanceof Student ? 'student_id' : 'teacher_id';
 
         $model->{$foreignKey} = $user->id;
-        $model->time_in = $scanDateTime;
+        $model->time_in = $scanDateTime->toTimeString();
         $model->date = $scanDateTime->toDateString();
         $model->device_id = $device->id;
         $status = $this->attendanceService->checkAttendanceStatus($scanDateTime, $attendanceRule);
@@ -174,7 +174,7 @@ class AttendanceProcessingService
      */
     private function processCheckout(Student|Teacher $user, $attendance, Carbon $scanDateTime): JsonResponse
     {
-        $attendance->time_out = $scanDateTime;
+        $attendance->time_out = $scanDateTime->toTimeString();
         $attendance->save();
 
         Log::info('Attendance record updated with time_out', ['user_id' => $user->id]);

@@ -22,9 +22,9 @@ class StudentAttendance extends Model
     ];
 
     protected $casts = [
-        'date' => 'date',
-        'time_in' => 'datetime',
-        'time_out' => 'datetime',
+        'date' => 'date:Y-m-d',
+        'time_in' => 'datetime:H:i:s',
+        'time_out' => 'datetime:H:i:s',
         'status' => AttendanceStatusEnum::class,
     ];
 
@@ -36,6 +36,13 @@ class StudentAttendance extends Model
     public function device(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Device::class);
+    }
+
+    public function setDateAttribute($value)
+    {
+        $this->attributes['date'] = $value instanceof \Carbon\Carbon 
+            ? $value->toDateString()
+            : \Carbon\Carbon::parse($value)->toDateString();
     }
 
     public function detectScanType(Carbon $scanTime, AttendanceRule $attendanceRule): ?string
