@@ -13,8 +13,21 @@ use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Output\OutputInterface;
 
+/**
+ * Orchestrates the monthly discipline summary workflow.
+ *
+ * Responsibilities:
+ * - Read settings and determine target month.
+ * - Query candidates via `CandidateFinder`.
+ * - Format text chunks via `TextMessageFormatter`.
+ * - Generate and store PDF via `PdfReportService` when requested.
+ * - Send WhatsApp messages/documents via `WhatsappService`.
+ */
 class MonthlyDisciplineSummaryService
 {
+    /**
+     * Inject dependencies for the summary workflow.
+     */
     public function __construct(
         private WhatsappService $whatsappService,
         private CandidateFinder $candidateFinder,
@@ -23,6 +36,19 @@ class MonthlyDisciplineSummaryService
     ) {
     }
 
+    /**
+     * Entry point to send the monthly discipline summary.
+     *
+     * Side effects:
+     * - May perform HTTP requests (WhatsApp, optional PDF URL probe).
+     * - Writes console output and application logs.
+     * - Persists generated PDF to public storage when output is PDF.
+     *
+     * @param OutputInterface $output       Console output interface
+     * @param string|null     $monthOption  Target month in YYYY-MM; if null, use previous month or scheduled time
+     * @param bool            $dryRun       If true, no messages/documents are actually sent
+     * @return int                            SymfonyCommand::SUCCESS or FAILURE
+     */
     public function send(OutputInterface $output, ?string $monthOption, bool $dryRun): int
     {
         $settings = SettingsHelper::getMonthlySummarySettings();
@@ -119,6 +145,27 @@ class MonthlyDisciplineSummaryService
 
     // Formatting dipindahkan ke TextMessageFormatter
 
+    /**
+     * Handle PDF outputs according to requested format (link or attachment).
+     * Falls back to text when PDF is not enabled or not reachable.
+     *
+     * Side effects:
+     * - Stores PDF on public disk.
+     * - Sends WhatsApp message or document.
+     * - Performs an HTTP HEAD probe to the public URL for reachability.
+     *
+     * @param OutputInterface   $output
+     * @param string            $receiver
+     * @param bool              $dryRun
+     * @param Collection        $selected
+     * @param string            $monthKey
+     * @param string            $monthTitle
+     * @param array<string,mixed> $thresholds
+     * @param int               $limit
+     * @param int               $extraCount
+     * @param string            $outputFormat    'pdf_link' or 'pdf_attachment'
+     * @return int|null                          SUCCESS when handled; null to fall back to text
+     */
     private function handlePdfOutput(
         OutputInterface $output,
         string $receiver,

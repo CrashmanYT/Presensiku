@@ -8,6 +8,12 @@ use App\Services\WhatsappService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Send a daily WhatsApp summary of students on leave (sick/permit) to each homeroom teacher.
+ *
+ * Time-gated to run around the class time-in end. Groups today's leave by class
+ * and sends the list to the class's homeroom teacher via `WhatsappService`.
+ */
 class SendClassLeaveSummaryToHomeroomTeacher extends Command
 {
     /**
@@ -26,6 +32,14 @@ class SendClassLeaveSummaryToHomeroomTeacher extends Command
 
     /**
      * Execute the console command.
+     *
+     * Side effects:
+     * - Reads today's `student_attendances` with status sakit/izin grouped by class
+     * - Sends WhatsApp messages to homeroom teachers when numbers are available
+     * - Writes info/warning/error logs
+     *
+     * @param WhatsappService $whatsappService Service used to send WhatsApp messages
+     * @return void
      */
     public function handle(WhatsappService $whatsappService)
     {

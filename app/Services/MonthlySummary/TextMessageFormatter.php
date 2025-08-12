@@ -4,12 +4,25 @@ namespace App\Services\MonthlySummary;
 
 use Illuminate\Support\Collection;
 
+/**
+ * Formats selected discipline rankings into paginated WhatsApp text messages
+ * including a header, a body list of students, and a footer with criteria.
+ */
 class TextMessageFormatter
 {
     /**
      * Format selected rankings into paginated WhatsApp text messages.
      *
-     * @return array<int, string>
+     * The message list is split into chunks of 20 lines to avoid overly long
+     * messages. The first chunk includes the header; the last chunk includes
+     * the footer describing thresholds and limits.
+     *
+     * @param Collection          $selected    Selected discipline ranking models
+     * @param string              $monthTitle  Month title used in header
+     * @param array<string,mixed> $thresholds  Thresholds config for footer
+     * @param int                 $limit       Display limit used for footer
+     * @param int                 $extraCount  Number of hidden rows beyond limit
+     * @return array<int, string>              Message chunks ready for WhatsApp
      */
     public function formatTextChunks(Collection $selected, string $monthTitle, array $thresholds, int $limit, int $extraCount): array
     {

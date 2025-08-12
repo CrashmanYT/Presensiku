@@ -15,17 +15,48 @@ use Filament\Notifications\Notification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Orchestrates end-to-end attendance scan handling for students and teachers.
+ *
+ * Responsibilities:
+ * - Determine effective attendance rule for scan time
+ * - Create new attendance records or update existing ones (checkout)
+ * - Send late notifications when applicable
+ * - Broadcast scan events for real-time updates
+ */
 class AttendanceProcessingService
 {
+    /**
+     * Service used to resolve attendance rules and status derivation.
+     */
     protected AttendanceService $attendanceService;
 
+    /**
+     * Create a new service instance.
+     *
+     * @param AttendanceService $attendanceService
+     */
     public function __construct(AttendanceService $attendanceService)
     {
         $this->attendanceService = $attendanceService;
     }
 
     /**
-     * Handles the entire attendance scan logic for a user (Student or Teacher).
+     * Handle an attendance scan for a user (Student or Teacher).
+     *
+     * Creates a new attendance when none exists for the date; otherwise processes
+     * checkout if scan time is after the configured checkout window start, or
+     * returns an informative response if already checked in/out.
+     *
+     * Side effects:
+     * - Writes to attendance tables
+     * - May send late notification to admins
+     * - Broadcasts \App\Events\UserScanned
+     *
+     * @param Student|Teacher $user The scanning user
+     * @param Device $device Device used for scanning
+     * @param Carbon $scanDateTime Scan timestamp
+     * @return JsonResponse Structured JSON API response
      */
     public function handleScan(Student|Teacher $user, Device $device, Carbon $scanDateTime): JsonResponse
     {
@@ -41,6 +72,13 @@ class AttendanceProcessingService
         return $this->handleExistingAttendance($user, $attendance, $scanDateTime, $attendanceRule);
     }
 
+    /**
+     * Look up an existing attendance record for the given user and date.
+     *
+     * @param Student|Teacher $user
+     * @param string $scanDate Date in Y-m-d format
+     * @return StudentAttendance|TeacherAttendance|null
+     */
     private function findExistingAttendance(Student|Teacher $user, string $scanDate)
     {
         $model = $user instanceof Student ? StudentAttendance::class : TeacherAttendance::class;
@@ -64,6 +102,15 @@ class AttendanceProcessingService
         return $attendance;
     }
 
+    /**
+     * Create a new attendance record for the scan and send late notification if needed.
+     *
+     * @param Student|Teacher $user
+     * @param Carbon $scanDateTime
+     * @param AttendanceRule $attendanceRule Effective rule for the day
+     * @param Device $device
+     * @return JsonResponse
+     */
     private function createNewAttendance(Student|Teacher $user, Carbon $scanDateTime, AttendanceRule $attendanceRule, Device $device): JsonResponse
     {
         $model = $user instanceof Student ? new StudentAttendance : new TeacherAttendance;
@@ -87,6 +134,19 @@ class AttendanceProcessingService
         return $this->buildSuccessResponse($user, $model, 'Scan masuk berhasil');
     }
 
+    /**
+     * Handle a scan for a user who already has an attendance record today.
+     *
+     * If time is before checkout window, returns an already-checked-in response.
+     * If checkout time is not set yet and time is valid, processes checkout.
+     * Otherwise indicates the day is already completed.
+     *
+     * @param Student|Teacher $user
+     * @param StudentAttendance|TeacherAttendance $attendance
+     * @param Carbon $scanDateTime
+     * @param AttendanceRule $attendanceRule
+     * @return JsonResponse
+     */
     private function handleExistingAttendance(Student|Teacher $user, $attendance, Carbon $scanDateTime, AttendanceRule $attendanceRule): JsonResponse
     {
         // Bandingkan hanya bagian waktunya saja untuk menghindari masalah tanggal
@@ -104,6 +164,14 @@ class AttendanceProcessingService
         return $this->buildAlreadyCompletedResponse($user, $attendance);
     }
 
+    /**
+     * Complete checkout for the given attendance by setting time_out.
+     *
+     * @param Student|Teacher $user
+     * @param StudentAttendance|TeacherAttendance $attendance
+     * @param Carbon $scanDateTime
+     * @return JsonResponse
+     */
     private function processCheckout(Student|Teacher $user, $attendance, Carbon $scanDateTime): JsonResponse
     {
         $attendance->time_out = $scanDateTime;
@@ -118,6 +186,13 @@ class AttendanceProcessingService
         ]);
     }
 
+    /**
+     * Send a late notification to admin users for a tardy scan.
+     *
+     * @param Student|Teacher $user
+     * @param Carbon $scanDateTime
+     * @return void
+     */
     private function sendLateNotification(Student|Teacher $user, Carbon $scanDateTime): void
     {
         $recipients = User::whereHas('roles', function ($query) {
@@ -138,6 +213,14 @@ class AttendanceProcessingService
         }
     }
 
+    /**
+     * Build a successful JSON response payload.
+     *
+     * @param Student|Teacher $user
+     * @param StudentAttendance|TeacherAttendance $attendance
+     * @param string $message
+     * @return JsonResponse
+     */
     private function buildSuccessResponse(Student|Teacher $user, $attendance, string $message): JsonResponse
     {
         return response()->json([
@@ -147,6 +230,13 @@ class AttendanceProcessingService
         ]);
     }
 
+    /**
+     * Build response indicating the user already checked in.
+     *
+     * @param Student|Teacher $user
+     * @param StudentAttendance|TeacherAttendance $attendance
+     * @return JsonResponse
+     */
     private function buildAlreadyCheckedInResponse(Student|Teacher $user, $attendance): JsonResponse
     {
         Log::info('User already checked in', ['user_id' => $user->id]);
@@ -158,6 +248,13 @@ class AttendanceProcessingService
         ], 409);
     }
 
+    /**
+     * Build response indicating user has completed both check-in and check-out.
+     *
+     * @param Student|Teacher $user
+     * @param StudentAttendance|TeacherAttendance $attendance
+     * @return JsonResponse
+     */
     private function buildAlreadyCompletedResponse(Student|Teacher $user, $attendance): JsonResponse
     {
         return response()->json([
@@ -167,6 +264,20 @@ class AttendanceProcessingService
         ], 409);
     }
 
+    /**
+     * Format common response data for attendance operations.
+     *
+     * Keys:
+     * - student_name|teacher_name
+     * - time_in (H:i:s|null)
+     * - time_out (H:i:s|null)
+     * - status (string)
+     * - date (Y-m-d)
+     *
+     * @param Student|Teacher $user
+     * @param StudentAttendance|TeacherAttendance $attendance
+     * @return array<string, mixed>
+     */
     private function formatResponseData(Student|Teacher $user, $attendance): array
     {
         $userNameKey = $user instanceof Student ? 'student_name' : 'teacher_name';

@@ -10,6 +10,12 @@ use App\Models\StudentAttendance;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Mark students as absent if they have no attendance record for today.
+ *
+ * Skips weekends and configured holidays. Optionally time-gates execution
+ * unless forced via --force.
+ */
 class MarkStudentsAsAbsent extends Command
 {
     /**
@@ -28,6 +34,12 @@ class MarkStudentsAsAbsent extends Command
 
     /**
      * Execute the console command.
+     *
+     * Side effects:
+     * - Inserts `student_attendances` records with status TIDAK_HADIR
+     * - Writes info/error logs
+     *
+     * @return void
      */
     public function handle(): void
     {

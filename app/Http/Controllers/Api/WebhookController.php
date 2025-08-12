@@ -15,14 +15,32 @@ use App\Services\LeaveRequestService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * API Webhook controller handling real-time attendance scans and leave requests.
+ *
+ * Endpoints:
+ * - handleAttendance: ingest scans from fingerprint devices
+ * - handleStudentLeaveRequest: ingest student leave requests from external forms
+ * - handleTeacherLeaveRequest: ingest teacher leave requests from external forms
+ */
 class WebhookController extends Controller
 {
+    /** @var UserRepositoryInterface */
     protected UserRepositoryInterface $userRepository;
 
+    /** @var DeviceRepositoryInterface */
     protected DeviceRepositoryInterface $deviceRepository;
 
+    /** @var AttendanceProcessingService */
     protected AttendanceProcessingService $attendanceProcessingService;
 
+    /**
+     * Inject dependencies.
+     *
+     * @param UserRepositoryInterface $userRepository
+     * @param DeviceRepositoryInterface $deviceRepository
+     * @param AttendanceProcessingService $attendanceProcessingService
+     */
     public function __construct(
         UserRepositoryInterface $userRepository,
         DeviceRepositoryInterface $deviceRepository,
@@ -36,6 +54,15 @@ class WebhookController extends Controller
     /**
      * Handle attendance data from fingerprint device.
      * This endpoint receives real-time data from fingerprint scanners.
+     *
+     * Flow:
+     * - Resolve device by cloud id (create if not exists)
+     * - Find user by fingerprint id
+     * - Validate student has class assignment
+     * - Delegate scan handling to AttendanceProcessingService
+     *
+     * @param WebhookAttendanceRequest $request
+     * @return JsonResponse
      */
     public function handleAttendance(WebhookAttendanceRequest $request): JsonResponse
     {
@@ -56,6 +83,13 @@ class WebhookController extends Controller
         return $this->attendanceProcessingService->handleScan($user, $device, $scanDateTime);
     }
 
+    /**
+     * Handle student leave requests submitted via external webhook (e.g., Google Forms).
+     *
+     * @param LeaveRequestWebhookRequest $request Validated request containing identifier and leave details
+     * @param LeaveRequestService $leaveRequestService
+     * @return JsonResponse
+     */
     public function handleStudentLeaveRequest(LeaveRequestWebhookRequest $request, LeaveRequestService $leaveRequestService): JsonResponse
     {
         try {
@@ -72,6 +106,13 @@ class WebhookController extends Controller
         }
     }
 
+    /**
+     * Handle teacher leave requests submitted via external webhook (e.g., Google Forms).
+     *
+     * @param LeaveRequestWebhookRequest $request Validated request containing identifier and leave details
+     * @param LeaveRequestService $leaveRequestService
+     * @return JsonResponse
+     */
     public function handleTeacherLeaveRequest(LeaveRequestWebhookRequest $request, LeaveRequestService $leaveRequestService): JsonResponse
     {
         try {
@@ -88,3 +129,4 @@ class WebhookController extends Controller
         }
     }
 }
+

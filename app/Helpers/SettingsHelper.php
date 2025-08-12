@@ -8,7 +8,11 @@ use Illuminate\Support\Facades\Cache;
 class SettingsHelper
 {
     /**
-     * Get a setting value with default fallback
+     * Get a setting value with default fallback.
+     *
+     * @param string $key     Dot-notated setting key
+     * @param mixed  $default Default value if not set
+     * @return mixed
      */
     public static function get(string $key, $default = null)
     {
@@ -16,7 +20,12 @@ class SettingsHelper
     }
 
     /**
-     * Set a setting value
+     * Set a setting value.
+     *
+     * @param string $key   Dot-notated setting key
+     * @param mixed  $value Value to persist
+     * @param string $type  Underlying type hint (e.g., 'string','int','bool','json')
+     * @return void
      */
     public static function set(string $key, $value, string $type = 'string'): void
     {
@@ -24,7 +33,9 @@ class SettingsHelper
     }
 
     /**
-     * Dashboard Settings
+     * Dashboard Settings.
+     *
+     * @return array{show_test_button: bool}
      */
     public static function getDashboardSettings(): array
     {
@@ -34,7 +45,9 @@ class SettingsHelper
     }
 
     /**
-     * Attendance Settings
+     * Attendance Settings.
+     *
+     * @return array{default_time_in_start:string,default_time_in_end:string,default_time_out_start:string,default_time_out_end:string}
      */
     public static function getAttendanceSettings(): array
     {
@@ -47,7 +60,15 @@ class SettingsHelper
     }
 
     /**
-     * Notification Settings
+     * Notification Settings.
+     *
+     * @return array{
+     *   enabled: bool,
+     *   absent_notification_time: string,
+     *   channels: array<int,string>,
+     *   student_affairs_number: string,
+     *   administration_number: string
+     * }
      */
     public static function getNotificationSettings(): array
     {
@@ -61,7 +82,9 @@ class SettingsHelper
     }
 
     /**
-     * Discipline Score Settings
+     * Discipline Score Settings.
+     *
+     * @return array{hadir:int,terlambat:int,izin:int,sakit:int,tidak_hadir:int}
      */
     public static function getDisciplineScores(): array
     {
@@ -75,7 +98,9 @@ class SettingsHelper
     }
 
     /**
-     * System Settings
+     * System Settings.
+     *
+     * @return array{timezone:string,date_format:string,language:string,maintenance_mode:bool}
      */
     public static function getSystemSettings(): array
     {
@@ -88,7 +113,9 @@ class SettingsHelper
     }
 
     /**
-     * Get all public settings (for frontend/dashboard use)
+     * Get all public settings (for frontend/dashboard use).
+     *
+     * @return array<string,mixed>
      */
     public static function getPublicSettings(): array
     {
@@ -96,7 +123,7 @@ class SettingsHelper
     }
 
     /**
-     * Check if notifications are enabled
+     * Check if notifications are enabled.
      */
     public static function isNotificationEnabled(): bool
     {
@@ -104,7 +131,7 @@ class SettingsHelper
     }
 
     /**
-     * Check if maintenance mode is active
+     * Check if maintenance mode is active.
      */
     public static function isMaintenanceMode(): bool
     {
@@ -112,7 +139,10 @@ class SettingsHelper
     }
 
     /**
-     * Get formatted date using system date format
+     * Get formatted date using system date format.
+     *
+     * @param \DateTimeInterface|string $date
+     * @return string
      */
     public static function formatDate($date): string
     {
@@ -122,7 +152,9 @@ class SettingsHelper
     }
 
     /**
-     * WhatsApp Templates
+     * WhatsApp Templates.
+     *
+     * @return array<string, array<int, array{message:string}>>
      */
     public static function getWhatsAppTemplates(): array
     {
@@ -134,7 +166,13 @@ class SettingsHelper
     }
 
     /**
-     * Get WhatsApp message template with variables replaced
+     * Get a WhatsApp message template with variables replaced.
+     * Picks a random template from the configured set and interpolates variables
+     * using {varName} markers.
+     *
+     * @param string              $type       Template type key (e.g., 'late','absent','permit')
+     * @param array<string,string> $variables Replacement variables
+     * @return string
      */
     public static function getWhatsAppMessage(string $type, array $variables = []): string
     {
@@ -180,7 +218,9 @@ class SettingsHelper
     }
 
     /**
-     * Clear settings cache
+     * Clear settings cache.
+     *
+     * @return void
      */
     public static function clearCache(): void
     {
@@ -188,7 +228,9 @@ class SettingsHelper
     }
 
     /**
-     * Refresh settings cache
+     * Refresh settings cache.
+     *
+     * @return void
      */
     public static function refreshCache(): void
     {
@@ -197,7 +239,15 @@ class SettingsHelper
     }
 
     /**
-     * Monthly Summary Settings (for Student Affairs / Kesiswaan)
+     * Monthly Summary Settings (for Student Affairs / Kesiswaan).
+     *
+     * @return array{
+     *   enabled: bool,
+     *   output: string,
+     *   thresholds: array{min_total_late:int,min_total_absent:int,min_score:int},
+     *   limit: int,
+     *   send_time: string
+     * }
      */
     public static function getMonthlySummarySettings(): array
     {

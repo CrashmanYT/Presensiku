@@ -4,10 +4,27 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Request validator for attendance webhook payloads from fingerprint devices.
+ *
+ * Expected payload example:
+ * {
+ *   "type": "scan",
+ *   "cloud_id": "device-cloud-id",
+ *   "data": {
+ *     "pin": "00123",
+ *     "scan": "2025-08-12 07:15:30"
+ *   }
+ * }
+ */
 class WebhookAttendanceRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Webhook endpoint does not require user auth.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {
@@ -16,6 +33,8 @@ class WebhookAttendanceRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -29,6 +48,8 @@ class WebhookAttendanceRequest extends FormRequest
 
     /**
      * Get custom messages for validator errors.
+     *
+     * @return array<string,string>
      */
     public function messages(): array
     {
@@ -42,6 +63,8 @@ class WebhookAttendanceRequest extends FormRequest
 
     /**
      * Get the fingerprint ID from the request
+     *
+     * @return string
      */
     public function getFingerprintId(): string
     {
@@ -50,6 +73,8 @@ class WebhookAttendanceRequest extends FormRequest
 
     /**
      * Get the cloud ID from the request
+     *
+     * @return string
      */
     public function getCloudId(): string
     {
@@ -58,6 +83,8 @@ class WebhookAttendanceRequest extends FormRequest
 
     /**
      * Get the scan time from the request
+     *
+     * @return string ISO-like datetime string from device
      */
     public function getScanTime(): string
     {

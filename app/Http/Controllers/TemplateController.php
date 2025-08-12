@@ -7,8 +7,21 @@ use App\Models\Classes;
 use App\Models\Teacher;
 use Maatwebsite\Excel\Facades\Excel;
 
+/**
+ * Controller to provide downloadable Excel templates for bulk import.
+ *
+ * Provides sample data and headers to guide users when preparing
+ * bulk import files for students, teachers, and classes.
+ */
 class TemplateController extends Controller
 {
+    /**
+     * Download the student import template (XLSX) with example rows.
+     *
+     * Headers: name, nis, class_name, gender, fingerprint_id, parent_whatsapp
+     *
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
+     */
     public function downloadStudentTemplate()
     {
         $headers = ['name', 'nis', 'class_name', 'gender', 'fingerprint_id', 'parent_whatsapp'];
@@ -29,6 +42,13 @@ class TemplateController extends Controller
         );
     }
 
+    /**
+     * Download the teacher import template (XLSX) with example rows.
+     *
+     * Headers: name, nip, fingerprint_id, whatsapp_number
+     *
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
+     */
     public function downloadTeacherTemplate()
     {
         $headers = ['name', 'nip', 'fingerprint_id', 'whatsapp_number'];
@@ -45,6 +65,13 @@ class TemplateController extends Controller
         );
     }
 
+    /**
+     * Download the class import template (XLSX) with example rows.
+     *
+     * Headers: name, level, major, homeroom_teacher_name
+     *
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
+     */
     public function downloadClassTemplate()
     {
         $headers = ['name', 'level', 'major', 'homeroom_teacher_name'];

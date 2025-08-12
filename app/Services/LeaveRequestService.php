@@ -16,10 +16,33 @@ use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Service handling leave request ingestion and synchronization with attendance.
+ *
+ * Responsibilities:
+ * - Validate and process webhook payloads for student/teacher leave
+ * - Adjust overlapping leave requests (split/trim/delete) to prevent conflicts
+ * - Persist leave records and synchronize to daily attendance entries
+ * - Notify administrators upon successful creation
+ */
 class LeaveRequestService
 {
     /**
-     * @throws \Throwable
+     * Process a leave request coming from an external webhook and synchronize
+     * it to the attendance tables.
+     *
+     * Workflow:
+     * - Validate payload fields and semantics
+     * - Within a transaction: resolve overlaps, create leave, sync attendance
+     * - After commit: send notifications
+     *
+     * @param Student|Teacher $user Target user submitting the request
+     * @param array{start_date:string,end_date:string,type:string,reason:string,attachment?:string} $data
+     *        Normalized webhook payload
+     * @return void
+     *
+     * @throws \Throwable When the transaction fails
+     * @throws \InvalidArgumentException When payload is invalid
      */
     public function processFromWebhook(Student|Teacher $user, array $data): void
     {
@@ -64,6 +87,16 @@ class LeaveRequestService
         }
     }
 
+    /**
+     * Resolve overlapping leave requests by splitting, trimming, or deleting
+     * existing records to accommodate the new range.
+     *
+     * @param StudentLeaveRequest|TeacherLeaveRequest $model Polymorphic model instance
+     * @param int $userId Target user id
+     * @param Carbon $newStartDate
+     * @param Carbon $newEndDate
+     * @return void
+     */
     private function handleOverlaps(StudentLeaveRequest|TeacherLeaveRequest $model, int $userId, Carbon $newStartDate, Carbon $newEndDate)
     {
         $foreignKey = $model instanceof StudentLeaveRequest ? 'student_id' : 'teacher_id';
@@ -113,6 +146,14 @@ class LeaveRequestService
         }
     }
 
+    /**
+     * Persist the main leave request record.
+     *
+     * @param StudentLeaveRequest|TeacherLeaveRequest $model Polymorphic model instance
+     * @param int $userId
+     * @param array{start_date:string,end_date:string,type:string,reason:string,attachment?:string} $data
+     * @return void
+     */
     private function createLeaveRequest(StudentLeaveRequest|TeacherLeaveRequest $model, int $userId, array $data)
     {
         $foreignKey = $model instanceof StudentLeaveRequest ? 'student_id' : 'teacher_id';
@@ -128,6 +169,18 @@ class LeaveRequestService
         ]);
     }
 
+    /**
+     * Synchronize a leave request range into daily attendance rows while
+     * skipping weekends and holidays.
+     *
+     * @param StudentAttendance|TeacherAttendance $attendanceModelClass Concrete model instance
+     * @param string $foreignKey 'student_id'|'teacher_id'
+     * @param int $userId
+     * @param Carbon $startDate
+     * @param Carbon $endDate
+     * @param string $type Leave type (e.g., 'izin','sakit')
+     * @return void
+     */
     private function syncToAttendance(StudentAttendance|TeacherAttendance $attendanceModelClass, string $foreignKey, int $userId, Carbon $startDate, Carbon $endDate, string $type)
     {
         $holidays = Holiday::where(function ($query) use ($startDate, $endDate) {
@@ -167,6 +220,13 @@ class LeaveRequestService
         }
     }
 
+    /**
+     * Notify administrators (and fallback all users) about a new leave request.
+     *
+     * @param Student|Teacher $user
+     * @param array{start_date:string,end_date:string,type:string,reason:string,attachment?:string} $data
+     * @return void
+     */
     private function sendLeaveRequestNotification(Student|Teacher $user, array $data): void
     {
         Log::info('Attempting to send leave request notification.');
@@ -232,7 +292,15 @@ class LeaveRequestService
     }
 
     /**
-     * Validate webhook data to prevent security issues and data corruption
+     * Validate webhook data to prevent security issues and data corruption.
+     *
+     * Ensures presence of required fields, valid date formats and ordering,
+     * supported leave types, and reasonable reason length.
+     *
+     * @param array{start_date:string,end_date:string,type:string,reason:string,attachment?:string} $data
+     * @return void
+     *
+     * @throws \InvalidArgumentException When validation fails
      */
     private function validateWebhookData(array $data): void
     {

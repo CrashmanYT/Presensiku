@@ -9,6 +9,13 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Create a database backup file and optionally clean up old backups.
+ *
+ * Options:
+ * - --cleanup  Remove old backups after creating a new one
+ * - --days     Number of days to keep backups (default: 30)
+ */
 class BackupDatabase extends Command
 {
     /**
@@ -29,6 +36,12 @@ class BackupDatabase extends Command
 
     /**
      * Execute the console command.
+     *
+     * Creates a backup file using one of several strategies (mysqldump,
+     * Laravel schema dump, or custom SQL export). Records the backup metadata
+     * in the `backups` table. Optionally cleans up old backups.
+     *
+     * @return int Command exit code
      */
     public function handle()
     {
@@ -94,7 +107,13 @@ class BackupDatabase extends Command
     }
 
     /**
-     * Membuat backup database menggunakan berbagai metode
+     * Create a database backup using multiple possible strategies.
+     *
+     * Tries mysqldump first, then Laravel schema dump, and finally a custom
+     * SQL export as the last fallback.
+     *
+     * @param string $filePath Absolute path to write the backup file
+     * @return void
      */
     private function createDatabaseBackup(string $filePath)
     {
@@ -121,7 +140,10 @@ class BackupDatabase extends Command
     }
 
     /**
-     * Coba backup menggunakan mysqldump
+     * Attempt backup using mysqldump if available on the system.
+     *
+     * @param string $filePath Absolute path to write the backup file
+     * @return bool True on success
      */
     private function tryMysqldump(string $filePath): bool
     {
@@ -191,7 +213,10 @@ class BackupDatabase extends Command
     }
 
     /**
-     * Coba backup menggunakan Laravel Schema dump
+     * Attempt backup using a simple Laravel schema and data dump.
+     *
+     * @param string $filePath Absolute path to write the backup file
+     * @return bool True on success
      */
     private function tryLaravelSchemaDump(string $filePath): bool
     {
@@ -238,7 +263,11 @@ class BackupDatabase extends Command
     }
 
     /**
-     * Custom SQL backup sebagai fallback terakhir
+     * Perform a custom SQL backup as the final fallback.
+     *
+     * @param string $filePath Absolute path to write the backup file
+     * @return void
+     * @throws Exception If the output file cannot be created or is empty
      */
     private function createCustomSqlBackup(string $filePath)
     {
@@ -301,7 +330,10 @@ class BackupDatabase extends Command
     }
 
     /**
-     * Bersihkan backup lama
+     * Remove backup records and files older than the specified number of days.
+     *
+     * @param int $days Number of days to retain backups
+     * @return void
      */
     private function cleanupOldBackups(int $days = 30)
     {
@@ -336,7 +368,11 @@ class BackupDatabase extends Command
     }
 
     /**
-     * Format bytes ke format yang mudah dibaca
+     * Convert a byte size into a human-readable string (e.g., MB, GB).
+     *
+     * @param int|float $bytes Raw byte size
+     * @param int $precision Decimal precision
+     * @return string Human-readable size
      */
     private function formatBytes($bytes, $precision = 2)
     {

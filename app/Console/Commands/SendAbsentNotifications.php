@@ -9,6 +9,11 @@ use App\Models\StudentAttendance;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Find all students marked as absent today and dispatch notifications.
+ *
+ * Optionally time-gates execution unless forced via --force.
+ */
 class SendAbsentNotifications extends Command
 {
     /**
@@ -27,6 +32,13 @@ class SendAbsentNotifications extends Command
 
     /**
      * Execute the console command.
+     *
+     * Side effects:
+     * - Reads today's `student_attendances` with status TIDAK_HADIR
+     * - Dispatches `StudentAttendanceUpdated` events per record
+     * - Writes info/error logs
+     *
+     * @return void
      */
     public function handle(): void
     {

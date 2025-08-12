@@ -8,8 +8,23 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Service responsible for generating the Monthly Discipline Summary PDF.
+ *
+ * Responsibilities:
+ * - Transform Eloquent models into table rows for the report.
+ * - Render an HTML view that represents the report.
+ * - Render HTML into a PDF using Dompdf.
+ * - Store the PDF in the public disk and return an accessible URL.
+ */
 class PdfReportService
 {
+    /**
+     * Determine if PDF generation is enabled (Dompdf available).
+     * During unit tests, this returns false to keep tests deterministic.
+     *
+     * @return bool
+     */
     public function isEnabled(): bool
     {
         // During tests, treat PDF as disabled to keep tests deterministic
@@ -19,6 +34,12 @@ class PdfReportService
         return class_exists(Dompdf::class);
     }
 
+    /**
+     * Convert selected rankings into a normalized array for the PDF table.
+     *
+     * @param Collection $selected Collection of ranking models with student and class relations
+     * @return array<int, array{no:int,name:string,class:string,late:int,absent:int,score:int}>
+     */
     public function buildRows(Collection $selected): array
     {
         return $selected->values()->map(function ($r, $i) {
@@ -33,6 +54,16 @@ class PdfReportService
         })->all();
     }
 
+    /**
+     * Render the HTML view for the monthly report.
+     *
+     * @param string $monthTitle
+     * @param array<int, array{no:int,name:string,class:string,late:int,absent:int,score:int}> $rows
+     * @param array<string,mixed> $thresholds
+     * @param int $limit
+     * @param int $extraCount
+     * @return string HTML output
+     */
     public function renderHtml(string $monthTitle, array $rows, array $thresholds, int $limit, int $extraCount): string
     {
         return View::make('reports.monthly_discipline_summary', [
@@ -44,6 +75,12 @@ class PdfReportService
         ])->render();
     }
 
+    /**
+     * Render a PDF binary string from the given HTML.
+     *
+     * @param string $html UTF-8 HTML string
+     * @return string Binary PDF contents
+     */
     public function renderPdf(string $html): string
     {
         $dompdf = new Dompdf();

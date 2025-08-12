@@ -5,10 +5,22 @@ namespace App\Services\MonthlySummary;
 use App\Models\DisciplineRanking;
 use Illuminate\Support\Collection;
 
+/**
+ * Encapsulates the query to find discipline ranking candidates
+ * for a given month using configured thresholds and a limit.
+ */
 class CandidateFinder
 {
     /**
-     * Return [Collection $selected, int $extraCount]
+     * Find discipline candidates for the given month.
+     *
+     * The query returns all matches ordered by severity, then selects up to
+     * the provided limit. The remainder count is returned as extraCount.
+     *
+     * @param string              $monthKey    Target month in format YYYY-MM
+     * @param array<string,int>   $thresholds  Thresholds: min_total_late, min_total_absent, min_score
+     * @param int                 $limit       Maximum number of candidates to include
+     * @return array{0: Collection, 1: int}    [selected, extraCount]
      */
     public function findCandidates(string $monthKey, array $thresholds, int $limit): array
     {

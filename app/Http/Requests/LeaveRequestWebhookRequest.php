@@ -4,10 +4,25 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Request validator for student/teacher leave submissions via webhook.
+ *
+ * Expected payload fields:
+ * - identifier: NIS (student) or NIP (teacher)
+ * - start_date: YYYY-MM-DD
+ * - end_date: YYYY-MM-DD (>= start_date)
+ * - type: one of [Sakit, Izin]
+ * - reason: free text reason
+ * - attachment_url: optional URL to supporting document
+ */
 class LeaveRequestWebhookRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Uses a shared secret header for simple webhook authentication.
+     *
+     * @return bool
      */
     public function authorize(): bool
     {

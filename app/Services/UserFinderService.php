@@ -7,14 +7,31 @@ use App\Models\StudentAttendance;
 use App\Models\Teacher;
 use App\Models\TeacherAttendance;
 
+/**
+ * Utility service for locating users and their most recent attendance entries.
+ */
 class UserFinderService
 {
+    /**
+     * Find a student or teacher by fingerprint id.
+     *
+     * @param string $fingerprintId
+     * @return Student|Teacher|null
+     */
     public function findByFingerprint(string $fingerprintId)
     {
         return Student::where('fingerprint_id', $fingerprintId)->first()
             ?? Teacher::where('fingerprint_id', $fingerprintId)->first();
     }
 
+    /**
+     * Find the most recent attendance record across students and teachers.
+     *
+     * If $lastTimestamp is provided, only consider records created after that timestamp.
+     *
+     * @param string|null $lastTimestamp ISO datetime string or null
+     * @return StudentAttendance|TeacherAttendance|null
+     */
     public function findMostRecentAttendance(?string $lastTimestamp = null)
     {
         $latestStudentAttendance = StudentAttendance::with('student:id,name,fingerprint_id')
@@ -39,6 +56,11 @@ class UserFinderService
             : $latestStudentAttendance;
     }
 
+    /**
+     * Find a test student with at least one attendance record and a fingerprint id.
+     *
+     * @return Student|null
+     */
     public function findTestStudent()
     {
         return Student::has('attendances')

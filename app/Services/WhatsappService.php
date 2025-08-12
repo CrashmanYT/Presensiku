@@ -6,12 +6,28 @@ use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Service wrapper for Kirimi WhatsApp API.
+ *
+ * Responsibilities:
+ * - Send text messages to a WhatsApp receiver via Kirimi API.
+ * - Send document attachments (e.g., PDF) via Kirimi API, with a safe fallback
+ *   to sending a message containing a media URL when direct document send fails.
+ *
+ * Configuration keys (config/services.php):
+ * - services.kirimi.user_code
+ * - services.kirimi.secret
+ * - services.kirimi.device_id
+ */
 class WhatsappService {
     protected string $userCode;
     protected string $secret;
     protected ?string $deviceId;
     protected string $baseUrl;
 
+    /**
+     * Construct the WhatsappService using app configuration.
+     */
     public function __construct() 
     {
         $this->userCode = config('services.kirimi.user_code');
@@ -20,6 +36,17 @@ class WhatsappService {
         $this->baseUrl = 'https://api.kirimi.id/v1';
     }
 
+    /**
+     * Send a WhatsApp text message.
+     *
+     * Side effects:
+     * - Performs an outbound HTTP request to Kirimi API.
+     * - Writes info/error logs with the HTTP response.
+     *
+     * @param string $receiver Target number in international format, e.g. 6285xxxxxxxx
+     * @param string $message  Text message body
+     * @return array{success: bool, data?: mixed, error?: string}
+     */
     public function sendMessage(string $receiver, string $message) {
         if (empty($this->deviceId)) {
             Log::warning('WhatsApp message not sent: Device ID is not configured.');
@@ -53,12 +80,17 @@ class WhatsappService {
     
     /**
      * Send a document (e.g., PDF) to a WhatsApp number using Kirimi API.
-     * Will try the primary endpoint and fall back to a generic media endpoint if available.
+     * It first tries the primary document endpoint, and on failure falls back to
+     * sending a message with a media URL as per Kirimi documentation.
      *
-     * @param string $receiver E.g., 628xxxxxxxxxx
-     * @param string $documentUrl Publicly accessible URL to the document
-     * @param string|null $caption Optional caption
-     * @param string|null $fileName Optional file name hint (e.g., report.pdf)
+     * Side effects:
+     * - Performs one or more outbound HTTP requests to Kirimi API.
+     * - Writes info/warning/error logs with the HTTP responses.
+     *
+     * @param string      $receiver    Target number in international format, e.g. 6285xxxxxxxx
+     * @param string      $documentUrl Publicly accessible URL to the document
+     * @param string|null $caption     Optional caption to accompany the document
+     * @param string|null $fileName    Optional filename hint (e.g., report.pdf)
      * @return array{success: bool, data?: mixed, error?: string}
      */
     public function sendDocument(string $receiver, string $documentUrl, ?string $caption = null, ?string $fileName = null): array

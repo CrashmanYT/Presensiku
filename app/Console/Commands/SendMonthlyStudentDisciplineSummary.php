@@ -5,6 +5,13 @@ namespace App\Console\Commands;
 use App\Services\MonthlyDisciplineSummaryService;
 use Illuminate\Console\Command;
 
+/**
+ * Artisan command to send the Monthly Student Discipline Summary via WhatsApp.
+ *
+ * Options:
+ * - --month=YYYY-MM  Send report for a specific month; if omitted, uses previous month.
+ * - --dry-run        Do not actually send messages; only print to console.
+ */
 class SendMonthlyStudentDisciplineSummary extends Command
 {
     /**
@@ -23,6 +30,13 @@ class SendMonthlyStudentDisciplineSummary extends Command
 
     /**
      * Execute the console command.
+     *
+     * Side effects:
+     * - Delegates to `MonthlyDisciplineSummaryService::send()` which may send
+     *   WhatsApp messages and generate/store a PDF, unless --dry-run is used.
+     *
+     * @param MonthlyDisciplineSummaryService $service
+     * @return int
      */
     public function handle(MonthlyDisciplineSummaryService $service)
     {
