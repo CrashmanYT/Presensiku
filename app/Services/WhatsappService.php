@@ -19,7 +19,8 @@ use Illuminate\Support\Facades\Log;
  * - services.kirimi.secret
  * - services.kirimi.device_id
  */
-class WhatsappService {
+class WhatsappService
+{
     protected string $userCode;
     protected string $secret;
     protected ?string $deviceId;
@@ -28,7 +29,7 @@ class WhatsappService {
     /**
      * Construct the WhatsappService using app configuration.
      */
-    public function __construct() 
+    public function __construct()
     {
         $this->userCode = config('services.kirimi.user_code');
         $this->secret = config('services.kirimi.secret');
@@ -47,7 +48,8 @@ class WhatsappService {
      * @param string $message  Text message body
      * @return array{success: bool, data?: mixed, error?: string}
      */
-    public function sendMessage(string $receiver, string $message) {
+    public function sendMessage(string $receiver, string $message)
+    {
         if (empty($this->deviceId)) {
             Log::warning('WhatsApp message not sent: Device ID is not configured.');
             return ['success' => false, 'error' => 'Device ID is not configured.'];
@@ -77,7 +79,7 @@ class WhatsappService {
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
-    
+
     /**
      * Send a document (e.g., PDF) to a WhatsApp number using Kirimi API.
      * It first tries the primary document endpoint, and on failure falls back to
@@ -147,5 +149,4 @@ class WhatsappService {
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
-    
 }

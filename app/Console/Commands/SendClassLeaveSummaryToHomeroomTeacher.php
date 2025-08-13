@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Helpers\SettingsHelper;
 use App\Models\StudentAttendance;
 use App\Services\WhatsappService;
+use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -21,7 +22,7 @@ class SendClassLeaveSummaryToHomeroomTeacher extends Command
      *
      * @var string
      */
-    protected $signature = 'attendance:send-leave-summary';
+    protected $signature = 'attendance:send-leave-summary {--force : Bypass schedule time gate}';
 
     /**
      * The console command description.
@@ -46,17 +47,17 @@ class SendClassLeaveSummaryToHomeroomTeacher extends Command
         // Check if it's the right time to run this command
         $timeInEnd = SettingsHelper::get('attendance.defaults.time_in_end', '08:00');
         $targetTime = \Carbon\Carbon::parse($timeInEnd);
-        $currentTime = now();
+        $currentTime = CarbonImmutable::now();
         
-        // Only run if we're within 1 minute of the target time
-        if (abs($currentTime->diffInMinutes($targetTime)) > 1) {
+        // Only run if we're within 1 minute of the target time, unless forced
+        if (!(bool)$this->option('force') && abs($currentTime->diffInMinutes($targetTime)) > 1) {
             return; // Exit silently if it's not time yet
         }
         
         $this->info('Starting to process daily leave summaries for homeroom teachers...');
         Log::info('Running SendClassLeaveSummaryToHomeroomTeacher command.');
 
-        $today = now()->toDateString();
+        $today = $currentTime->toDateString();
 
         // 1. Get all sick or permit attendances for today, grouped by class
         $attendancesByClass = StudentAttendance::where('date', $today)

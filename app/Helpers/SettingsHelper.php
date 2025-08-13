@@ -263,4 +263,26 @@ class SettingsHelper
             'send_time' => (string) static::get('notifications.whatsapp.monthly_summary.send_time', '07:30'),
         ];
     }
+
+    /**
+     * Daily Teacher Late Summary Settings (for Administration / Tata Usaha).
+     *
+     * @return array{
+     *   enabled: bool,
+     *   output: string,
+     *   send_time: string
+     * }
+     */
+    public static function getTeacherLateDailySettings(): array
+    {
+        // Default send_time: follow the end of time-in window so the list is complete
+        $defaultSendTime = (string) static::get('attendance.defaults.time_in_end', '08:00');
+
+        return [
+            'enabled' => (bool) static::get('notifications.whatsapp.teacher_late_daily.enabled', true),
+            // 'pdf_link' or 'pdf_attachment'
+            'output' => (string) static::get('notifications.whatsapp.teacher_late_daily.output', 'pdf_link'),
+            'send_time' => (string) static::get('notifications.whatsapp.teacher_late_daily.send_time', $defaultSendTime),
+        ];
+    }
 }

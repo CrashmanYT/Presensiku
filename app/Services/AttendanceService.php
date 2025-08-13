@@ -167,7 +167,10 @@ class AttendanceService
     {
         return AttendanceRule::where('class_id', $classId)
             ->whereNull('date_override')
-            ->whereJsonContains('day_of_week', $dayName)
+            ->where(function($query) use ($dayName) {
+                $query->whereJsonContains('day_of_week', strtolower($dayName))
+                      ->orWhereJsonContains('day_of_week', ucfirst($dayName));
+            })
             ->first();
     }
 

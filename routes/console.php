@@ -24,3 +24,6 @@ Schedule::command(\App\Console\Commands\SendClassLeaveSummaryToHomeroomTeacher::
 
 // Check every minute if it's time to send monthly discipline summary to Student Affairs (self-gated by time)
 Schedule::command(\App\Console\Commands\SendMonthlyStudentDisciplineSummary::class)->everyMinute();
+
+// Check every minute if it's time to send daily teacher-late summary to Administration (self-gated by time)
+Schedule::command(\App\Console\Commands\SendDailyTeacherLateSummary::class)->everyMinute();
