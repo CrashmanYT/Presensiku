@@ -205,6 +205,27 @@ class Settings extends Page
                                             ->helperText('Jumlah maksimum siswa yang akan dikirim dalam ringkasan (akan dipotong jika melebihi).'),
                                     ]),
                             ]),
+                    
+                        Forms\Components\Fieldset::make('Laporan Harian Keterlambatan Guru (TU)')
+                            ->schema([
+                                Forms\Components\Toggle::make('notifications.whatsapp.teacher_late_daily.enabled')
+                                    ->label('Aktifkan Laporan Harian Terlambat Guru')
+                                    ->default(true)
+                                    ->helperText('Jika aktif, sistem akan mengirim ringkasan guru terlambat ke nomor TU setiap hari.'),
+                                Forms\Components\TimePicker::make('notifications.whatsapp.teacher_late_daily.send_time')
+                                    ->label('Waktu Kirim Otomatis')
+                                    ->seconds(false)
+                                    ->default('08:00')
+                                    ->helperText('Format HH:MM. Disarankan mengikuti akhir jendela jam masuk.'),
+                                Forms\Components\Select::make('notifications.whatsapp.teacher_late_daily.output')
+                                    ->label('Format Pengiriman')
+                                    ->options([
+                                        'pdf_link' => 'Tautan PDF',
+                                        'pdf_attachment' => 'Lampiran PDF',
+                                    ])
+                                    ->default('pdf_link')
+                                    ->helperText('Pastikan storage publik sudah di-link (php artisan storage:link) agar tautan PDF bisa diakses.'),
+                            ]),
                     ]),
 
                 // System Settings

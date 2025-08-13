@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Backup as BackupModel;
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
@@ -55,7 +55,8 @@ class BackupDatabase extends Command
                 $this->info('Created backup directory: '.$backupDir);
             }
 
-            $timestamp = now()->format('Y-m-d_H-i-s');
+            $now = CarbonImmutable::now();
+            $timestamp = $now->format('Y-m-d_H-i-s');
             $backupFileName = "backup_presensiku_{$timestamp}.sql";
             $backupFilePath = $backupDir.'/'.$backupFileName;
 
@@ -73,7 +74,7 @@ class BackupDatabase extends Command
                 'file_path' => $backupFileName,
                 'restored' => false,
                 'file_size' => $fileSize,
-                'description' => 'Automatic database backup created via command on '.now()->format('Y-m-d H:i:s'),
+                'description' => 'Automatic database backup created via command on '.$now->format('Y-m-d H:i:s'),
             ]);
 
             $this->info('✅ Backup completed successfully!');
@@ -221,8 +222,9 @@ class BackupDatabase extends Command
     private function tryLaravelSchemaDump(string $filePath): bool
     {
         try {
+            $now = CarbonImmutable::now();
             $sql = "-- Laravel Database Backup\n";
-            $sql .= '-- Generated on: '.now()->format('Y-m-d H:i:s')."\n\n";
+            $sql .= '-- Generated on: '.$now->format('Y-m-d H:i:s')."\n\n";
             $sql .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
 
             // Get all tables using raw query
@@ -271,8 +273,9 @@ class BackupDatabase extends Command
      */
     private function createCustomSqlBackup(string $filePath)
     {
+        $now = CarbonImmutable::now();
         $sql = "-- Custom Database Backup\n";
-        $sql .= '-- Generated on: '.now()->format('Y-m-d H:i:s')."\n\n";
+        $sql .= '-- Generated on: '.$now->format('Y-m-d H:i:s')."\n\n";
         $sql .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
 
         // Get all tables using raw query
@@ -340,7 +343,7 @@ class BackupDatabase extends Command
         try {
             $this->info("Cleaning up backups older than {$days} days...");
 
-            $oldBackups = BackupModel::where('created_at', '<', Carbon::now()->subDays($days))->get();
+            $oldBackups = BackupModel::where('created_at', '<', CarbonImmutable::now()->subDays($days))->get();
 
             $deletedCount = 0;
             foreach ($oldBackups as $backup) {

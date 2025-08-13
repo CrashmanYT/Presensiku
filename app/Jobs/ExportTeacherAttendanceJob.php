@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
+use Carbon\CarbonImmutable;
 
 class ExportTeacherAttendanceJob implements ShouldQueue
 {
@@ -32,7 +33,8 @@ class ExportTeacherAttendanceJob implements ShouldQueue
     {
         $this->filters = $filters;
         $this->user = $user;
-        $this->fileName = 'absensi-guru-' . now()->format('Ymd-His') . '-' . $this->user->id . '.xlsx';
+        $now = CarbonImmutable::now();
+        $this->fileName = 'absensi-guru-' . $now->format('Ymd-His') . '-' . $this->user->id . '.xlsx';
         Log::info('ExportTeacherAttendanceJob: Job created for file ' . $this->fileName);
     }
 
@@ -45,8 +47,9 @@ class ExportTeacherAttendanceJob implements ShouldQueue
         Log::info('ExportTeacherAttendanceJob: Starting handle process.', $context);
 
         try {
+            $now = CarbonImmutable::now();
             $disk = 'public';
-            $dir = 'exports/teacher-attendances/' . now()->format('Y') . '/' . now()->format('m');
+            $dir = 'exports/teacher-attendances/' . $now->format('Y') . '/' . $now->format('m');
             Storage::disk($disk)->makeDirectory($dir);
             Log::info('ExportTeacherAttendanceJob: Ensured public directory exists.', ['dir' => $dir]);
 

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Helpers\SettingsHelper;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use App\Services\MonthlySummary\CandidateFinder;
 use App\Services\MonthlySummary\PdfReportService;
 use App\Services\MonthlySummary\TextMessageFormatter;
@@ -65,10 +66,11 @@ class MonthlyDisciplineSummaryService
         }
 
         // For automatic scheduler runs, only execute near the configured time on the 1st day of month
+        $now = CarbonImmutable::now();
         if (!$monthOption) {
             $sendTimeString = SettingsHelper::get('notifications.whatsapp.monthly_summary.send_time', '07:30');
-            $targetDateTime = now()->startOfMonth()->setTimeFromTimeString($sendTimeString);
-            if (abs(now()->diffInMinutes($targetDateTime)) > 1) {
+            $targetDateTime = $now->startOfMonth()->setTimeFromTimeString($sendTimeString);
+            if (abs($now->diffInMinutes($targetDateTime)) > 1) {
                 return SymfonyCommand::SUCCESS; // Not yet time; exit silently
             }
         }
@@ -76,7 +78,7 @@ class MonthlyDisciplineSummaryService
         try {
             $targetMonth = $monthOption
                 ? Carbon::createFromFormat('Y-m', $monthOption)
-                : now()->subMonth()->startOfMonth();
+                : $now->subMonth()->startOfMonth();
         } catch (\Exception) {
             $output->writeln('Format --month tidak valid. Gunakan format YYYY-MM, contoh: 2025-07');
             return SymfonyCommand::FAILURE;

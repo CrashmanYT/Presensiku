@@ -9,6 +9,7 @@ use App\Models\Student;
 use App\Models\StudentAttendance;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Carbon\CarbonImmutable;
 
 /**
  * Mark students as absent if they have no attendance record for today.
@@ -47,7 +48,7 @@ class MarkStudentsAsAbsent extends Command
         if (!$this->option('force')) {
             $absentNotificationTime = SettingsHelper::get('notifications.absent.notification_time', '09:00');
             $targetTime = \Carbon\Carbon::parse($absentNotificationTime)->subMinutes(5);
-            $currentTime = now();
+            $currentTime = CarbonImmutable::now();
             
             // Only run if we're within 1 minute of the target time
             if (abs($currentTime->diffInMinutes($targetTime)) > 1) {
@@ -58,7 +59,7 @@ class MarkStudentsAsAbsent extends Command
         $this->info('Starting to mark absent students...');
         Log::info('Running MarkStudentsAsAbsent command.');
 
-        $today = now();
+        $today = CarbonImmutable::now();
 
         // 1. Check if today is a weekend.
         if ($today->isWeekend()) {

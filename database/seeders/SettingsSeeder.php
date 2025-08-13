@@ -157,6 +157,32 @@ class SettingsSeeder extends Seeder
                 'is_public' => false,
             ],
 
+            // Daily Teacher Late Summary (to Administration/TU)
+            [
+                'key' => 'notifications.whatsapp.teacher_late_daily.enabled',
+                'value' => '1',
+                'type' => 'boolean',
+                'group_name' => 'notifications',
+                'description' => 'Aktifkan pengiriman laporan harian keterlambatan guru ke nomor TU.',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'notifications.whatsapp.teacher_late_daily.output',
+                'value' => 'pdf_link',
+                'type' => 'string',
+                'group_name' => 'notifications',
+                'description' => 'Format keluaran laporan harian guru terlambat: pdf_link | pdf_attachment.',
+                'is_public' => false,
+            ],
+            [
+                'key' => 'notifications.whatsapp.teacher_late_daily.send_time',
+                'value' => '08:00',
+                'type' => 'string',
+                'group_name' => 'notifications',
+                'description' => 'Waktu kirim otomatis laporan harian guru (format HH:MM). Disarankan sama dengan attendance.defaults.time_in_end.',
+                'is_public' => false,
+            ],
+
             // System Settings
             [
                 'key' => 'system.localization.timezone',
