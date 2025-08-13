@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Helpers\SettingsHelper;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use App\Services\MonthlySummary\CandidateFinder;
 use App\Services\MonthlySummary\PdfReportService;
 use App\Services\MonthlySummary\TextMessageFormatter;
@@ -40,15 +41,7 @@ class MonthlyDisciplineSummaryService
     /**
      * Entry point to send the monthly discipline summary.
      *
-     * Side effects:
-     * - May perform HTTP requests (WhatsApp, optional PDF URL probe).
-     * - Writes console output and application logs.
-     * - Persists generated PDF to public storage when output is PDF.
-     *
-     * @param OutputInterface $output       Console output interface
-     * @param string|null     $monthOption  Target month in YYYY-MM; if null, use previous month or scheduled time
-     * @param bool            $dryRun       If true, no messages/documents are actually sent
-     * @return int                            SymfonyCommand::SUCCESS or FAILURE
+     * Keeps orchestration thin by delegating to testable helpers.
      */
     public function send(OutputInterface $output, ?string $monthOption, bool $dryRun): int
     {
@@ -65,14 +58,11 @@ class MonthlyDisciplineSummaryService
             return SymfonyCommand::SUCCESS;
         }
 
-        // For automatic scheduler runs, only execute near the configured time on the 1st day of month
         $now = CarbonImmutable::now();
-        if (!$monthOption) {
-            $sendTimeString = SettingsHelper::get('notifications.whatsapp.monthly_summary.send_time', '07:30');
-            $targetDateTime = $now->startOfMonth()->setTimeFromTimeString($sendTimeString);
-            if (abs($now->diffInMinutes($targetDateTime)) > 1) {
-                return SymfonyCommand::SUCCESS; // Not yet time; exit silently
-            }
+        $sendTimeString = SettingsHelper::get('notifications.whatsapp.monthly_summary.send_time', '07:30');
+        $force = (bool) $monthOption; // manual run bypasses schedule
+        if (!$this->shouldSendNow($now, $sendTimeString, $force)) {
+            return SymfonyCommand::SUCCESS; // exit silently if not time yet
         }
 
         try {
@@ -88,17 +78,17 @@ class MonthlyDisciplineSummaryService
         $monthTitle = $targetMonth->locale(app()->getLocale() ?? 'id')->translatedFormat('F Y');
 
         $thresholds = $settings['thresholds'] ?? [];
-        $limit = $settings['limit'] ?? 50;
+        $limit = (int) ($settings['limit'] ?? 50);
         $outputFormat = $settings['output'] ?? 'text';
 
-        $output->writeln("Mencari data peringkat disiplin untuk bulan: $monthKey ...");
+        $output->writeln("Mencari data peringkat disiplin untuk bulan: {$monthKey} ...");
 
-        [$selected, $extraCount] = $this->candidateFinder->findCandidates($monthKey, $thresholds, (int) $limit);
+        [$selected, $extraCount] = $this->collectAttendances($monthKey, $thresholds, $limit);
 
         if ($selected->isEmpty()) {
-            $message = "Ringkasan Disiplin Bulanan — $monthTitle\n\nTidak ada siswa yang memenuhi kriteria untuk ditindaklanjuti.";
+            $message = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nTidak ada siswa yang memenuhi kriteria untuk ditindaklanjuti.";
             if ($dryRun) {
-                $output->writeln("[DRY-RUN] Pesan yang akan dikirim ke $receiver:\n\n$message");
+                $output->writeln("[DRY-RUN] Pesan yang akan dikirim ke {$receiver}:\n\n{$message}");
                 return SymfonyCommand::SUCCESS;
             }
 
@@ -108,15 +98,158 @@ class MonthlyDisciplineSummaryService
         }
 
         if ($outputFormat === 'pdf_link' || $outputFormat === 'pdf_attachment') {
-            $handled = $this->handlePdfOutput($output, $receiver, $dryRun, $selected, $monthKey, $monthTitle, $thresholds, (int) $limit, $extraCount, $outputFormat);
-            if ($handled !== null) {
-                return $handled;
+            $rows = $this->buildRows($selected);
+            $pdfMeta = $this->renderAndStorePdf($rows, $monthKey, $monthTitle, $thresholds, $limit, $extraCount);
+            if ($pdfMeta !== null) {
+                if ($outputFormat === 'pdf_link') {
+                    return $this->sendPdfLink($output, $receiver, $pdfMeta['publicUrl'], $monthTitle, $dryRun);
+                }
+                return $this->sendPdfAttachment($output, $receiver, $pdfMeta['publicUrl'], $pdfMeta['fileName'], $monthTitle, $dryRun);
             }
-            // fallback ke teks jika null
+            // fallback to text if PDF is disabled/unavailable
         }
 
-        // Fallback/format teks
-        $chunks = $this->textFormatter->formatTextChunks($selected, $monthTitle, $thresholds, (int) $limit, $extraCount);
+        $chunks = $this->textFormatter->formatTextChunks($selected, $monthTitle, $thresholds, $limit, $extraCount);
+        $sentCount = $this->sendTextList($output, $receiver, $chunks, $dryRun);
+
+        $output->writeln(sprintf(
+            'Ringkasan bulanan untuk %s %s dikirim ke %s (%d pesan).',
+            $monthTitle,
+            $dryRun ? '(DRY-RUN)' : '',
+            $receiver,
+            $sentCount
+        ));
+
+        return SymfonyCommand::SUCCESS;
+    }
+
+    // Kandidat dipindahkan ke CandidateFinder
+
+    // Formatting dipindahkan ke TextMessageFormatter
+
+    /**
+     * Decide whether the job should send now.
+     */
+    public function shouldSendNow(CarbonInterface $now, string $sendTime, bool $force): bool
+    {
+        if ($force) {
+            return true;
+        }
+        $targetDateTime = $now->startOfMonth()->setTimeFromTimeString($sendTime);
+        return abs($now->diffInMinutes($targetDateTime)) <= 1;
+    }
+
+    /**
+     * Query attendance candidates for a given month key.
+     *
+     * @return array{0: Collection, 1: int} [$selected, $extraCount]
+     */
+    protected function collectAttendances(string $monthKey, array $thresholds, int $limit): array
+    {
+        return $this->candidateFinder->findCandidates($monthKey, $thresholds, $limit);
+    }
+
+    /**
+     * Build PDF rows from selected candidates (pure transformation).
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    protected function buildRows(Collection $selected): array
+    {
+        return $this->pdfReportService->buildRows($selected);
+    }
+
+    /**
+     * Render HTML and PDF, then store into public disk.
+     * Returns metadata for subsequent sending.
+     *
+     * @return array{publicUrl: string, fileName: string, diskPath: string}|null
+     */
+    protected function renderAndStorePdf(
+        array $rows,
+        string $monthKey,
+        string $monthTitle,
+        array $thresholds,
+        int $limit,
+        int $extraCount
+    ): ?array {
+        if (!$this->pdfReportService->isEnabled()) {
+            return null;
+        }
+        $html = $this->pdfReportService->renderHtml($monthTitle, $rows, $thresholds, $limit, $extraCount);
+        $pdfOutput = $this->pdfReportService->renderPdf($html);
+        [$fileName, $publicUrl, $relativePath] = $this->pdfReportService->store($pdfOutput, $monthKey);
+        return [
+            'publicUrl' => $publicUrl,
+            'fileName' => $fileName,
+            'diskPath' => $relativePath,
+        ];
+    }
+
+    /**
+     * Send a simple PDF link via WhatsApp.
+     */
+    protected function sendPdfLink(OutputInterface $output, string $receiver, string $publicUrl, string $monthTitle, bool $dryRun): int
+    {
+        $message = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$publicUrl}";
+        if ($dryRun) {
+            $output->writeln("[DRY-RUN] Akan mengirim tautan PDF ke {$receiver}: {$publicUrl}");
+            return SymfonyCommand::SUCCESS;
+        }
+        $this->whatsappService->sendMessage($receiver, $message);
+        $output->writeln('Tautan PDF ringkasan bulanan telah dikirim ke kesiswaan.');
+        return SymfonyCommand::SUCCESS;
+    }
+
+    /**
+     * Send a PDF as a WhatsApp document, with preflight reachability probe.
+     */
+    protected function sendPdfAttachment(
+        OutputInterface $output,
+        string $receiver,
+        string $publicUrl,
+        string $fileName,
+        string $monthTitle,
+        bool $dryRun
+    ): int {
+        if ($dryRun) {
+            $output->writeln("[DRY-RUN] Akan mengirim lampiran PDF ke {$receiver}: {$publicUrl}");
+            return SymfonyCommand::SUCCESS;
+        }
+
+        try {
+            $probe = Http::timeout(10)->head($publicUrl);
+        } catch (\Throwable $e) {
+            $probe = null;
+        }
+        if (!$probe || !$probe->successful()) {
+            $status = $probe?->status() ?? 'n/a';
+            $output->writeln("URL PDF tidak dapat diakses (status: {$status}). Mengirim tautan sebagai pesan teks.");
+            $fallbackMessage = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$publicUrl}";
+            $this->whatsappService->sendMessage($receiver, $fallbackMessage);
+            $output->writeln('Tautan PDF telah dikirim sebagai pesan teks ke kesiswaan.');
+            return SymfonyCommand::SUCCESS;
+        }
+
+        $result = $this->whatsappService->sendDocument($receiver, $publicUrl, "Ringkasan Disiplin Bulanan — {$monthTitle}", $fileName);
+        if (($result['success'] ?? false) === true) {
+            $output->writeln('Lampiran PDF ringkasan bulanan telah dikirim ke kesiswaan.');
+            return SymfonyCommand::SUCCESS;
+        }
+
+        $output->writeln('Gagal mengirim lampiran PDF melalui WhatsApp. Mengirim tautan sebagai pesan teks. Error: ' . ($result['error'] ?? 'unknown'));
+        $fallbackMessage = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$publicUrl}";
+        $this->whatsappService->sendMessage($receiver, $fallbackMessage);
+        $output->writeln('Tautan PDF telah dikirim sebagai pesan teks ke kesiswaan.');
+        return SymfonyCommand::SUCCESS;
+    }
+
+    /**
+     * Send a list of text chunks through WhatsApp.
+     * Returns number of messages processed.
+     */
+    protected function sendTextList(OutputInterface $output, string $receiver, array $chunks, bool $dryRun): int
+    {
         foreach ($chunks as $index => $message) {
             if ($dryRun) {
                 $output->writeln(sprintf(
@@ -132,113 +265,6 @@ class MonthlyDisciplineSummaryService
             }
         }
 
-        $output->writeln(sprintf(
-            'Ringkasan bulanan untuk %s %s dikirim ke %s (%d pesan).',
-            $monthTitle,
-            $dryRun ? '(DRY-RUN)' : '',
-            $receiver,
-            count($chunks)
-        ));
-
-        return SymfonyCommand::SUCCESS;
-    }
-
-    // Kandidat dipindahkan ke CandidateFinder
-
-    // Formatting dipindahkan ke TextMessageFormatter
-
-    /**
-     * Handle PDF outputs according to requested format (link or attachment).
-     * Falls back to text when PDF is not enabled or not reachable.
-     *
-     * Side effects:
-     * - Stores PDF on public disk.
-     * - Sends WhatsApp message or document.
-     * - Performs an HTTP HEAD probe to the public URL for reachability.
-     *
-     * @param OutputInterface   $output
-     * @param string            $receiver
-     * @param bool              $dryRun
-     * @param Collection        $selected
-     * @param string            $monthKey
-     * @param string            $monthTitle
-     * @param array<string,mixed> $thresholds
-     * @param int               $limit
-     * @param int               $extraCount
-     * @param string            $outputFormat    'pdf_link' or 'pdf_attachment'
-     * @return int|null                          SUCCESS when handled; null to fall back to text
-     */
-    private function handlePdfOutput(
-        OutputInterface $output,
-        string $receiver,
-        bool $dryRun,
-        Collection $selected,
-        string $monthKey,
-        string $monthTitle,
-        array $thresholds,
-        int $limit,
-        int $extraCount,
-        string $outputFormat
-    ): ?int {
-        if (!$this->pdfReportService->isEnabled()) {
-            $output->writeln('Output PDF diminta, tetapi Dompdf belum terpasang. Menggunakan format teks sebagai fallback.');
-            return null; // fallback ke teks
-        }
-
-        $rows = $this->pdfReportService->buildRows($selected);
-        $html = $this->pdfReportService->renderHtml($monthTitle, $rows, $thresholds, $limit, $extraCount);
-        $pdfOutput = $this->pdfReportService->renderPdf($html);
-
-        if ($outputFormat === 'pdf_link') {
-            [$fileName, $publicUrl] = $this->pdfReportService->store($pdfOutput, $monthKey);
-            $message = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$publicUrl}";
-
-            if ($dryRun) {
-                $output->writeln("[DRY-RUN] Akan mengirim tautan PDF ke {$receiver}: {$publicUrl}");
-                return SymfonyCommand::SUCCESS;
-            }
-
-            $this->whatsappService->sendMessage($receiver, $message);
-            $output->writeln('Tautan PDF ringkasan bulanan telah dikirim ke kesiswaan.');
-            return SymfonyCommand::SUCCESS;
-        }
-
-        if ($outputFormat === 'pdf_attachment') {
-            [$fileName, $publicUrl] = $this->pdfReportService->store($pdfOutput, $monthKey);
-
-            if ($dryRun) {
-                $output->writeln("[DRY-RUN] Akan mengirim lampiran PDF ke {$receiver}: {$publicUrl}");
-                return SymfonyCommand::SUCCESS;
-            }
-
-            // Preflight: ensure the public URL is reachable (avoid Kirimi failing with 404/Page Not Found)
-            try {
-                $probe = Http::timeout(10)->head($publicUrl);
-            } catch (\Throwable $e) {
-                $probe = null;
-            }
-            if (!$probe || !$probe->successful()) {
-                $status = $probe?->status() ?? 'n/a';
-                $output->writeln("URL PDF tidak dapat diakses (status: {$status}). Mengirim tautan sebagai pesan teks.");
-                $fallbackMessage = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$publicUrl}";
-                $this->whatsappService->sendMessage($receiver, $fallbackMessage);
-                $output->writeln('Tautan PDF telah dikirim sebagai pesan teks ke kesiswaan.');
-                return SymfonyCommand::SUCCESS;
-            }
-
-            $result = $this->whatsappService->sendDocument($receiver, $publicUrl, "Ringkasan Disiplin Bulanan — {$monthTitle}", $fileName);
-            if (($result['success'] ?? false) === true) {
-                $output->writeln('Lampiran PDF ringkasan bulanan telah dikirim ke kesiswaan.');
-                return SymfonyCommand::SUCCESS;
-            }
-
-            $output->writeln('Gagal mengirim lampiran PDF melalui WhatsApp. Mengirim tautan sebagai pesan teks. Error: ' . ($result['error'] ?? 'unknown'));
-            $fallbackMessage = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$publicUrl}";
-            $this->whatsappService->sendMessage($receiver, $fallbackMessage);
-            $output->writeln('Tautan PDF telah dikirim sebagai pesan teks ke kesiswaan.');
-            return SymfonyCommand::SUCCESS;
-        }
-
-        return null;
+        return count($chunks);
     }
 }
