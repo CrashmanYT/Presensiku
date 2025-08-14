@@ -9,6 +9,7 @@ use App\Models\StudentAttendance;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Carbon\CarbonImmutable;
+use App\Support\TimeGate;
 
 /**
  * Find all students marked as absent today and dispatch notifications.
@@ -43,16 +44,17 @@ class SendAbsentNotifications extends Command
      */
     public function handle(SettingsRepositoryInterface $settings): void
     {
-        // Check if it's the right time to run this command (unless forced)
-        if (!$this->option('force')) {
-            $absentNotificationTime = (string) $settings->get('notifications.absent.notification_time', '09:00');
-            $targetTime = \Carbon\Carbon::parse($absentNotificationTime);
-            $currentTime = CarbonImmutable::now();
-            
-            // Only run if we're within 1 minute of the target time
-            if (abs($currentTime->diffInMinutes($targetTime)) > 1) {
-                return; // Exit silently if it's not time yet
-            }
+        // Centralized time gate (±1 minute window) with --force override
+        $force = (bool) $this->option('force');
+        $absentNotificationTime = (string) $settings->get('notifications.absent.notification_time', '09:00');
+        $timeGate = app(TimeGate::class);
+        if (! $timeGate->shouldRunNow(CarbonImmutable::now(), $absentNotificationTime, $force, 1)) {
+            Log::info('SendAbsentNotifications skipped: outside time window', [
+                'now' => CarbonImmutable::now()->toDateTimeString(),
+                'window' => $timeGate->windowMessage($absentNotificationTime, 1),
+                'force' => $force,
+            ]);
+            return; // Skip if not in time window
         }
         
         $this->info('Starting to process absent students for notification...');

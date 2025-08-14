@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Output\OutputInterface;
+use App\Support\TimeGate;
 
 /**
  * Orchestrates the monthly discipline summary workflow.
@@ -137,11 +138,8 @@ class MonthlyDisciplineSummaryService
      */
     public function shouldSendNow(CarbonInterface $now, string $sendTime, bool $force): bool
     {
-        if ($force) {
-            return true;
-        }
         $targetDateTime = $now->startOfMonth()->setTimeFromTimeString($sendTime);
-        return abs($now->diffInMinutes($targetDateTime)) <= 1;
+        return app(TimeGate::class)->isWithinWindow($now, $targetDateTime, $force, 1);
     }
 
     /**

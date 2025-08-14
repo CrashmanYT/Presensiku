@@ -10,6 +10,7 @@ use App\Models\StudentAttendance;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Carbon\CarbonImmutable;
+use App\Support\TimeGate;
 
 /**
  * Mark students as absent if they have no attendance record for today.
@@ -44,16 +45,22 @@ class MarkStudentsAsAbsent extends Command
      */
     public function handle(SettingsRepositoryInterface $settings): void
     {
-        // Check if it's the right time to run this command (unless forced)
-        if (!$this->option('force')) {
-            $absentNotificationTime = (string) $settings->get('notifications.absent.notification_time', '09:00');
-            $targetTime = \Carbon\Carbon::parse($absentNotificationTime)->subMinutes(5);
-            $currentTime = CarbonImmutable::now();
-            
-            // Only run if we're within 1 minute of the target time
-            if (abs($currentTime->diffInMinutes($targetTime)) > 1) {
-                return; // Exit silently if it's not time yet
-            }
+        // Centralized time gate: run around (absent_notification_time - 5 minutes), unless forced
+        $currentTime = CarbonImmutable::now();
+        $absentNotificationTime = (string) $settings->get('notifications.absent.notification_time', '09:00');
+        [$H, $m] = explode(':', $absentNotificationTime, 2);
+        $target = \Carbon\Carbon::create(
+            $currentTime->year,
+            $currentTime->month,
+            $currentTime->day,
+            (int) $H,
+            (int) $m,
+            0,
+            $currentTime->getTimezone()
+        )->subMinutes(5);
+        $timeGate = app(TimeGate::class);
+        if (! $timeGate->isWithinWindow($currentTime, $target, (bool) $this->option('force'), 1)) {
+            return; // Skip if not within time window
         }
         
         $this->info('Starting to mark absent students...');

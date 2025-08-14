@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Output\OutputInterface;
+use App\Support\TimeGate;
 
 class TeacherLateDailyReportService
 {
@@ -55,8 +56,8 @@ class TeacherLateDailyReportService
 
         // Time gate: only run near the configured time unless forced
         $sendTimeString = (string) $this->settings->get('notifications.whatsapp.teacher_late_daily.send_time', '08:00');
-        $targetDateTime = $now->setTimeFromTimeString($sendTimeString);
-        if (!$force && abs($now->diffInMinutes($targetDateTime)) > 1) {
+        $timeGate = app(TimeGate::class);
+        if (! $timeGate->isWithinWindow($now, $now->setTimeFromTimeString($sendTimeString), $force, 1)) {
             return SymfonyCommand::SUCCESS; // Not yet time; exit silently
         }
 

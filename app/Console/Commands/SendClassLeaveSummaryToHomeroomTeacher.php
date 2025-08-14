@@ -8,6 +8,7 @@ use App\Services\WhatsappService;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use App\Support\TimeGate;
 
 /**
  * Send a daily WhatsApp summary of students on leave (sick/permit) to each homeroom teacher.
@@ -44,14 +45,18 @@ class SendClassLeaveSummaryToHomeroomTeacher extends Command
      */
     public function handle(WhatsappService $whatsappService, SettingsRepositoryInterface $settings)
     {
-        // Check if it's the right time to run this command
+        // Centralized time gate (±1 minute window) with --force override
         $timeInEnd = (string) $settings->get('attendance.defaults.time_in_end', '08:00');
-        $targetTime = \Carbon\Carbon::parse($timeInEnd);
         $currentTime = CarbonImmutable::now();
-        
-        // Only run if we're within 1 minute of the target time, unless forced
-        if (!(bool)$this->option('force') && abs($currentTime->diffInMinutes($targetTime)) > 1) {
-            return; // Exit silently if it's not time yet
+        $force = (bool) $this->option('force');
+        $timeGate = app(TimeGate::class);
+        if (! $timeGate->shouldRunNow($currentTime, $timeInEnd, $force, 1)) {
+            Log::info('SendClassLeaveSummaryToHomeroomTeacher skipped: outside time window', [
+                'now' => $currentTime->toDateTimeString(),
+                'window' => $timeGate->windowMessage($timeInEnd, 1),
+                'force' => $force,
+            ]);
+            return; // Skip if not in time window
         }
         
         $this->info('Starting to process daily leave summaries for homeroom teachers...');
