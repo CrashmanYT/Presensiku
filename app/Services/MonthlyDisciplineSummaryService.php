@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Helpers\SettingsHelper;
+use App\Contracts\SettingsRepositoryInterface;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -35,6 +35,7 @@ class MonthlyDisciplineSummaryService
         private CandidateFinder $candidateFinder,
         private TextMessageFormatter $textFormatter,
         private PdfReportService $pdfReportService,
+        private SettingsRepositoryInterface $settings,
     ) {
     }
 
@@ -45,13 +46,13 @@ class MonthlyDisciplineSummaryService
      */
     public function send(OutputInterface $output, ?string $monthOption, bool $dryRun): int
     {
-        $settings = SettingsHelper::getMonthlySummarySettings();
-        if (!($settings['enabled'] ?? false)) {
+        $enabled = (bool) $this->settings->get('notifications.whatsapp.monthly_summary.enabled', true);
+        if (!$enabled) {
             $output->writeln('Monthly summary is disabled via settings. Exiting.');
             return SymfonyCommand::SUCCESS;
         }
 
-        $receiver = SettingsHelper::get('notifications.whatsapp.student_affairs_number', '');
+        $receiver = (string) $this->settings->get('notifications.whatsapp.student_affairs_number', '');
         if (empty($receiver)) {
             $output->writeln('Nomor WhatsApp kesiswaan belum diatur (notifications.whatsapp.student_affairs_number).');
             Log::warning('Monthly summary not sent: student_affairs_number is empty.');
@@ -59,7 +60,7 @@ class MonthlyDisciplineSummaryService
         }
 
         $now = CarbonImmutable::now();
-        $sendTimeString = SettingsHelper::get('notifications.whatsapp.monthly_summary.send_time', '07:30');
+        $sendTimeString = (string) $this->settings->get('notifications.whatsapp.monthly_summary.send_time', '07:30');
         $force = (bool) $monthOption; // manual run bypasses schedule
         if (!$this->shouldSendNow($now, $sendTimeString, $force)) {
             return SymfonyCommand::SUCCESS; // exit silently if not time yet
@@ -77,9 +78,13 @@ class MonthlyDisciplineSummaryService
         $monthKey = $targetMonth->format('Y-m');
         $monthTitle = $targetMonth->locale(app()->getLocale() ?? 'id')->translatedFormat('F Y');
 
-        $thresholds = $settings['thresholds'] ?? [];
-        $limit = (int) ($settings['limit'] ?? 50);
-        $outputFormat = $settings['output'] ?? 'text';
+        $thresholds = [
+            'min_total_late' => (int) $this->settings->get('notifications.whatsapp.monthly_summary.thresholds.min_total_late', 3),
+            'min_total_absent' => (int) $this->settings->get('notifications.whatsapp.monthly_summary.thresholds.min_total_absent', 2),
+            'min_score' => (int) $this->settings->get('notifications.whatsapp.monthly_summary.thresholds.min_score', -5),
+        ];
+        $limit = (int) $this->settings->get('notifications.whatsapp.monthly_summary.limit', 50);
+        $outputFormat = (string) $this->settings->get('notifications.whatsapp.monthly_summary.output', 'text');
 
         $output->writeln("Mencari data peringkat disiplin untuk bulan: {$monthKey} ...");
 
@@ -191,9 +196,10 @@ class MonthlyDisciplineSummaryService
      */
     protected function sendPdfLink(OutputInterface $output, string $receiver, string $publicUrl, string $monthTitle, bool $dryRun): int
     {
-        $message = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$publicUrl}";
+        $absoluteUrl = url($publicUrl);
+        $message = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$absoluteUrl}";
         if ($dryRun) {
-            $output->writeln("[DRY-RUN] Akan mengirim tautan PDF ke {$receiver}: {$publicUrl}");
+            $output->writeln("[DRY-RUN] Akan mengirim tautan PDF ke {$receiver}: {$absoluteUrl}");
             return SymfonyCommand::SUCCESS;
         }
         $this->whatsappService->sendMessage($receiver, $message);
@@ -212,33 +218,34 @@ class MonthlyDisciplineSummaryService
         string $monthTitle,
         bool $dryRun
     ): int {
+        $absoluteUrl = url($publicUrl);
         if ($dryRun) {
-            $output->writeln("[DRY-RUN] Akan mengirim lampiran PDF ke {$receiver}: {$publicUrl}");
+            $output->writeln("[DRY-RUN] Akan mengirim lampiran PDF ke {$receiver}: {$absoluteUrl}");
             return SymfonyCommand::SUCCESS;
         }
 
         try {
-            $probe = Http::timeout(10)->head($publicUrl);
+            $probe = Http::timeout(10)->head($absoluteUrl);
         } catch (\Throwable $e) {
             $probe = null;
         }
         if (!$probe || !$probe->successful()) {
             $status = $probe?->status() ?? 'n/a';
             $output->writeln("URL PDF tidak dapat diakses (status: {$status}). Mengirim tautan sebagai pesan teks.");
-            $fallbackMessage = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$publicUrl}";
+            $fallbackMessage = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$absoluteUrl}";
             $this->whatsappService->sendMessage($receiver, $fallbackMessage);
             $output->writeln('Tautan PDF telah dikirim sebagai pesan teks ke kesiswaan.');
             return SymfonyCommand::SUCCESS;
         }
 
-        $result = $this->whatsappService->sendDocument($receiver, $publicUrl, "Ringkasan Disiplin Bulanan — {$monthTitle}", $fileName);
+        $result = $this->whatsappService->sendDocument($receiver, $absoluteUrl, "Ringkasan Disiplin Bulanan — {$monthTitle}", $fileName);
         if (($result['success'] ?? false) === true) {
             $output->writeln('Lampiran PDF ringkasan bulanan telah dikirim ke kesiswaan.');
             return SymfonyCommand::SUCCESS;
         }
 
         $output->writeln('Gagal mengirim lampiran PDF melalui WhatsApp. Mengirim tautan sebagai pesan teks. Error: ' . ($result['error'] ?? 'unknown'));
-        $fallbackMessage = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$publicUrl}";
+        $fallbackMessage = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$absoluteUrl}";
         $this->whatsappService->sendMessage($receiver, $fallbackMessage);
         $output->writeln('Tautan PDF telah dikirim sebagai pesan teks ke kesiswaan.');
         return SymfonyCommand::SUCCESS;

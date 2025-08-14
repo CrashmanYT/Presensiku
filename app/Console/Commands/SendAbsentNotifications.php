@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\AttendanceStatusEnum;
 use App\Events\StudentAttendanceUpdated;
-use App\Helpers\SettingsHelper;
+use App\Contracts\SettingsRepositoryInterface;
 use App\Models\StudentAttendance;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -41,11 +41,11 @@ class SendAbsentNotifications extends Command
      *
      * @return void
      */
-    public function handle(): void
+    public function handle(SettingsRepositoryInterface $settings): void
     {
         // Check if it's the right time to run this command (unless forced)
         if (!$this->option('force')) {
-            $absentNotificationTime = SettingsHelper::get('notifications.absent.notification_time', '09:00');
+            $absentNotificationTime = (string) $settings->get('notifications.absent.notification_time', '09:00');
             $targetTime = \Carbon\Carbon::parse($absentNotificationTime);
             $currentTime = CarbonImmutable::now();
             

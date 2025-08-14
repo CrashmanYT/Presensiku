@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Enums\AttendanceStatusEnum;
-use App\Helpers\SettingsHelper;
+use App\Contracts\SettingsRepositoryInterface;
 use App\Models\AttendanceRule;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -20,19 +20,18 @@ use Illuminate\Support\Facades\Log;
 class AttendanceService
 {
     /**
-     * Application settings helper used to retrieve default attendance settings
-     * when no explicit rule is found.
+     * Settings repository to retrieve configured defaults when no explicit rule is found.
      */
-    protected SettingsHelper $settingsHelper;
+    protected SettingsRepositoryInterface $settings;
 
     /**
      * Create a new service instance.
      *
-     * @param SettingsHelper $settingsHelper Helper to read configured defaults
+     * @param SettingsRepositoryInterface $settings Settings repository to read configured defaults
      */
-    public function __construct(SettingsHelper $settingsHelper)
+    public function __construct(SettingsRepositoryInterface $settings)
     {
-        $this->settingsHelper = $settingsHelper;
+        $this->settings = $settings;
     }
 
     /**
@@ -85,13 +84,16 @@ class AttendanceService
      */
     private function createDefaultRuleFromSettings(): AttendanceRule
     {
-        $defaultSettings = $this->settingsHelper->getAttendanceSettings();
+        $timeInStart = Carbon::parse($this->settings->get('attendance.defaults.time_in_start', '07:00'))->format('H:i:s');
+        $timeInEnd = Carbon::parse($this->settings->get('attendance.defaults.time_in_end', '08:00'))->format('H:i:s');
+        $timeOutStart = Carbon::parse($this->settings->get('attendance.defaults.time_out_start', '14:00'))->format('H:i:s');
+        $timeOutEnd = Carbon::parse($this->settings->get('attendance.defaults.time_out_end', '16:00'))->format('H:i:s');
 
         return new AttendanceRule([
-            'time_in_start' => $defaultSettings['time_in_start'] ?? '07:00:00',
-            'time_in_end' => $defaultSettings['time_in_end'] ?? '08:00:00',
-            'time_out_start' => $defaultSettings['time_out_start'] ?? '14:00:00',
-            'time_out_end' => $defaultSettings['time_out_end'] ?? '16:00:00',
+            'time_in_start' => $timeInStart,
+            'time_in_end' => $timeInEnd,
+            'time_out_start' => $timeOutStart,
+            'time_out_end' => $timeOutEnd,
             'description' => 'Jadwal Absensi Bawaan',
             'day_of_week' => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
         ]);

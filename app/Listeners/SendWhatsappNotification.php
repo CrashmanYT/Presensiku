@@ -9,18 +9,16 @@ use App\Services\WhatsappService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use App\Helpers\SettingsHelper;
+use App\Contracts\SettingsRepositoryInterface;
 use Illuminate\Support\Facades\Log;
 
 class SendWhatsappNotification implements ShouldQueue
 {
     protected WhatsappService $whatsappService;
-    /**
-     * Create the event listener.
-     * @param WhatsappService $whatsappService
-     */
-    public function __construct(WhatsappService $whatsappService)
-    {
+    public function __construct(
+        WhatsappService $whatsappService,
+        private SettingsRepositoryInterface $settings,
+    ) {
         $this->whatsappService = $whatsappService;
     }
 
@@ -96,16 +94,25 @@ class SendWhatsappNotification implements ShouldQueue
             'jam_seharusnya' => '-', // Placeholder, as attendance rule is not available here.
         ];
 
-        // Get the message from the helper, which handles random template picking and variable replacement
-        $message = SettingsHelper::getWhatsAppMessage($templateType, $variables);
-
-        // If the template is not found or empty, the helper returns a default error message.
-        // We can check for this and return an empty string to avoid sending error messages to parents.
-        if (str_contains($message, 'tidak ditemukan atau kosong')) {
-            Log::warning("WhatsApp template not found for type: {$templateType}");
+        // Build WhatsApp message from templates stored in settings
+        $templates = $this->settings->get('notifications.whatsapp.templates', [
+            'late' => [],
+            'absent' => [],
+            'permit' => [],
+        ]);
+        if (!is_array($templates) || !isset($templates[$templateType]) || !is_array($templates[$templateType]) || empty($templates[$templateType])) {
+            Log::warning("WhatsApp template not found or empty for type: {$templateType}");
             return '';
         }
-
-        return $message;
+        $randomTemplate = $templates[$templateType][array_rand($templates[$templateType])];
+        $templateString = $randomTemplate['message'] ?? '';
+        if ($templateString === '') {
+            Log::warning("WhatsApp template invalid for type: {$templateType}");
+            return '';
+        }
+        foreach ($variables as $variable => $value) {
+            $templateString = str_replace('{'.$variable.'}', $value, $templateString);
+        }
+        return $templateString;
     }
 }

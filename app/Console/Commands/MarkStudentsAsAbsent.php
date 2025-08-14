@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\AttendanceStatusEnum;
-use App\Helpers\SettingsHelper;
+use App\Contracts\SettingsRepositoryInterface;
 use App\Models\Holiday;
 use App\Models\Student;
 use App\Models\StudentAttendance;
@@ -42,11 +42,11 @@ class MarkStudentsAsAbsent extends Command
      *
      * @return void
      */
-    public function handle(): void
+    public function handle(SettingsRepositoryInterface $settings): void
     {
         // Check if it's the right time to run this command (unless forced)
         if (!$this->option('force')) {
-            $absentNotificationTime = SettingsHelper::get('notifications.absent.notification_time', '09:00');
+            $absentNotificationTime = (string) $settings->get('notifications.absent.notification_time', '09:00');
             $targetTime = \Carbon\Carbon::parse($absentNotificationTime)->subMinutes(5);
             $currentTime = CarbonImmutable::now();
             

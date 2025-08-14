@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Helpers\SettingsHelper;
+use App\Contracts\SettingsRepositoryInterface;
 use App\Models\StudentAttendance;
 use App\Services\WhatsappService;
 use Carbon\CarbonImmutable;
@@ -42,10 +42,10 @@ class SendClassLeaveSummaryToHomeroomTeacher extends Command
      * @param WhatsappService $whatsappService Service used to send WhatsApp messages
      * @return void
      */
-    public function handle(WhatsappService $whatsappService)
+    public function handle(WhatsappService $whatsappService, SettingsRepositoryInterface $settings)
     {
         // Check if it's the right time to run this command
-        $timeInEnd = SettingsHelper::get('attendance.defaults.time_in_end', '08:00');
+        $timeInEnd = (string) $settings->get('attendance.defaults.time_in_end', '08:00');
         $targetTime = \Carbon\Carbon::parse($timeInEnd);
         $currentTime = CarbonImmutable::now();
         

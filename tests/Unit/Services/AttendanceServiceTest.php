@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Enums\AttendanceStatusEnum;
-use App\Helpers\SettingsHelper;
+use App\Contracts\SettingsRepositoryInterface;
 use App\Models\AttendanceRule;
 use App\Models\Classes;
 use App\Services\AttendanceService;
@@ -17,7 +17,7 @@ class AttendanceServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    private MockInterface $settingsHelperMock;
+    private MockInterface $settingsRepoMock;
 
     private AttendanceService $attendanceService;
 
@@ -27,11 +27,13 @@ class AttendanceServiceTest extends TestCase
     {
         parent::setUp();
 
-        // 1. Mock SettingsHelper untuk mengisolasi ketergantungan eksternal.
-        $this->settingsHelperMock = $this->mock(SettingsHelper::class);
+        // 1. Mock SettingsRepositoryInterface untuk mengisolasi ketergantungan eksternal.
+        $this->settingsRepoMock = $this->mock(SettingsRepositoryInterface::class);
 
         // 2. Buat instance service yang akan diuji.
-        $this->attendanceService = new AttendanceService($this->settingsHelperMock);
+        /** @var SettingsRepositoryInterface&MockInterface $settingsRepo */
+        $settingsRepo = $this->settingsRepoMock;
+        $this->attendanceService = new AttendanceService($settingsRepo);
 
         // 3. Buat data kelas dummy untuk digunakan di tes.
         $this->class = Classes::factory()->create();
@@ -87,8 +89,7 @@ class AttendanceServiceTest extends TestCase
             'description' => 'Aturan Selasa',
         ]);
 
-        // Add mock expectation to prevent error, even if this path shouldn't be hit.
-        $this->settingsHelperMock->shouldReceive('getAttendanceSettings')->andReturn([]);
+        // Tidak perlu expectation ke settings karena path ini tidak menyentuh default settings.
 
         // Act
         $foundRule = $this->attendanceService->getAttendanceRule($this->class->id, $scanDate);
@@ -107,15 +108,11 @@ class AttendanceServiceTest extends TestCase
 
         // Tidak ada aturan yang dibuat di database untuk kelas ini.
 
-        // Atur mock untuk mengembalikan pengaturan default
-        $defaultSettings = [
-            'time_in_start' => '07:00:00',
-            'time_in_end' => '08:00:00',
-            'time_out_start' => '14:00:00',
-            'time_out_end' => '16:00:00',
-        ];
-        // Kita gunakan mock yang sudah dibuat di setUp()
-        $this->settingsHelperMock->shouldReceive('getAttendanceSettings')->once()->andReturn($defaultSettings);
+        // Atur mock untuk mengembalikan pengaturan default melalui repository
+        $this->settingsRepoMock->shouldReceive('get')->with('attendance.defaults.time_in_start', '07:00')->once()->andReturn('07:00:00');
+        $this->settingsRepoMock->shouldReceive('get')->with('attendance.defaults.time_in_end', '08:00')->once()->andReturn('08:00:00');
+        $this->settingsRepoMock->shouldReceive('get')->with('attendance.defaults.time_out_start', '14:00')->once()->andReturn('14:00:00');
+        $this->settingsRepoMock->shouldReceive('get')->with('attendance.defaults.time_out_end', '16:00')->once()->andReturn('16:00:00');
 
         // Act
         $foundRule = $this->attendanceService->getAttendanceRule($this->class->id, $scanDate);

@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Enums\AttendanceStatusEnum;
-use App\Helpers\SettingsHelper;
+use App\Contracts\SettingsRepositoryInterface;
 use App\Models\TeacherAttendance;
 use App\Services\MonthlySummary\PdfReportService;
 use Carbon\Carbon;
@@ -22,6 +22,7 @@ class TeacherLateDailyReportService
         private WhatsappService $whatsappService,
         private AttendanceService $attendanceService,
         private PdfReportService $pdfReportService,
+        private SettingsRepositoryInterface $settings,
     ) {
     }
 
@@ -35,13 +36,13 @@ class TeacherLateDailyReportService
     public function send(OutputInterface $output, bool $dryRun, bool $force = false): int
     {
         $now = CarbonImmutable::now();
-        $settings = SettingsHelper::getTeacherLateDailySettings();
-        if (!($settings['enabled'] ?? false)) {
+        $enabled = (bool) $this->settings->get('notifications.whatsapp.teacher_late_daily.enabled', true);
+        if (!$enabled) {
             $output->writeln('Daily teacher-late summary is disabled via settings. Exiting.');
             return SymfonyCommand::SUCCESS;
         }
 
-        $receiver = SettingsHelper::get('notifications.whatsapp.administration_number', '');
+        $receiver = (string) $this->settings->get('notifications.whatsapp.administration_number', '');
         if (empty($receiver)) {
             if ($dryRun) {
                 $receiver = '(DRY-RUN: administration_number not set)';
@@ -53,7 +54,7 @@ class TeacherLateDailyReportService
         }
 
         // Time gate: only run near the configured time unless forced
-        $sendTimeString = $settings['send_time'] ?? '08:00';
+        $sendTimeString = (string) $this->settings->get('notifications.whatsapp.teacher_late_daily.send_time', '08:00');
         $targetDateTime = $now->setTimeFromTimeString($sendTimeString);
         if (!$force && abs($now->diffInMinutes($targetDateTime)) > 1) {
             return SymfonyCommand::SUCCESS; // Not yet time; exit silently
@@ -84,7 +85,7 @@ class TeacherLateDailyReportService
         $timeInEnd = Carbon::parse($rule->time_in_end)->format('H:i:s');
 
         $rows = $this->buildRows($attendances, $today, $timeInEnd);
-        $outputFormat = $settings['output'] ?? 'pdf_link';
+        $outputFormat = (string) $this->settings->get('notifications.whatsapp.teacher_late_daily.output', 'pdf_link');
 
         if (in_array($outputFormat, ['pdf_link', 'pdf_attachment'], true)) {
             if (!$this->pdfReportService->isEnabled()) {
@@ -111,11 +112,12 @@ class TeacherLateDailyReportService
                 }
 
                 $publicUrl = Storage::url($relativePath);
+                $absoluteUrl = url($publicUrl);
 
                 if ($outputFormat === 'pdf_link') {
-                    $message = "Laporan Guru Terlambat — {$dateTitle}\n\nUnduh PDF: {$publicUrl}";
+                    $message = "Laporan Guru Terlambat — {$dateTitle}\n\nUnduh PDF: {$absoluteUrl}";
                     if ($dryRun) {
-                        $output->writeln("[DRY-RUN] Akan mengirim tautan PDF ke {$receiver}: {$publicUrl}");
+                        $output->writeln("[DRY-RUN] Akan mengirim tautan PDF ke {$receiver}: {$absoluteUrl}");
                         return SymfonyCommand::SUCCESS;
                     }
                     $result = $this->whatsappService->sendMessage($receiver, $message);
@@ -129,13 +131,13 @@ class TeacherLateDailyReportService
 
                 // pdf_attachment
                 if ($dryRun) {
-                    $output->writeln("[DRY-RUN] Akan mengirim lampiran PDF ke {$receiver}: {$publicUrl}");
+                    $output->writeln("[DRY-RUN] Akan mengirim lampiran PDF ke {$receiver}: {$absoluteUrl}");
                     return SymfonyCommand::SUCCESS;
                 }
 
                 // Preflight reachability (best-effort). Even if it fails, still attempt sendDocument.
                 try {
-                    $probe = Http::timeout(10)->head($publicUrl);
+                    $probe = Http::timeout(10)->head($absoluteUrl);
                     if (!$probe->successful()) {
                         $output->writeln("Peringatan: HEAD ke URL PDF gagal (status: {$probe->status()}). Tetap mencoba kirim lampiran...");
                     }
@@ -143,14 +145,14 @@ class TeacherLateDailyReportService
                     $output->writeln('Peringatan: HEAD ke URL PDF melempar exception. Tetap mencoba kirim lampiran...');
                 }
 
-                $result = $this->whatsappService->sendDocument($receiver, $publicUrl, "Laporan Guru Terlambat — {$dateTitle}", $fileName);
+                $result = $this->whatsappService->sendDocument($receiver, $absoluteUrl, "Laporan Guru Terlambat — {$dateTitle}", $fileName);
                 if (($result['success'] ?? false) === true) {
                     $output->writeln('Lampiran PDF laporan harian telah dikirim ke Tata Usaha.');
                     return SymfonyCommand::SUCCESS;
                 }
 
                 $output->writeln('Gagal mengirim lampiran PDF melalui WhatsApp. Mengirim tautan sebagai pesan teks. Error: ' . ($result['error'] ?? 'unknown'));
-                $fallbackMessage = "Laporan Guru Terlambat — {$dateTitle}\n\nUnduh PDF: {$publicUrl}";
+                $fallbackMessage = "Laporan Guru Terlambat — {$dateTitle}\n\nUnduh PDF: {$absoluteUrl}";
                 $fallback = $this->whatsappService->sendMessage($receiver, $fallbackMessage);
                 if (($fallback['success'] ?? false) === true) {
                     $output->writeln('Tautan PDF sebagai fallback telah dikirim.');

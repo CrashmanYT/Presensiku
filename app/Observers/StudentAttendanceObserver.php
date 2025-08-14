@@ -4,7 +4,7 @@ namespace App\Observers;
 
 use App\Enums\AttendanceStatusEnum;
 use App\Events\StudentAttendanceUpdated;
-use App\Helpers\SettingsHelper;
+use App\Contracts\SettingsRepositoryInterface;
 use App\Models\DisciplineRanking;
 use App\Models\Student;
 use App\Models\StudentAttendance;
@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Log;
 
 class StudentAttendanceObserver
 {
+    public function __construct(private SettingsRepositoryInterface $settings)
+    {
+    }
     // Define the statuses that should trigger a WhatsApp notification
     private const WHATSAPP_NOTIFY_STATUSES = [
         'izin',
@@ -153,7 +156,13 @@ class StudentAttendanceObserver
      */
     private function recalculateTotalScore(DisciplineRanking $ranking): void
     {
-        $scores = SettingsHelper::getDisciplineScores();
+        $scores = [
+            'hadir' => (int) $this->settings->get('discipline.scores.hadir', 5),
+            'terlambat' => (int) $this->settings->get('discipline.scores.terlambat', -2),
+            'izin' => (int) $this->settings->get('discipline.scores.izin', 0),
+            'sakit' => (int) $this->settings->get('discipline.scores.sakit', 0),
+            'tidak_hadir' => (int) $this->settings->get('discipline.scores.tidak_hadir', -5),
+        ];
 
         $totalScore =
             ($ranking->total_present * $scores['hadir']) +

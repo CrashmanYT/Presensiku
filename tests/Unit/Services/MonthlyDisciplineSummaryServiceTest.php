@@ -7,6 +7,7 @@ use App\Services\MonthlySummary\CandidateFinder;
 use App\Services\MonthlySummary\PdfReportService;
 use App\Services\MonthlySummary\TextMessageFormatter;
 use App\Services\WhatsappService;
+use App\Contracts\SettingsRepositoryInterface;
 use Carbon\CarbonImmutable;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -19,8 +20,9 @@ class MonthlyDisciplineSummaryServiceTest extends TestCase
         $finder = $this->createMock(CandidateFinder::class);
         $formatter = $this->createMock(TextMessageFormatter::class);
         $pdf = $this->createMock(PdfReportService::class);
+        $settings = $this->createMock(SettingsRepositoryInterface::class);
 
-        return new MonthlyDisciplineSummaryService($wa, $finder, $formatter, $pdf);
+        return new MonthlyDisciplineSummaryService($wa, $finder, $formatter, $pdf, $settings);
     }
 
     #[Test]
