@@ -8,7 +8,7 @@ use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class Settings extends Page
 {
@@ -28,31 +28,8 @@ class Settings extends Page
 
     public function mount(): void
     {
-        // 1. Get all settings from the database.
-        $settings = Setting::all();
-        $preparedData = [];
-
-        // 2. Iterate and build a nested array.
-        foreach ($settings as $setting) {
-            $value = $setting->value;
-            // Cast the value based on its type in the DB
-            switch ($setting->type) {
-                case 'json':
-                    $value = json_decode($value, true) ?? [];
-                    break;
-                case 'boolean':
-                    $value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
-                    break;
-                case 'integer':
-                    $value = (int) $value;
-                    break;
-            }
-            // Use Arr::set to create the nested structure from the dot-notation key.
-            \Illuminate\Support\Arr::set($preparedData, $setting->key, $value);
-        }
-
-        // 3. Fill the form with the correctly structured nested array.
-        $this->form->fill($preparedData);
+        // Fill the form with nested, already-casted settings from the model helper.
+        $this->form->fill(Setting::allAsNested());
     }
 
     public function form(Form $form): Form
@@ -339,41 +316,16 @@ class Settings extends Page
 
     public function submit(): void
     {
-        // 1. Get the nested state from the form.
+        // Get current nested form state and flatten it.
         $data = $this->form->getState();
-
-        // 2. Flatten the nested array back to a dot-notation array.
         $flattenedData = \Illuminate\Support\Arr::dot($data);
 
-        // 3. Iterate over the flattened data and save each key-value pair.
-        foreach ($flattenedData as $key => $value) {
-            // Determine type based on value
-            $type = 'string';
-            if (is_bool($value)) {
-                $type = 'boolean';
-            } elseif (is_int($value)) {
-                $type = 'integer';
-            } elseif (is_float($value)) {
-                $type = 'float';
-            } elseif (is_array($value)) {
-                // This handles the Repeater and CheckboxList data
-                $type = 'json';
-                $value = json_encode($value);
+        // Persist atomically; type and group will be auto-resolved in the model.
+        DB::transaction(function () use ($flattenedData) {
+            foreach ($flattenedData as $key => $value) {
+                Setting::set($key, $value);
             }
-
-            // Determine group name from key
-            $groupName = strpos($key, '.') !== false ? explode('.', $key)[0] : 'general';
-
-            Setting::updateOrCreate(
-                ['key' => $key],
-                [
-                    'value' => $value,
-                    'type' => $type,
-                    'group_name' => $groupName,
-                    'updated_by' => Auth::id(),
-                ]
-            );
-        }
+        });
 
         Notification::make()
             ->title('Pengaturan berhasil disimpan!')

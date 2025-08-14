@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 
 class Setting extends Model
 {
@@ -37,10 +39,12 @@ class Setting extends Model
 
         static::saved(function () {
             Cache::forget('settings');
+            Cache::forget('settings_full');
         });
 
         static::deleted(function () {
             Cache::forget('settings');
+            Cache::forget('settings_full');
         });
     }
 
@@ -65,32 +69,46 @@ class Setting extends Model
      */
     public static function get(string $key, $default = null)
     {
-        $settings = Cache::remember('settings', 3600, function () {
-            return static::pluck('value', 'key')->toArray();
+        $settings = Cache::remember('settings_full', 3600, function () {
+            return static::query()
+                ->get(['key', 'value', 'type'])
+                ->mapWithKeys(fn ($s) => [
+                    $s->key => ['value' => $s->value, 'type' => $s->type],
+                ])
+                ->toArray();
         });
 
-        $value = $settings[$key] ?? $default;
-
-        // Get setting type for proper casting
-        $setting = static::where('key', $key)->first();
-        if ($setting) {
-            return static::castValue($value, $setting->type);
+        $row = $settings[$key] ?? null;
+        if ($row === null) {
+            return $default;
         }
 
-        return $value;
+        return static::castValue($row['value'], $row['type'] ?? 'string');
     }
 
     /**
      * Set a setting value
      */
-    public static function set(string $key, $value, string $type = 'string'): void
+    public static function set(string $key, $value, ?string $type = null, ?string $groupName = null): void
     {
+        $detectedType = $type ?? match (true) {
+            is_bool($value) => 'boolean',
+            is_int($value) => 'integer',
+            is_float($value) => 'float',
+            is_array($value), is_object($value) => 'json',
+            default => 'string',
+        };
+
+        $storeValue = is_array($value) || is_object($value) ? json_encode($value) : $value;
+        $resolvedGroup = $groupName ?? (str_contains($key, '.') ? explode('.', $key)[0] : 'general');
+
         static::updateOrCreate(
             ['key' => $key],
             [
-                'value' => is_array($value) || is_object($value) ? json_encode($value) : $value,
-                'type' => $type,
-                'updated_by' => auth()->id(),
+                'value' => $storeValue,
+                'type' => $detectedType,
+                'group_name' => $resolvedGroup,
+                'updated_by' => Auth::id(),
             ]
         );
     }
@@ -116,7 +134,10 @@ class Setting extends Model
     public static function getByGroup(string $group): array
     {
         return static::where('group_name', $group)
-            ->pluck('value', 'key')
+            ->get(['key', 'value', 'type'])
+            ->mapWithKeys(fn ($s) => [
+                $s->key => static::castValue($s->value, $s->type),
+            ])
             ->toArray();
     }
 
@@ -126,7 +147,10 @@ class Setting extends Model
     public static function getPublic(): array
     {
         return static::where('is_public', true)
-            ->pluck('value', 'key')
+            ->get(['key', 'value', 'type'])
+            ->mapWithKeys(fn ($s) => [
+                $s->key => static::castValue($s->value, $s->type),
+            ])
             ->toArray();
     }
 
@@ -144,5 +168,19 @@ class Setting extends Model
     public static function forget(string $key): void
     {
         static::where('key', $key)->delete();
+    }
+
+    /**
+     * Get all settings as nested array (keys expanded by dot-notation) with proper casting.
+     *
+     * @return array<string,mixed>
+     */
+    public static function allAsNested(): array
+    {
+        $result = [];
+        static::query()->get(['key', 'value', 'type'])->each(function ($s) use (&$result) {
+            Arr::set($result, $s->key, static::castValue($s->value, $s->type));
+        });
+        return $result;
     }
 }
