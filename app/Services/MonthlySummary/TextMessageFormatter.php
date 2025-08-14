@@ -11,6 +11,48 @@ use Illuminate\Support\Collection;
 class TextMessageFormatter
 {
     /**
+     * Build the raw list lines and a footer string used by templated messages.
+     *
+     * @param Collection          $selected
+     * @param array<string,mixed> $thresholds
+     * @param int                 $limit
+     * @param int                 $extraCount
+     * @return array{0: array<int,string>, 1: string}
+     */
+    public function buildLinesAndFooter(Collection $selected, array $thresholds, int $limit, int $extraCount): array
+    {
+        $lines = $selected->map(function ($r) {
+            $studentName = $r->student?->name ?? 'Tanpa Nama';
+            $className = $r->student?->class?->name ?? '-';
+            return sprintf('- %s (%s) | L:%d A:%d | Skor:%d',
+                $studentName,
+                $className,
+                (int) $r->total_late,
+                (int) $r->total_absent,
+                (int) $r->score
+            );
+        })->all();
+
+        if ($extraCount > 0) {
+            $lines[] = sprintf('(+%d siswa lainnya melebihi ambang, tidak ditampilkan karena melewati batas ringkasan)', $extraCount);
+        }
+
+        if (isset($thresholds['min_total_late'], $thresholds['min_total_absent'], $thresholds['min_score'])) {
+            $footer = "Kriteria: L>=%d atau A>=%d atau Skor<=%d. Batas: %d siswa.";
+            $footer = sprintf($footer,
+                (int) $thresholds['min_total_late'],
+                (int) $thresholds['min_total_absent'],
+                (int) $thresholds['min_score'],
+                (int) $limit
+            );
+        } else {
+            $footer = 'Kriteria: berdasarkan konfigurasi. Batas: ' . (int) $limit . ' siswa.';
+        }
+
+        return [$lines, $footer];
+    }
+
+    /**
      * Format selected rankings into paginated WhatsApp text messages.
      *
      * The message list is split into chunks of 20 lines to avoid overly long

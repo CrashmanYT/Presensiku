@@ -189,8 +189,9 @@ class Settings extends Page
                                                             ->numeric()
                                                             ->default(50)
                                                             ->helperText('Jumlah maksimum siswa yang akan dikirim dalam ringkasan (akan dipotong jika melebihi).'),
-                                                    ]),
-                                            ]),
+                                                 ]),
+ 
+                                                 ]),
                                     
                                         Forms\Components\Fieldset::make('Laporan Harian Keterlambatan Guru (TU)')
                                             ->schema([
@@ -261,51 +262,244 @@ class Settings extends Page
                                     ->description('Kustomisasi template pesan notifikasi. Sistem akan memilih salah satu template secara acak.')
                                     ->icon('heroicon-o-chat-bubble-left-ellipsis')
                                     ->schema([
-                                        Forms\Components\Repeater::make('notifications.whatsapp.templates.late')
-                                            ->label('Pesan Keterlambatan')
-                                            ->reorderableWithButtons()
-                                            ->collapsible()
-                                            ->cloneable()
-                                            ->deleteAction(
-                                                fn (Action $action) => $action->requiresConfirmation(),
-                                            )
-                                            ->addActionLabel('Tambah Template Terlambat')
-                                            ->schema([
-                                                Forms\Components\Textarea::make('message')
-                                                    ->label('Isi Pesan')
-                                                    ->rows(3)
-                                                    ->helperText('Variabel: {nama_siswa}, {jam_masuk}, {jam_seharusnya}, {kelas}'),
-                                            ]),
-                                        Forms\Components\Repeater::make('notifications.whatsapp.templates.absent')
-                                            ->label('Pesan Tidak Hadir (Alpa)')
-                                            ->reorderableWithButtons()
-                                            ->collapsible()
-                                            ->cloneable()
-                                            ->deleteAction(
-                                                fn (Action $action) => $action->requiresConfirmation(),
-                                            )
-                                            ->addActionLabel('Tambah Template Tidak Hadir')
-                                            ->schema([
-                                                Forms\Components\Textarea::make('message')
-                                                    ->label('Isi Pesan')
-                                                    ->rows(3)
-                                                    ->helperText('Variabel: {nama_siswa}, {tanggal}, {kelas}'),
-                                            ]),
-                                        Forms\Components\Repeater::make('notifications.whatsapp.templates.permit')
-                                            ->label('Pesan Izin')
-                                            ->reorderableWithButtons()
-                                            ->collapsible()
-                                            ->cloneable()
-                                            ->deleteAction(
-                                                fn (Action $action) => $action->requiresConfirmation(),
-                                            )
-                                            ->addActionLabel('Tambah Template Izin')
-                                            ->schema([
-                                                Forms\Components\Textarea::make('message')
-                                                    ->label('Isi Pesan')
-                                                    ->rows(3)
-                                                    ->helperText('Variabel: {nama_siswa}, {jam_masuk}, {kelas}'),
-                                            ]),
+                                        Forms\Components\Tabs::make('Kategori Template WA')
+                                            ->tabs([
+                                                Forms\Components\Tabs\Tab::make('Pesan Siswa')
+                                                    ->schema([
+                                                        Forms\Components\Placeholder::make('help_siswa')
+                                                            ->label('Bantuan Variabel')
+                                                            ->content('Tersedia: {nama_siswa}, {kelas}, {tanggal}, {jam_masuk}, {jam_seharusnya}')
+                                                            ->columnSpanFull(),
+                                                        
+
+                                                        Forms\Components\Repeater::make('notifications.whatsapp.templates.late')
+                                                            ->label('Pesan Keterlambatan')
+                                                            ->itemLabel(fn (array $state) => $state['label'] ?? 'Template')
+                                                            ->reorderableWithButtons()
+                                                            ->collapsible()
+                                                            ->cloneable()
+                                                            ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
+                                                            ->addActionLabel('Tambah Template Terlambat')
+                                                            ->schema([
+                                                                Forms\Components\TextInput::make('label')
+                                                                    ->label('Judul (opsional)')
+                                                                    ->maxLength(100),
+                                                                Forms\Components\Textarea::make('message')
+                                                                    ->label('Isi Pesan')
+                                                                    ->rows(3)
+                                                                    ->extraAttributes(['class' => 'font-mono text-sm'])
+                                                                    ->helperText('Variabel: {nama_siswa}, {jam_masuk}, {jam_seharusnya}, {kelas}'),
+                                                            ]),
+
+                                                        Forms\Components\Repeater::make('notifications.whatsapp.templates.absent')
+                                                            ->label('Pesan Tidak Hadir (Alpa)')
+                                                            ->itemLabel(fn (array $state) => $state['label'] ?? 'Template')
+                                                            ->reorderableWithButtons()
+                                                            ->collapsible()
+                                                            ->cloneable()
+                                                            ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
+                                                            ->addActionLabel('Tambah Template Tidak Hadir')
+                                                            ->schema([
+                                                                Forms\Components\TextInput::make('label')
+                                                                    ->label('Judul (opsional)')
+                                                                    ->maxLength(100),
+                                                                Forms\Components\Textarea::make('message')
+                                                                    ->label('Isi Pesan')
+                                                                    ->rows(3)
+                                                                    ->extraAttributes(['class' => 'font-mono text-sm'])
+                                                                    ->helperText('Variabel: {nama_siswa}, {tanggal}, {kelas}'),
+                                                            ]),
+
+                                                        Forms\Components\Repeater::make('notifications.whatsapp.templates.permit')
+                                                            ->label('Pesan Izin')
+                                                            ->itemLabel(fn (array $state) => $state['label'] ?? 'Template')
+                                                            ->reorderableWithButtons()
+                                                            ->collapsible()
+                                                            ->cloneable()
+                                                            ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
+                                                            ->addActionLabel('Tambah Template Izin')
+                                                            ->schema([
+                                                                Forms\Components\TextInput::make('label')
+                                                                    ->label('Judul (opsional)')
+                                                                    ->maxLength(100),
+                                                                Forms\Components\Textarea::make('message')
+                                                                    ->label('Isi Pesan')
+                                                                    ->rows(3)
+                                                                    ->extraAttributes(['class' => 'font-mono text-sm'])
+                                                                    ->helperText('Variabel: {nama_siswa}, {jam_masuk}, {kelas}'),
+                                                            ]),
+                                                    ]),
+
+                                                Forms\Components\Tabs\Tab::make('Internal (TU)')
+                                                    ->schema([
+                                                        Forms\Components\Placeholder::make('help_tu')
+                                                            ->label('Bantuan Variabel')
+                                                            ->content('Tersedia: {date_title}, {pdf_url}, {list}')
+                                                            ->columnSpanFull(),
+                                                        
+
+                                                        Forms\Components\Repeater::make('notifications.whatsapp.templates.report_teacher_late_no_data')
+                                                            ->label('Tidak Ada Data (No Data)')
+                                                            ->itemLabel(fn (array $state) => $state['label'] ?? 'Template')
+                                                            ->reorderableWithButtons()
+                                                            ->collapsible()
+                                                            ->cloneable()
+                                                            ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
+                                                            ->addActionLabel('Tambah Template (No Data)')
+                                                            ->schema([
+                                                                Forms\Components\TextInput::make('label')
+                                                                    ->label('Judul (opsional)')
+                                                                    ->maxLength(100),
+                                                                Forms\Components\Textarea::make('message')
+                                                                    ->label('Isi Pesan')
+                                                                    ->rows(3)
+                                                                    ->extraAttributes(['class' => 'font-mono text-sm'])
+                                                                    ->helperText('Variabel: {date_title}'),
+                                                            ]),
+
+                                                        Forms\Components\Repeater::make('notifications.whatsapp.templates.report_teacher_late_pdf_link')
+                                                            ->label('Tautan PDF')
+                                                            ->itemLabel(fn (array $state) => $state['label'] ?? 'Template')
+                                                            ->reorderableWithButtons()
+                                                            ->collapsible()
+                                                            ->cloneable()
+                                                            ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
+                                                            ->addActionLabel('Tambah Template (Tautan PDF)')
+                                                            ->schema([
+                                                                Forms\Components\TextInput::make('label')
+                                                                    ->label('Judul (opsional)')
+                                                                    ->maxLength(100),
+                                                                Forms\Components\Textarea::make('message')
+                                                                    ->label('Isi Pesan')
+                                                                    ->rows(3)
+                                                                    ->extraAttributes(['class' => 'font-mono text-sm'])
+                                                                    ->helperText('Variabel: {date_title}, {pdf_url}'),
+                                                            ]),
+
+                                                        Forms\Components\Repeater::make('notifications.whatsapp.templates.report_teacher_late_pdf_attachment_caption')
+                                                            ->label('Caption Lampiran PDF')
+                                                            ->itemLabel(fn (array $state) => $state['label'] ?? 'Template')
+                                                            ->reorderableWithButtons()
+                                                            ->collapsible()
+                                                            ->cloneable()
+                                                            ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
+                                                            ->addActionLabel('Tambah Template (Caption Lampiran)')
+                                                            ->schema([
+                                                                Forms\Components\TextInput::make('label')
+                                                                    ->label('Judul (opsional)')
+                                                                    ->maxLength(100),
+                                                                Forms\Components\Textarea::make('message')
+                                                                    ->label('Isi Pesan')
+                                                                    ->rows(2)
+                                                                    ->extraAttributes(['class' => 'font-mono text-sm'])
+                                                                    ->helperText('Variabel: {date_title}'),
+                                                            ]),
+
+                                                        Forms\Components\Repeater::make('notifications.whatsapp.templates.report_teacher_late_text')
+                                                            ->label('Fallback Teks (Daftar)')
+                                                            ->itemLabel(fn (array $state) => $state['label'] ?? 'Template')
+                                                            ->reorderableWithButtons()
+                                                            ->collapsible()
+                                                            ->cloneable()
+                                                            ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
+                                                            ->addActionLabel('Tambah Template (Fallback Teks)')
+                                                            ->schema([
+                                                                Forms\Components\TextInput::make('label')
+                                                                    ->label('Judul (opsional)')
+                                                                    ->maxLength(100),
+                                                                Forms\Components\Textarea::make('message')
+                                                                    ->label('Isi Pesan')
+                                                                    ->rows(6)
+                                                                    ->extraAttributes(['class' => 'font-mono text-sm'])
+                                                                    ->helperText('Variabel: {date_title}, {list}'),
+                                                            ]),
+                                                    ]),
+
+                                                Forms\Components\Tabs\Tab::make('Internal (Kesiswaan)')
+                                                    ->schema([
+                                                        Forms\Components\Placeholder::make('help_kesiswaan')
+                                                            ->label('Bantuan Variabel')
+                                                            ->content('Tersedia: {month_title}, {pdf_url}, {list}')
+                                                            ->columnSpanFull(),
+
+                                                        Forms\Components\Repeater::make('notifications.whatsapp.templates.monthly_summary_no_data')
+                                                            ->label('Tidak Ada Data (No Data)')
+                                                            ->itemLabel(fn (array $state) => $state['label'] ?? 'Template')
+                                                            ->reorderableWithButtons()
+                                                            ->collapsible()
+                                                            ->cloneable()
+                                                            ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
+                                                            ->addActionLabel('Tambah Template (No Data)')
+                                                            ->schema([
+                                                                Forms\Components\TextInput::make('label')
+                                                                    ->label('Judul (opsional)')
+                                                                    ->maxLength(100),
+                                                                Forms\Components\Textarea::make('message')
+                                                                    ->label('Isi Pesan')
+                                                                    ->rows(3)
+                                                                    ->extraAttributes(['class' => 'font-mono text-sm'])
+                                                                    ->helperText('Variabel: {month_title}'),
+                                                            ]),
+
+                                                        Forms\Components\Repeater::make('notifications.whatsapp.templates.monthly_summary_pdf_link')
+                                                            ->label('Tautan PDF')
+                                                            ->itemLabel(fn (array $state) => $state['label'] ?? 'Template')
+                                                            ->reorderableWithButtons()
+                                                            ->collapsible()
+                                                            ->cloneable()
+                                                            ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
+                                                            ->addActionLabel('Tambah Template (Tautan PDF)')
+                                                            ->schema([
+                                                                Forms\Components\TextInput::make('label')
+                                                                    ->label('Judul (opsional)')
+                                                                    ->maxLength(100),
+                                                                Forms\Components\Textarea::make('message')
+                                                                    ->label('Isi Pesan')
+                                                                    ->rows(3)
+                                                                    ->extraAttributes(['class' => 'font-mono text-sm'])
+                                                                    ->helperText('Variabel: {month_title}, {pdf_url}')
+                                                            ]),
+
+                                                        Forms\Components\Repeater::make('notifications.whatsapp.templates.monthly_summary_pdf_attachment_caption')
+                                                            ->label('Caption Lampiran PDF')
+                                                            ->itemLabel(fn (array $state) => $state['label'] ?? 'Template')
+                                                            ->reorderableWithButtons()
+                                                            ->collapsible()
+                                                            ->cloneable()
+                                                            ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
+                                                            ->addActionLabel('Tambah Template (Caption Lampiran)')
+                                                            ->schema([
+                                                                Forms\Components\TextInput::make('label')
+                                                                    ->label('Judul (opsional)')
+                                                                    ->maxLength(100),
+                                                                Forms\Components\Textarea::make('message')
+                                                                    ->label('Isi Pesan')
+                                                                    ->rows(2)
+                                                                    ->extraAttributes(['class' => 'font-mono text-sm'])
+                                                                    ->helperText('Variabel: {month_title}')
+                                                            ]),
+                                                        
+                                                        Forms\Components\Repeater::make('notifications.whatsapp.templates.monthly_summary_text')
+                                                            ->label('Fallback Teks (Daftar)')
+                                                            ->itemLabel(fn (array $state) => $state['label'] ?? 'Template')
+                                                            ->reorderableWithButtons()
+                                                            ->collapsible()
+                                                            ->cloneable()
+                                                            ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
+                                                            ->addActionLabel('Tambah Template (Fallback Teks)')
+                                                            ->schema([
+                                                                Forms\Components\TextInput::make('label')
+                                                                    ->label('Judul (opsional)')
+                                                                    ->maxLength(100),
+                                                                Forms\Components\Textarea::make('message')
+                                                                    ->label('Isi Pesan')
+                                                                    ->rows(6)
+                                                                    ->extraAttributes(['class' => 'font-mono text-sm'])
+                                                                    ->helperText('Variabel: {month_title}, {list}')
+                                                            ]),
+                                                    ]),
+                                            ])
+                                            ->columnSpanFull(),
                                     ]),
                             ]),
                     ])

@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\View;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Output\OutputInterface;
 use App\Support\TimeGate;
+use App\Services\MessageTemplateService;
 
 class TeacherLateDailyReportService
 {
@@ -24,6 +25,7 @@ class TeacherLateDailyReportService
         private AttendanceService $attendanceService,
         private PdfReportService $pdfReportService,
         private SettingsRepositoryInterface $settings,
+        private MessageTemplateService $messageTemplateService,
     ) {
     }
 
@@ -71,7 +73,13 @@ class TeacherLateDailyReportService
             ->get();
 
         if ($attendances->isEmpty()) {
-            $message = "Laporan Guru Terlambat — {$dateTitle}\n\nTidak ada guru yang terlambat hari ini.";
+            // Template: report_teacher_late_no_data
+            $message = $this->messageTemplateService->renderByType('report_teacher_late_no_data', [
+                'date_title' => $dateTitle,
+            ]);
+            if ($message === '') {
+                $message = "Laporan Guru Terlambat — {$dateTitle}\n\nTidak ada guru yang terlambat hari ini."; // fallback
+            }
             if ($dryRun) {
                 $output->writeln("[DRY-RUN] Pesan yang akan dikirim ke {$receiver}:\n\n{$message}");
                 return SymfonyCommand::SUCCESS;
@@ -116,7 +124,14 @@ class TeacherLateDailyReportService
                 $absoluteUrl = url($publicUrl);
 
                 if ($outputFormat === 'pdf_link') {
-                    $message = "Laporan Guru Terlambat — {$dateTitle}\n\nUnduh PDF: {$absoluteUrl}";
+                    // Template: report_teacher_late_pdf_link
+                    $message = $this->messageTemplateService->renderByType('report_teacher_late_pdf_link', [
+                        'date_title' => $dateTitle,
+                        'pdf_url' => $absoluteUrl,
+                    ]);
+                    if ($message === '') {
+                        $message = "Laporan Guru Terlambat — {$dateTitle}\n\nUnduh PDF: {$absoluteUrl}"; // fallback
+                    }
                     if ($dryRun) {
                         $output->writeln("[DRY-RUN] Akan mengirim tautan PDF ke {$receiver}: {$absoluteUrl}");
                         return SymfonyCommand::SUCCESS;
@@ -146,14 +161,28 @@ class TeacherLateDailyReportService
                     $output->writeln('Peringatan: HEAD ke URL PDF melempar exception. Tetap mencoba kirim lampiran...');
                 }
 
-                $result = $this->whatsappService->sendDocument($receiver, $absoluteUrl, "Laporan Guru Terlambat — {$dateTitle}", $fileName);
+                // Template caption: report_teacher_late_pdf_attachment_caption
+                $caption = $this->messageTemplateService->renderByType('report_teacher_late_pdf_attachment_caption', [
+                    'date_title' => $dateTitle,
+                ]);
+                if ($caption === '') {
+                    $caption = "Laporan Guru Terlambat — {$dateTitle}"; // fallback
+                }
+                $result = $this->whatsappService->sendDocument($receiver, $absoluteUrl, $caption, $fileName);
                 if (($result['success'] ?? false) === true) {
                     $output->writeln('Lampiran PDF laporan harian telah dikirim ke Tata Usaha.');
                     return SymfonyCommand::SUCCESS;
                 }
 
                 $output->writeln('Gagal mengirim lampiran PDF melalui WhatsApp. Mengirim tautan sebagai pesan teks. Error: ' . ($result['error'] ?? 'unknown'));
-                $fallbackMessage = "Laporan Guru Terlambat — {$dateTitle}\n\nUnduh PDF: {$absoluteUrl}";
+                // Fallback as text link (same as pdf_link template)
+                $fallbackMessage = $this->messageTemplateService->renderByType('report_teacher_late_pdf_link', [
+                    'date_title' => $dateTitle,
+                    'pdf_url' => $absoluteUrl,
+                ]);
+                if ($fallbackMessage === '') {
+                    $fallbackMessage = "Laporan Guru Terlambat — {$dateTitle}\n\nUnduh PDF: {$absoluteUrl}"; // fallback
+                }
                 $fallback = $this->whatsappService->sendMessage($receiver, $fallbackMessage);
                 if (($fallback['success'] ?? false) === true) {
                     $output->writeln('Tautan PDF sebagai fallback telah dikirim.');
@@ -169,7 +198,14 @@ class TeacherLateDailyReportService
             ->map(fn ($r) => sprintf('- %s (NIP: %s) jam %s (%d menit)', $r['name'], $r['nip'], $r['time_in'], $r['minutes_late']))
             ->implode("\n");
 
-        $message = "Laporan Guru Terlambat — {$dateTitle}\n\n{$list}";
+        // Template: report_teacher_late_text
+        $message = $this->messageTemplateService->renderByType('report_teacher_late_text', [
+            'date_title' => $dateTitle,
+            'list' => $list,
+        ]);
+        if ($message === '') {
+            $message = "Laporan Guru Terlambat — {$dateTitle}\n\n{$list}"; // fallback
+        }
         if ($dryRun) {
             $output->writeln("[DRY-RUN] Pesan teks ke {$receiver}:\n\n{$message}");
             return SymfonyCommand::SUCCESS;

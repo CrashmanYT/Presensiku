@@ -37,6 +37,7 @@ class MonthlyDisciplineSummaryService
         private TextMessageFormatter $textFormatter,
         private PdfReportService $pdfReportService,
         private SettingsRepositoryInterface $settings,
+        private MessageTemplateService $messageTemplateService,
     ) {
     }
 
@@ -92,7 +93,12 @@ class MonthlyDisciplineSummaryService
         [$selected, $extraCount] = $this->collectAttendances($monthKey, $thresholds, $limit);
 
         if ($selected->isEmpty()) {
-            $message = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nTidak ada siswa yang memenuhi kriteria untuk ditindaklanjuti.";
+            $message = $this->messageTemplateService->renderByType('monthly_summary_no_data', [
+                'month_title' => $monthTitle,
+            ]);
+            if ($message === '') {
+                $message = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nTidak ada siswa yang memenuhi kriteria untuk ditindaklanjuti.";
+            }
             if ($dryRun) {
                 $output->writeln("[DRY-RUN] Pesan yang akan dikirim ke {$receiver}:\n\n{$message}");
                 return SymfonyCommand::SUCCESS;
@@ -115,8 +121,26 @@ class MonthlyDisciplineSummaryService
             // fallback to text if PDF is disabled/unavailable
         }
 
-        $chunks = $this->textFormatter->formatTextChunks($selected, $monthTitle, $thresholds, $limit, $extraCount);
-        $sentCount = $this->sendTextList($output, $receiver, $chunks, $dryRun);
+        [$lines, $footer] = $this->textFormatter->buildLinesAndFooter($selected, $thresholds, $limit, $extraCount);
+        $chunks = array_chunk($lines, 20);
+        $messages = [];
+        foreach ($chunks as $i => $chunk) {
+            $listText = implode("\n", $chunk);
+            if ($i === count($chunks) - 1 && $footer !== '') {
+                $listText .= "\n\n" . $footer;
+            }
+            $rendered = $this->messageTemplateService->renderByType('monthly_summary_text', [
+                'month_title' => $monthTitle,
+                'list' => $listText,
+            ]);
+            if ($rendered === '') {
+                // Fallback to legacy format if template bucket missing
+                $prefix = $i === 0 ? "Ringkasan Disiplin Bulanan — {$monthTitle}\n\n" : "(lanjutan)\n\n";
+                $rendered = $prefix . $listText;
+            }
+            $messages[] = $rendered;
+        }
+        $sentCount = $this->sendTextList($output, $receiver, $messages, $dryRun);
 
         $output->writeln(sprintf(
             'Ringkasan bulanan untuk %s %s dikirim ke %s (%d pesan).',
@@ -195,7 +219,13 @@ class MonthlyDisciplineSummaryService
     protected function sendPdfLink(OutputInterface $output, string $receiver, string $publicUrl, string $monthTitle, bool $dryRun): int
     {
         $absoluteUrl = url($publicUrl);
-        $message = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$absoluteUrl}";
+        $message = $this->messageTemplateService->renderByType('monthly_summary_pdf_link', [
+            'month_title' => $monthTitle,
+            'pdf_url' => $absoluteUrl,
+        ]);
+        if ($message === '') {
+            $message = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$absoluteUrl}";
+        }
         if ($dryRun) {
             $output->writeln("[DRY-RUN] Akan mengirim tautan PDF ke {$receiver}: {$absoluteUrl}");
             return SymfonyCommand::SUCCESS;
@@ -230,20 +260,29 @@ class MonthlyDisciplineSummaryService
         if (!$probe || !$probe->successful()) {
             $status = $probe?->status() ?? 'n/a';
             $output->writeln("URL PDF tidak dapat diakses (status: {$status}). Mengirim tautan sebagai pesan teks.");
-            $fallbackMessage = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$absoluteUrl}";
+            $fallbackMessage = $this->messageTemplateService->renderByType('monthly_summary_pdf_link', [
+                'month_title' => $monthTitle,
+                'pdf_url' => $absoluteUrl,
+            ]) ?: "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$absoluteUrl}";
             $this->whatsappService->sendMessage($receiver, $fallbackMessage);
             $output->writeln('Tautan PDF telah dikirim sebagai pesan teks ke kesiswaan.');
             return SymfonyCommand::SUCCESS;
         }
 
-        $result = $this->whatsappService->sendDocument($receiver, $absoluteUrl, "Ringkasan Disiplin Bulanan — {$monthTitle}", $fileName);
+        $caption = $this->messageTemplateService->renderByType('monthly_summary_pdf_attachment_caption', [
+            'month_title' => $monthTitle,
+        ]) ?: "Ringkasan Disiplin Bulanan — {$monthTitle}";
+        $result = $this->whatsappService->sendDocument($receiver, $absoluteUrl, $caption, $fileName);
         if (($result['success'] ?? false) === true) {
             $output->writeln('Lampiran PDF ringkasan bulanan telah dikirim ke kesiswaan.');
             return SymfonyCommand::SUCCESS;
         }
 
         $output->writeln('Gagal mengirim lampiran PDF melalui WhatsApp. Mengirim tautan sebagai pesan teks. Error: ' . ($result['error'] ?? 'unknown'));
-        $fallbackMessage = "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$absoluteUrl}";
+        $fallbackMessage = $this->messageTemplateService->renderByType('monthly_summary_pdf_link', [
+            'month_title' => $monthTitle,
+            'pdf_url' => $absoluteUrl,
+        ]) ?: "Ringkasan Disiplin Bulanan — {$monthTitle}\n\nUnduh PDF: {$absoluteUrl}";
         $this->whatsappService->sendMessage($receiver, $fallbackMessage);
         $output->writeln('Tautan PDF telah dikirim sebagai pesan teks ke kesiswaan.');
         return SymfonyCommand::SUCCESS;

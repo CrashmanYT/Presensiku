@@ -8,15 +8,15 @@ use App\Services\WhatsappService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use App\Contracts\SettingsRepositoryInterface;
 use Illuminate\Support\Facades\Log;
+use App\Services\MessageTemplateService;
 
 class SendWhatsappNotification implements ShouldQueue
 {
     protected WhatsappService $whatsappService;
     public function __construct(
         WhatsappService $whatsappService,
-        private SettingsRepositoryInterface $settings,
+        private MessageTemplateService $templates,
     ) {
         $this->whatsappService = $whatsappService;
     }
@@ -109,25 +109,11 @@ class SendWhatsappNotification implements ShouldQueue
             'jam_seharusnya' => '-', // Placeholder, as attendance rule is not available here.
         ];
 
-        // Build WhatsApp message from templates stored in settings
-        $templates = $this->settings->get('notifications.whatsapp.templates', [
-            'late' => [],
-            'absent' => [],
-            'permit' => [],
-        ]);
-        if (!is_array($templates) || !isset($templates[$templateType]) || !is_array($templates[$templateType]) || empty($templates[$templateType])) {
-            Log::warning("WhatsApp template not found or empty for type: {$templateType}");
-            return '';
+        // Render via centralized template service
+        $message = $this->templates->renderByType($templateType, $variables);
+        if ($message === '') {
+            Log::warning("WhatsApp template not found or rendered empty for type: {$templateType}");
         }
-        $randomTemplate = $templates[$templateType][array_rand($templates[$templateType])];
-        $templateString = $randomTemplate['message'] ?? '';
-        if ($templateString === '') {
-            Log::warning("WhatsApp template invalid for type: {$templateType}");
-            return '';
-        }
-        foreach ($variables as $variable => $value) {
-            $templateString = str_replace('{' . $variable . '}', $value, $templateString);
-        }
-        return $templateString;
+        return $message;
     }
 }
