@@ -4,6 +4,7 @@ namespace App\Filament\Imports;
 
 use App\Models\Classes;
 use App\Models\Student;
+use App\Support\PhoneNumber;
 use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Importer;
 use Filament\Actions\Imports\Models\Import;
@@ -48,7 +49,11 @@ class StudentImporter extends Importer
 
             ImportColumn::make('parent_whatsapp')
                 ->label('WhatsApp Orang Tua')
-                ->rules(['nullable', 'string', 'max:20']),
+                ->rules(['nullable', 'string', 'max:20'])
+                ->castStateUsing(function (?string $state): ?string {
+                    $normalized = PhoneNumber::normalize($state);
+                    return $normalized; // keep null if invalid/empty
+                }),
         ];
     }
 

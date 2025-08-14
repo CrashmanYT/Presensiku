@@ -13,9 +13,7 @@ use Illuminate\Support\Facades\Log;
 
 class StudentAttendanceObserver
 {
-    public function __construct(private SettingsRepositoryInterface $settings)
-    {
-    }
+    public function __construct(private SettingsRepositoryInterface $settings) {}
     // Define the statuses that should trigger a WhatsApp notification
     private const WHATSAPP_NOTIFY_STATUSES = [
         'izin',
@@ -36,7 +34,6 @@ class StudentAttendanceObserver
             if ($studentAttendance->student) {
                 $this->updateRanking($studentAttendance->student, $studentAttendance->date, $studentAttendance->status->value, 'increment');
             }
-
         } catch (\Exception $e) {
             Log::error('Error in StudentAttendanceObserver created method: ' . $e->getMessage(), ['exception' => $e]);
         }
@@ -171,6 +168,5 @@ class StudentAttendanceObserver
         // Skor untuk izin dan sakit adalah 0, jadi tidak perlu dihitung
 
         $ranking->update(['score' => $totalScore]);
-        $ranking->save();
     }
 }

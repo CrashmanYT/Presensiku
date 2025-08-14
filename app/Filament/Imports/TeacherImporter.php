@@ -3,6 +3,7 @@
 namespace App\Filament\Imports;
 
 use App\Models\Teacher;
+use App\Support\PhoneNumber;
 use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Importer;
 use Filament\Actions\Imports\Models\Import;
@@ -33,20 +34,9 @@ class TeacherImporter extends Importer
                 ->requiredMapping()
                 ->rules(['required', 'string', 'max:20'])
                 ->castStateUsing(function (string $state): string {
-                    // Clean up phone number format
-                    $phone = preg_replace('/[^0-9+]/', '', trim($state));
-
-                    // Add +62 prefix if it starts with 0
-                    if (str_starts_with($phone, '0')) {
-                        $phone = '62'.substr($phone, 1);
-                    }
-
-                    // Add + prefix if not present
-                    if (! str_starts_with($phone, '+')) {
-                        $phone = '+'.$phone;
-                    }
-
-                    return $phone;
+                    // Normalize to digits-only 62XXXXXXXXXX using centralized utility
+                    $normalized = PhoneNumber::normalize($state);
+                    return $normalized ?? '';
                 }),
         ];
     }

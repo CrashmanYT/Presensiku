@@ -2,7 +2,6 @@
 
 namespace App\Listeners;
 
-use App\Enums\AttendanceStatusEnum;
 use App\Events\StudentAttendanceUpdated;
 use App\Models\StudentAttendance;
 use App\Services\WhatsappService;
@@ -30,18 +29,20 @@ class SendWhatsappNotification implements ShouldQueue
         Log::info('SendWhatsappNotification: Handling event for attendance ID: ' . $event->studentAttendance->id);
 
         $attendance = $event->studentAttendance;
-        $student = $attendance->student;
-        $class = $student->class;
+        // Eager-load required relations, including homeroomTeacher if present
+        $attendance->load('student.class.homeroomTeacher');
 
-        $attendance->load('student.class');
+        $student = $attendance->student;
+        $class = $student?->class;
 
         if (!$student) {
             Log::warning("SendWhatsappNotification: Student not found for attendance ID: {$attendance->id}");
             return;
         }
 
-        $parentPhoneNumber = "62".$student->parent_whatsapp;
-        $homeroomTeacherPhoneNumber = $class->homeroomTeacher->whatsapp_number;
+        // Let WhatsappService normalize/validate numbers; do not pre/over-prefix here
+        $parentPhoneNumber = $student->parent_whatsapp ?? '';
+        $homeroomTeacherPhoneNumber = $class?->homeroomTeacher?->whatsapp_number ?? null;
 
         $message = $this->buildMessage($attendance);
 
@@ -55,18 +56,18 @@ class SendWhatsappNotification implements ShouldQueue
             }
         }
 
-        // if ($homeroomTeacherPhoneNumber) {
+        // Optionally send to homeroom teacher
+        // if ($homeroomTeacherPhoneNumber && !empty($message)) {
         //     $this->whatsappService->sendMessage($homeroomTeacherPhoneNumber, $message);
         // } else {
-        //     Log::info("SendWhatsappNotification: Homeroom teacher phone number not found for class: {$class->name}");
+        //     Log::info("SendWhatsappNotification: Homeroom teacher phone number not found or message empty for class: " . ($class?->name ?? '-'));
         // }
-
     }
 
     protected function buildMessage(StudentAttendance $attendance): string
     {
-        $studentName = $attendance->student->name ?? 'Siswa Tidak Dikenal';
-        $className = $attendance->student->class->name ?? 'Kelas Tidak Dikenal';
+        $studentName = $attendance->student?->name ?? 'Siswa Tidak Dikenal';
+        $className = $attendance->student?->class?->name ?? 'Kelas Tidak Dikenal';
         $date = Carbon::parse($attendance->date)->translatedFormat('d F Y');
         $status = $attendance->status; // Enum instance
 
@@ -85,12 +86,26 @@ class SendWhatsappNotification implements ShouldQueue
             return '';
         }
 
+        // Handle time_in formatting robustly
+        $timeIn = $attendance->time_in;
+        if ($timeIn instanceof \Carbon\Carbon) {
+            $timeInFormatted = $timeIn->format('H:i');
+        } elseif (is_string($timeIn) && $timeIn !== '') {
+            try {
+                $timeInFormatted = Carbon::parse($timeIn)->format('H:i');
+            } catch (\Throwable) {
+                $timeInFormatted = '-';
+            }
+        } else {
+            $timeInFormatted = '-';
+        }
+
         // Prepare variables for the template
         $variables = [
             'nama_siswa' => $studentName,
             'kelas' => $className,
             'tanggal' => $date,
-            'jam_masuk' => $attendance->time_in ? $attendance->time_in->format('H:i') : '-',
+            'jam_masuk' => $timeInFormatted,
             'jam_seharusnya' => '-', // Placeholder, as attendance rule is not available here.
         ];
 
@@ -111,7 +126,7 @@ class SendWhatsappNotification implements ShouldQueue
             return '';
         }
         foreach ($variables as $variable => $value) {
-            $templateString = str_replace('{'.$variable.'}', $value, $templateString);
+            $templateString = str_replace('{' . $variable . '}', $value, $templateString);
         }
         return $templateString;
     }

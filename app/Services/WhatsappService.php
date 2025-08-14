@@ -5,6 +5,7 @@ namespace App\Services;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Support\PhoneNumber;
 
 /**
  * Service wrapper for Kirimi WhatsApp API.
@@ -55,6 +56,13 @@ class WhatsappService
             return ['success' => false, 'error' => 'Device ID is not configured.'];
         }
 
+        // Normalize and validate receiver number
+        $receiver = PhoneNumber::normalize($receiver);
+        if (!$receiver) {
+            Log::warning('WhatsApp message not sent: Invalid receiver number.');
+            return ['success' => false, 'error' => 'Invalid receiver number.'];
+        }
+
         try {
             $response = Http::post("{$this->baseUrl}/send-message", [
                 'user_code' => $this->userCode,
@@ -100,6 +108,13 @@ class WhatsappService
         if (empty($this->deviceId)) {
             Log::warning('WhatsApp document not sent: Device ID is not configured.');
             return ['success' => false, 'error' => 'Device ID is not configured.'];
+        }
+
+        // Normalize and validate receiver number
+        $receiver = PhoneNumber::normalize($receiver);
+        if (!$receiver) {
+            Log::warning('WhatsApp document not sent: Invalid receiver number.');
+            return ['success' => false, 'error' => 'Invalid receiver number.'];
         }
 
         try {
@@ -149,4 +164,5 @@ class WhatsappService
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
+
 }
