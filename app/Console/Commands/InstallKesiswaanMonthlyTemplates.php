@@ -15,6 +15,7 @@ class InstallKesiswaanMonthlyTemplates extends Command
     {
         $overwrite = (bool) $this->option('overwrite');
 
+        // Define defaults as arrays of items (each item corresponds to a repeater row)
         $payloads = [
             'notifications.whatsapp.templates.monthly_summary_no_data' => [
                 ['message' => "Ringkasan Disiplin Bulanan — {month_title}\n\nTidak ada siswa yang memenuhi kriteria untuk ditindaklanjuti."],
@@ -30,13 +31,40 @@ class InstallKesiswaanMonthlyTemplates extends Command
             ],
         ];
 
-        foreach ($payloads as $key => $value) {
-            if (! $overwrite && Setting::has($key)) {
-                $this->line("Skip (exists): {$key}");
+        foreach ($payloads as $base => $items) {
+            // Detect existing data in either old JSON-at-base format or dot-indexed format.
+            $exists = Setting::has($base) || Setting::has($base . '.0.message');
+
+            if (! $overwrite && $exists) {
+                $this->line("Skip (exists): {$base}");
                 continue;
             }
-            Setting::set($key, $value, 'json', 'notifications');
-            $this->info(($overwrite ? 'Updated' : 'Created') . ": {$key}");
+
+            // If overwriting, clear previous values (both styles) for a clean slate.
+            if ($overwrite) {
+                // Remove old aggregated JSON row if present
+                if (Setting::has($base)) {
+                    Setting::forget($base);
+                }
+                // Remove dot-indexed children
+                \App\Models\Setting::query()
+                    ->where('key', 'like', $base . '.%')
+                    ->delete();
+            }
+
+            // Write as dot-indexed repeater keys: {base}.{index}.message (and label if provided)
+            foreach (array_values($items) as $i => $item) {
+                $message = (string) ($item['message'] ?? '');
+                if ($message === '') {
+                    continue;
+                }
+                Setting::set($base . ".{$i}.message", $message, 'string', 'notifications');
+                if (isset($item['label']) && $item['label'] !== '') {
+                    Setting::set($base . ".{$i}.label", (string) $item['label'], 'string', 'notifications');
+                }
+            }
+
+            $this->info(($overwrite ? 'Updated' : 'Created') . ": {$base}");
         }
 
         $this->info('Done installing Kesiswaan monthly WhatsApp templates.');

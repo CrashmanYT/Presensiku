@@ -20,12 +20,34 @@ class MessageTemplateService
      */
     public function renderByType(string $type, array $variables): string
     {
+        // 1) Try aggregated root
         $all = $this->settings->get('notifications.whatsapp.templates', []);
         if (!is_array($all)) {
             Log::warning('MessageTemplateService: templates root is not an array');
-            return '';
+            $all = [];
         }
         $bucket = $all[$type] ?? null;
+
+        // 2) Try direct dot-key bucket, e.g. notifications.whatsapp.templates.{type}
+        if (!is_array($bucket) || empty($bucket)) {
+            $maybe = $this->settings->get("notifications.whatsapp.templates.$type", null);
+            if (is_array($maybe) && !empty($maybe)) {
+                $bucket = $maybe;
+            }
+        }
+
+        // 3) Self-healing: bypass cache by using a fresh nested read
+        if (!is_array($bucket) || empty($bucket)) {
+            $nested = $this->settings->allAsNested();
+            $rootTemplates = $nested['notifications']['whatsapp']['templates'] ?? null;
+            if (is_array($rootTemplates)) {
+                $maybe = $rootTemplates[$type] ?? null;
+                if (is_array($maybe) && !empty($maybe)) {
+                    $bucket = $maybe;
+                }
+            }
+        }
+
         if (!is_array($bucket) || empty($bucket)) {
             Log::warning("MessageTemplateService: template bucket not found or empty for type: {$type}");
             return '';
@@ -79,7 +101,7 @@ class MessageTemplateService
                 return $matches[0];
             }
             // Filter to non-empty strings
-            $options = array_values(array_filter(array_map(fn ($s) => trim((string) $s), $options), fn ($s) => $s !== ''));
+            $options = array_values(array_filter(array_map(fn($s) => trim((string) $s), $options), fn($s) => $s !== ''));
             if (empty($options)) {
                 return $matches[0];
             }
@@ -118,7 +140,7 @@ class MessageTemplateService
                     // Support newline-separated string stored as value
                     $phrases = preg_split("/\r?\n/", $val) ?: [];
                 }
-                $phrases = array_values(array_filter(array_map(fn ($s) => trim((string) $s), $phrases), fn ($s) => $s !== ''));
+                $phrases = array_values(array_filter(array_map(fn($s) => trim((string) $s), $phrases), fn($s) => $s !== ''));
                 if (!empty($phrases)) {
                     $result[$key] = $phrases;
                 }
@@ -143,7 +165,7 @@ class MessageTemplateService
             } else {
                 $phrases = [];
             }
-            $phrases = array_values(array_filter(array_map(fn ($s) => trim((string) $s), $phrases), fn ($s) => $s !== ''));
+            $phrases = array_values(array_filter(array_map(fn($s) => trim((string) $s), $phrases), fn($s) => $s !== ''));
             if (!empty($phrases)) {
                 $result[$key] = $phrases;
             }

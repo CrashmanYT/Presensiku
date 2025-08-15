@@ -164,5 +164,4 @@ class WhatsappService
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
-
 }
