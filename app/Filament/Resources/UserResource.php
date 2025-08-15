@@ -41,9 +41,10 @@ class UserResource extends Resource
                 Forms\Components\DateTimePicker::make('email_verified_at'),
                 Forms\Components\TextInput::make('password')
                     ->password()
-                    ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                    ->dehydrated(fn ($state) => filled($state))
-                    ->required(),
+                    ->required(fn(string $context) => $context === 'create')
+                    ->helperText('Kosongkan saat edit jika tidak ingin mengubah')
+                    ->dehydrateStateUsing(fn($state) => Hash::make($state))
+                    ->dehydrated(fn($state) => filled($state)),
                 Forms\Components\Select::make('class_id')
                     ->relationship('class', 'name')
                     ->label('Scope Wali Kelas (Jika Walas)'),
@@ -51,13 +52,13 @@ class UserResource extends Resource
                     ->tel(),
                 Forms\Components\Select::make('roles')
                     ->multiple()
-                    ->relationship('roles', 'name', fn ($query) => (
+                    ->relationship('roles', 'name', fn($query) => (
                         (Auth::user()?->hasRole('admin') ?? false)
-                            ? $query
-                            : $query->where('name', '!=', 'admin')
+                        ? $query
+                        : $query->where('name', '!=', 'admin')
                     ))
-                    ->visible(fn () => Auth::user()?->can('roles.manage') ?? false)
-                    ->disabled(fn (?\App\Models\User $record) => $record?->is(Auth::user()) ?? false)
+                    ->visible(fn() => Auth::user()?->can('roles.manage') ?? false)
+                    ->disabled(fn(?\App\Models\User $record) => $record?->is(Auth::user()) ?? false)
                     ->preload(),
             ]);
     }
@@ -95,14 +96,14 @@ class UserResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()
-                    ->visible(fn () => Auth::user()?->can('users.view') ?? false),
+                    ->visible(fn() => Auth::user()?->can('users.view') ?? false),
                 Tables\Actions\EditAction::make()
-                    ->visible(fn () => Auth::user()?->can('users.manage') ?? false),
+                    ->visible(fn() => Auth::user()?->can('users.manage') ?? false),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                        ->visible(fn () => Auth::user()?->can('users.manage') ?? false),
+                        ->visible(fn() => Auth::user()?->can('users.manage') ?? false),
                 ]),
             ]);
     }
