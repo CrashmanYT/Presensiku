@@ -542,6 +542,11 @@ class Settings extends Page
             ->cloneable()
             ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
             ->addActionLabel($addActionLabel)
+            ->helperText(function (\Filament\Forms\Get $get) use ($path) {
+                $items = $get($path) ?? [];
+                $count = is_array($items) ? count($items) : 0;
+                return new HtmlString('<span class="inline-flex items-center gap-1 text-xs text-gray-600 dark:text-gray-300">Jumlah template: <span class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">' . $count . '</span></span>');
+            })
             ->schema([
                 Forms\Components\TextInput::make('label')
                     ->label('Judul (opsional)')
@@ -576,7 +581,7 @@ class Settings extends Page
                             . '</div>';
 
                         $chipsBox = <<<'HTML'
-<div class="mt-2 flex flex-wrap gap-2" x-data="{ insert(token) { const ta = $el.closest('[data-repeater-item]')?.querySelector('textarea[data-message-field=\'1\']'); if (!ta) return; const start = (typeof ta.selectionStart === 'number') ? ta.selectionStart : ta.value.length; const end = (typeof ta.selectionEnd === 'number') ? ta.selectionEnd : ta.value.length; const before = ta.value.slice(0, start); const after = ta.value.slice(end); ta.value = before + token + after; const pos = before.length + token.length; if (ta.setSelectionRange) ta.setSelectionRange(pos, pos); ta.dispatchEvent(new Event('input', { bubbles: true })); ta.focus(); } }">
+<div class="mt-2 flex flex-wrap gap-2" x-data="{ insert(token) { const scope = $el.closest('.fi-fo-field'); const ta = scope ? scope.querySelector('textarea[data-message-field=\'1\']') : null; if (!ta) return; const start = (typeof ta.selectionStart === 'number') ? ta.selectionStart : ta.value.length; const end = (typeof ta.selectionEnd === 'number') ? ta.selectionEnd : ta.value.length; const before = ta.value.slice(0, start); const after = ta.value.slice(end); ta.value = before + token + after; const pos = before.length + token.length; if (ta.setSelectionRange) ta.setSelectionRange(pos, pos); ta.dispatchEvent(new Event('input', { bubbles: true })); ta.dispatchEvent(new Event('change', { bubbles: true })); ta.focus(); } }">
   <div class="w-full text-[11px] text-gray-600 dark:text-gray-300">Klik untuk menyisipkan:</div>
 HTML;
                         $chipsBox .= $chipsHtml;
