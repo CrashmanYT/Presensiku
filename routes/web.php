@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\TemplateController;
+use App\Http\Controllers\LogDownloadController;
 use App\Livewire\RealtimeAttendanceDashboard;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/template/student', [TemplateController::class, 'downloadStudentTemplate'])->name('template.student');
     Route::get('/template/teacher', [TemplateController::class, 'downloadTeacherTemplate'])->name('template.teacher');
     Route::get('/template/class', [TemplateController::class, 'downloadClassTemplate'])->name('template.class');
+});
+
+// Admin log download route
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/admin/logs/download/{name}', [LogDownloadController::class, 'show'])
+        ->where('name', '.*')
+        ->name('admin.logs.download');
 });
 
 require __DIR__.'/auth.php';
