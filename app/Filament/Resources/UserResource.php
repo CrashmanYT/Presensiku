@@ -3,12 +3,14 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
+use App\Filament\Resources\UserResource\RelationManagers\RolesRelationManager;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class UserResource extends Resource
@@ -20,6 +22,11 @@ class UserResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-user-circle';
 
     protected static ?int $navigationSort = 5;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Auth::user()?->can('users.view') ?? false;
+    }
 
     public static function form(Form $form): Form
     {
@@ -44,7 +51,13 @@ class UserResource extends Resource
                     ->tel(),
                 Forms\Components\Select::make('roles')
                     ->multiple()
-                    ->relationship('roles', 'name')
+                    ->relationship('roles', 'name', fn ($query) => (
+                        (Auth::user()?->hasRole('admin') ?? false)
+                            ? $query
+                            : $query->where('name', '!=', 'admin')
+                    ))
+                    ->visible(fn () => Auth::user()?->can('roles.manage') ?? false)
+                    ->disabled(fn (?\App\Models\User $record) => $record?->is(Auth::user()) ?? false)
                     ->preload(),
             ]);
     }
@@ -81,12 +94,15 @@ class UserResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->visible(fn () => Auth::user()?->can('users.view') ?? false),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn () => Auth::user()?->can('users.manage') ?? false),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn () => Auth::user()?->can('users.manage') ?? false),
                 ]),
             ]);
     }
@@ -94,7 +110,7 @@ class UserResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RolesRelationManager::class,
         ];
     }
 

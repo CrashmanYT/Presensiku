@@ -25,8 +25,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/template/class', [TemplateController::class, 'downloadClassTemplate'])->name('template.class');
 });
 
-// Admin log download route
-Route::middleware(['auth', 'role:admin'])->group(function () {
+// Admin log download route (permission-based)
+Route::middleware(['auth', 'permission:logs.download'])->group(function () {
     Route::get('/admin/logs/download/{name}', [LogDownloadController::class, 'show'])
         ->where('name', '.*')
         ->name('admin.logs.download');

@@ -11,9 +11,9 @@ class LogDownloadController extends Controller
 {
     public function show(Request $request, string $name): StreamedResponse
     {
-        // Extra guard (route already protected by auth + role:admin)
+        // Extra guard (route already protected by auth + permission:logs.download)
         $user = Auth::user();
-        if (!$user || !method_exists($user, 'hasRole') || !$user->hasRole('admin')) {
+        if (!$user || !$user->can('logs.download')) {
             abort(403);
         }
 

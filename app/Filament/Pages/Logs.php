@@ -23,6 +23,11 @@ class Logs extends Page
 
     protected static string $view = 'filament.pages.logs';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Auth::user()?->can('logs.view') ?? false;
+    }
+
     // State
     public ?string $selectedFile = null;
 
@@ -43,6 +48,7 @@ class Logs extends Page
 
     public function mount(): void
     {
+        abort_unless(Auth::user()?->can('logs.view'), 403);
         $this->files = LogReader::listFiles();
         if (!empty($this->files)) {
             $this->selectedFile = $this->files[0]['path'] ?? null;
@@ -54,21 +60,22 @@ class Logs extends Page
 
     protected function getHeaderActions(): array
     {
-        $isAdmin = Auth::user() && method_exists(Auth::user(), 'hasRole') && Auth::user()->hasRole('admin');
         $file = $this->resolveSelectedFile();
         $downloadUrl = $file ? route('admin.logs.download', ['name' => $file['basename']]) : null;
+        $canDownload = Auth::user()?->can('logs.download') ?? false;
+        $canManage = Auth::user()?->can('logs.manage') ?? false;
         return [
             Actions\Action::make('download')
                 ->label('Download')
                 ->icon('heroicon-o-arrow-down-tray')
-                ->visible($isAdmin && $downloadUrl !== null)
+                ->visible($canDownload && $downloadUrl !== null)
                 ->url($downloadUrl)
                 ->openUrlInNewTab(),
             Actions\Action::make('delete')
                 ->label('Hapus')
                 ->icon('heroicon-o-trash')
                 ->color('danger')
-                ->visible($isAdmin)
+                ->visible($canManage)
                 ->requiresConfirmation()
                 ->modalHeading('Hapus file log ini?')
                 ->modalDescription('Tindakan tidak dapat dibatalkan.')
@@ -120,10 +127,10 @@ class Logs extends Page
         $this->entries = $filtered;
     }
 
-    protected function ensureAdmin(): void
+    protected function ensureCan(string $permission): void
     {
         $user = Auth::user();
-        if (!$user || !method_exists($user, 'hasRole') || !$user->hasRole('admin')) {
+        if (!$user || !$user->can($permission)) {
             abort(403);
         }
     }
@@ -142,7 +149,7 @@ class Logs extends Page
 
     public function downloadSelected(): StreamedResponse
     {
-        $this->ensureAdmin();
+        $this->ensureCan('logs.download');
         $file = $this->resolveSelectedFile();
         if (!$file || !is_file($file['path']) || !is_readable($file['path'])) {
             Notification::make()->title('File log tidak ditemukan atau tidak dapat dibaca.')->danger()->send();
@@ -168,7 +175,7 @@ class Logs extends Page
 
     public function deleteSelected(): void
     {
-        $this->ensureAdmin();
+        $this->ensureCan('logs.manage');
         $file = $this->resolveSelectedFile();
         if (!$file) {
             Notification::make()->title('Tidak ada file yang dipilih.')->danger()->send();
