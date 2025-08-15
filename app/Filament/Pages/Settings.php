@@ -471,6 +471,47 @@ class Settings extends Page
             ->columnSpanFull();
     }
 
+    protected static function extractTokens(string $variablesText): array
+    {
+        if ($variablesText === '') {
+            return [];
+        }
+        if (!preg_match_all('/\{[a-zA-Z0-9_.]+\}/', $variablesText, $m)) {
+            return [];
+        }
+        $tokens = $m[0] ?? [];
+        $seen = [];
+        $out = [];
+        foreach ($tokens as $t) {
+            if (!isset($seen[$t])) {
+                $seen[$t] = true;
+                $out[] = $t;
+            }
+        }
+        return $out;
+    }
+
+    protected static function getVariantKeys(): array
+    {
+        $raw = Setting::get('notifications.whatsapp.template_variants', []);
+        $keys = [];
+        if (is_array($raw)) {
+            if (array_keys($raw) !== range(0, count($raw) - 1)) {
+                // Associative: keys are the variant group keys
+                $keys = array_keys($raw);
+            } else {
+                // Repeater-like
+                foreach ($raw as $g) {
+                    if (is_array($g) && !empty($g['key'])) {
+                        $keys[] = (string) $g['key'];
+                    }
+                }
+            }
+        }
+        $keys = array_values(array_unique(array_filter(array_map('strval', $keys))));
+        return array_slice($keys, 0, 30);
+    }
+
     protected static function templateRepeater(
         string $path,
         string $label,
@@ -480,9 +521,24 @@ class Settings extends Page
     ) {
         return Forms\Components\Repeater::make($path)
             ->label($label)
-            ->itemLabel(fn (array $state) => $state['label'] ?? 'Template')
+            ->itemLabel(function (array $state) {
+                $label = trim((string)($state['label'] ?? ''));
+                if ($label !== '') {
+                    return $label;
+                }
+                $message = (string)($state['message'] ?? '');
+                $firstLine = trim((string) strtok($message, "\n"));
+                if ($firstLine === '') {
+                    return 'Template';
+                }
+                if (function_exists('mb_strimwidth')) {
+                    return mb_strimwidth($firstLine, 0, 40, '…');
+                }
+                return strlen($firstLine) > 40 ? substr($firstLine, 0, 37) . '...' : $firstLine;
+            })
             ->reorderableWithButtons()
             ->collapsible()
+            ->collapsed()
             ->cloneable()
             ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
             ->addActionLabel($addActionLabel)
@@ -493,16 +549,41 @@ class Settings extends Page
                 Forms\Components\Textarea::make('message')
                     ->label('Isi Pesan')
                     ->rows($rows)
-                    ->extraAttributes(['class' => 'font-mono text-sm'])
-                    ->helperText(new HtmlString(
-                        '<div class="rounded-md border border-gray-200 bg-gray-50 p-2 text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 overflow-x-auto mt-2">'
-                        . '<div class="flex items-center gap-2 mb-1 text-[11px] font-medium text-gray-600 dark:text-gray-300">'
-                        . '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 8.75 5.75 12l2.5 3.25m7.5-6.5 2.5 3.25-2.5 3.25M13 4.75 11 19.25"/></svg>'
-                        . '<span>Helper</span>'
-                        . '</div>'
-                        . '<pre class="font-mono text-xs whitespace-pre">' . e($variablesText) . '</pre>'
-                        . '</div>'
-                    )),
+                    ->extraAttributes(['class' => 'font-mono text-sm', 'data-message-field' => '1'])
+                    ->helperText(function () use ($variablesText) {
+                        $tokens = self::extractTokens($variablesText);
+                        $variantKeys = self::getVariantKeys();
+
+                        $chipsHtml = '';
+                        foreach ($tokens as $t) {
+                            $et = e($t);
+                            $chipsHtml .= '<button type="button" class="px-2 py-0.5 text-xs rounded border border-gray-300 bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800" @click.prevent="insert(\'' . $et . '\')">' . $et . '</button>';
+                        }
+                        if (!empty($variantKeys)) {
+                            foreach ($variantKeys as $vk) {
+                                $ev = e((string) $vk);
+                                $label = '{v:' . $ev . '}';
+                                $chipsHtml .= '<button type="button" class="px-2 py-0.5 text-xs rounded border border-gray-300 bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800" @click.prevent="insert(\'' . $label . '\')">' . e($label) . '</button>';
+                            }
+                        }
+
+                        $helperBox = '<div class="rounded-md border border-gray-200 bg-gray-50 p-2 text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 overflow-x-auto mt-2">'
+                            . '<div class="flex items-center gap-2 mb-1 text-[11px] font-medium text-gray-600 dark:text-gray-300">'
+                            . '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 8.75 5.75 12l2.5 3.25m7.5-6.5 2.5 3.25-2.5 3.25M13 4.75 11 19.25"/></svg>'
+                            . '<span>Helper</span>'
+                            . '</div>'
+                            . '<pre class="font-mono text-xs whitespace-pre">' . e($variablesText) . '</pre>'
+                            . '</div>';
+
+                        $chipsBox = <<<'HTML'
+<div class="mt-2 flex flex-wrap gap-2" x-data="{ insert(token) { const ta = $el.closest('[data-repeater-item]')?.querySelector('textarea[data-message-field=\'1\']'); if (!ta) return; const start = (typeof ta.selectionStart === 'number') ? ta.selectionStart : ta.value.length; const end = (typeof ta.selectionEnd === 'number') ? ta.selectionEnd : ta.value.length; const before = ta.value.slice(0, start); const after = ta.value.slice(end); ta.value = before + token + after; const pos = before.length + token.length; if (ta.setSelectionRange) ta.setSelectionRange(pos, pos); ta.dispatchEvent(new Event('input', { bubbles: true })); ta.focus(); } }">
+  <div class="w-full text-[11px] text-gray-600 dark:text-gray-300">Klik untuk menyisipkan:</div>
+HTML;
+                        $chipsBox .= $chipsHtml;
+                        $chipsBox .= '</div>';
+
+                        return new HtmlString($helperBox . $chipsBox);
+                    }),
             ]);
     }
 
