@@ -401,6 +401,146 @@ class StudentAttendanceResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('bulk_ubah_status')
+                        ->label('Ubah Status')
+                        ->icon('heroicon-o-pencil-square')
+                        ->color('warning')
+                        ->form([
+                            Forms\Components\Select::make('status')
+                                ->label('Status')
+                                ->options(AttendanceStatusEnum::labels())
+                                ->required(),
+                        ])
+                        ->action(function (\Illuminate\Support\Collection $records, array $data): void {
+                            $updated = 0;
+                            foreach ($records as $record) {
+                                /** @var \App\Models\StudentAttendance $record */
+                                $record->status = (string) $data['status'];
+                                $record->save();
+                                $updated++;
+                            }
+                            Notification::make()
+                                ->title('Status diperbarui')
+                                ->body("Berhasil memperbarui status pada {$updated} data.")
+                                ->success()
+                                ->send();
+                        }),
+
+                    Tables\Actions\BulkAction::make('bulk_kirim_wa')
+                        ->label('Kirim WA')
+                        ->icon('heroicon-o-paper-airplane')
+                        ->color('success')
+                        ->form(function (): array {
+                            // Build template options from settings
+                            $templateOptions = [];
+                            try {
+                                /** @var \App\Contracts\SettingsRepositoryInterface $settings */
+                                $settings = app(\App\Contracts\SettingsRepositoryInterface::class);
+                                $root = $settings->get('notifications.whatsapp.templates', []);
+                                if (!is_array($root) || empty($root)) {
+                                    $nested = $settings->allAsNested();
+                                    $root = $nested['notifications']['whatsapp']['templates'] ?? [];
+                                }
+                                if (is_array($root)) {
+                                    $keys = array_keys($root);
+                                    $templateOptions = array_combine($keys, $keys);
+                                }
+                            } catch (\Throwable $e) {
+                                $templateOptions = [];
+                            }
+
+                            return [
+                                Forms\Components\Toggle::make('use_template')
+                                    ->label('Gunakan Template')
+                                    ->default(!empty($templateOptions))
+                                    ->reactive(),
+                                Forms\Components\Select::make('template_type')
+                                    ->label('Tipe Template')
+                                    ->options($templateOptions)
+                                    ->searchable()
+                                    ->preload()
+                                    ->visible(fn (\Filament\Forms\Get $get) => (bool) $get('use_template')),
+                                Forms\Components\Textarea::make('message')
+                                    ->label('Pesan WhatsApp (opsional jika pakai template)')
+                                    ->rows(7)
+                                    ->helperText('Placeholder: {student_name}/{nama_siswa}, {date}/{tanggal}, {time_in}/{jam_masuk}, {status_label}/{status}, {v:key}.'),
+                            ];
+                        })
+                        ->action(function (\Illuminate\Support\Collection $records, array $data): void {
+                            $countSent = 0; $countSkipped = 0; $countFailed = 0;
+                            $useTemplate = (bool) ($data['use_template'] ?? false);
+                            $templateType = (string) ($data['template_type'] ?? '');
+                            $baseMessage = (string) ($data['message'] ?? '');
+
+                            /** @var \App\Services\MessageTemplateService $mts */
+                            $mts = app(\App\Services\MessageTemplateService::class);
+                            /** @var \App\Services\WhatsappService $wa */
+                            $wa = app(\App\Services\WhatsappService::class);
+
+                            foreach ($records as $record) {
+                                /** @var \App\Models\StudentAttendance $record */
+                                $receiver = optional($record->student)->parent_whatsapp;
+                                if (!filled($receiver)) { $countSkipped++; continue; }
+
+                                // Build variables with aliases per record
+                                $studentName = optional($record->student)->name ?? '-';
+                                $className = optional(optional($record->student)->class)->name ?? '-';
+                                $deviceName = optional($record->device)->name ?? '-';
+                                $date = \Illuminate\Support\Carbon::parse($record->date)->format('d M Y');
+                                $timeIn = $record->time_in ? substr((string) $record->time_in, 0, 5) : '-';
+                                $timeOut = $record->time_out ? substr((string) $record->time_out, 0, 5) : '-';
+                                $statusLabel = $record->status instanceof AttendanceStatusEnum ? $record->status->getLabel() : (string) ($record->status ?? '-');
+                                $expectedTime = '-';
+
+                                $variables = [
+                                    'student_name' => $studentName,
+                                    'class_name' => $className,
+                                    'device_name' => $deviceName,
+                                    'date' => $date,
+                                    'time_in' => $timeIn,
+                                    'time_out' => $timeOut,
+                                    'status_label' => $statusLabel,
+                                    'expected_time' => $expectedTime,
+                                    'nama_siswa' => $studentName,
+                                    'kelas' => $className,
+                                    'perangkat' => $deviceName,
+                                    'tanggal' => $date,
+                                    'jam_masuk' => $timeIn,
+                                    'jam_keluar' => $timeOut,
+                                    'status' => $statusLabel,
+                                    'jam_seharusnya' => $expectedTime,
+                                ];
+
+                                $message = $baseMessage;
+                                try {
+                                    if ($useTemplate && $templateType !== '') {
+                                        $rendered = (string) $mts->renderByType($templateType, $variables);
+                                        if ($rendered !== '') { $message = $rendered; }
+                                    }
+                                    $message = $mts->expandVariants($message);
+                                    $message = $mts->interpolate($message, $variables);
+                                    $message = preg_replace('/\{[A-Za-z0-9_\.-]+\}/', '-', (string) $message) ?? (string) $message;
+                                } catch (\Throwable $e) {
+                                    // keep as-is
+                                }
+
+                                $result = $wa->sendMessage((string) $receiver, (string) $message);
+                                if (($result['success'] ?? false) === true) { $countSent++; }
+                                else { $countFailed++; }
+                            }
+
+                            $body = "Terkirim: {$countSent}\nDilewati (tanpa no. WA): {$countSkipped}\nGagal: {$countFailed}";
+                            $notif = Notification::make()
+                                ->title('Hasil Kirim WhatsApp (Bulk)')
+                                ->body($body);
+                            if ($countFailed > 0) {
+                                $notif->danger();
+                            } else {
+                                $notif->success();
+                            }
+                            $notif->send();
+                        }),
+
                     Tables\Actions\DeleteBulkAction::make(),
                     
                 ]),
