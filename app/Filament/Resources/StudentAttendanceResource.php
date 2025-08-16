@@ -3,6 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Enums\AttendanceStatusEnum;
+use App\Contracts\SettingsRepositoryInterface;
+use App\Services\MessageTemplateService;
 use App\Filament\Resources\StudentAttendanceResource\Pages;
 use App\Helpers\ExportColumnHelper;
 use App\Models\StudentAttendance;
@@ -16,6 +18,7 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Filament\Notifications\Notification;
 
 class StudentAttendanceResource extends Resource
 {
@@ -59,10 +62,13 @@ class StudentAttendanceResource extends Resource
                     ->toggleable()
                     ->label('Jam Keluar'),
                 Tables\Columns\TextColumn::make('status')
-                    ->searchable()
-                    ->toggleable()
                     ->label('Status')
-                    ->badge(),
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => $state instanceof \App\Enums\AttendanceStatusEnum ? $state->getLabel() : (string) $state)
+                    ->color(fn ($state) => $state instanceof \App\Enums\AttendanceStatusEnum ? $state->getColor() : null)
+                    ->icon(fn ($state) => $state instanceof \App\Enums\AttendanceStatusEnum ? $state->getIcon() : null)
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('device.name')
                     ->label('Perangkat')
                     ->toggleable()
@@ -89,7 +95,7 @@ class StudentAttendanceResource extends Resource
                     ->multiple()
                     ->preload(),
                 SelectFilter::make('Status')
-                    ->options(AttendanceStatusEnum::class)
+                    ->options(AttendanceStatusEnum::labels())
                     ->multiple(),
                 Filter::make('date_range')
                     ->label('Rentang Tanggal')
@@ -161,7 +167,237 @@ class StudentAttendanceResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->label('Edit'),
+                Tables\Actions\Action::make('ubah_status')
+                    ->label('')
+                    ->tooltip('Ubah Status')
+                    ->icon('heroicon-o-pencil-square')
+                    ->iconButton()
+                    ->color('warning')
+                    ->form(function (\App\Models\StudentAttendance $record): array {
+                        return [
+                            Forms\Components\Select::make('status')
+                                ->label('Status')
+                                ->options(AttendanceStatusEnum::labels())
+                                ->required()
+                                ->default($record->status instanceof AttendanceStatusEnum ? $record->status->value : ($record->status ?? null)),
+                        ];
+                    })
+                    ->action(function (\App\Models\StudentAttendance $record, array $data): void {
+                        $record->status = $data['status'];
+                        $record->save();
+
+                        Notification::make()
+                            ->title('Status kehadiran diperbarui')
+                            ->success()
+                            ->send();
+                    }),
+                Tables\Actions\Action::make('kirim_wa')
+                    ->label('')
+                    ->tooltip('Kirim WA')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->iconButton()
+                    ->color('success')
+                    ->visible(fn (\App\Models\StudentAttendance $record) => filled(optional($record->student)->parent_whatsapp))
+                    ->form(function (\App\Models\StudentAttendance $record): array {
+                        // Base variables for template interpolation
+                        $studentName = $record->student->name ?? '-';
+                        $date = \Illuminate\Support\Carbon::parse($record->date)->format('d M Y');
+                        $timeIn = $record->time_in ? substr((string) $record->time_in, 0, 5) : '-';
+                        $statusLabel = $record->status instanceof AttendanceStatusEnum ? $record->status->getLabel() : (string) ($record->status ?? '-');
+
+                        $variables = [
+                            'student_name' => $studentName,
+                            'date' => $date,
+                            'time_in' => $timeIn,
+                            'status_label' => $statusLabel,
+                        ];
+
+                        // Build plain fallback
+                        $plainFallback = "Assalamualaikum, Orang Tua/Wali dari {$studentName}.\n" .
+                            "Informasi kehadiran tanggal {$date}:\n" .
+                            "Status: {$statusLabel}\n" .
+                            "Jam Masuk: {$timeIn}.";
+
+                        // Collect template types from settings (nested or flat)
+                        $templateOptions = [];
+                        try {
+                            /** @var SettingsRepositoryInterface $settings */
+                            $settings = app(SettingsRepositoryInterface::class);
+                            $root = $settings->get('notifications.whatsapp.templates', []);
+                            if (!is_array($root) || empty($root)) {
+                                $nested = $settings->allAsNested();
+                                $root = $nested['notifications']['whatsapp']['templates'] ?? [];
+                            }
+                            if (is_array($root)) {
+                                $keys = array_keys($root);
+                                $templateOptions = array_combine($keys, $keys);
+                            }
+                        } catch (\Throwable $e) {
+                            $templateOptions = [];
+                        }
+
+                        // Guess default template type from status
+                        $statusKey = $record->status instanceof AttendanceStatusEnum ? $record->status->value : (string) ($record->status ?? '');
+                        $guessed = match ($statusKey) {
+                            'hadir' => 'student_present',
+                            'terlambat' => 'student_late',
+                            'tidak_hadir' => 'student_absent',
+                            'izin' => 'student_leave',
+                            'sakit' => 'student_sick',
+                            default => null,
+                        };
+                        if (empty($templateOptions) || ($guessed !== null && !array_key_exists($guessed, $templateOptions))) {
+                            $guessed = array_key_first($templateOptions) ?: null;
+                        }
+
+                        // Try initial render from template
+                        $defaultMessage = $plainFallback;
+                        if ($guessed) {
+                            try {
+                                /** @var MessageTemplateService $mts */
+                                $mts = app(MessageTemplateService::class);
+                                $rendered = (string) $mts->renderByType($guessed, $variables);
+                                if ($rendered !== '') {
+                                    $defaultMessage = $rendered;
+                                }
+                            } catch (\Throwable $e) {
+                                // keep fallback
+                            }
+                        }
+
+                        return [
+                            Forms\Components\Toggle::make('use_template')
+                                ->label('Gunakan Template')
+                                ->default(!empty($templateOptions))
+                                ->reactive()
+                                ->afterStateUpdated(function ($state, \Filament\Forms\Set $set, \Filament\Forms\Get $get) use ($variables, $plainFallback) {
+                                    if (!$state) {
+                                        $set('message', $plainFallback);
+                                        return;
+                                    }
+                                    $type = (string) ($get('template_type') ?? '');
+                                    if ($type === '') {
+                                        $set('message', $plainFallback);
+                                        return;
+                                    }
+                                    try {
+                                        /** @var MessageTemplateService $mts */
+                                        $mts = app(MessageTemplateService::class);
+                                        $rendered = (string) $mts->renderByType($type, $variables);
+                                        $set('message', $rendered !== '' ? $rendered : $plainFallback);
+                                    } catch (\Throwable $e) {
+                                        $set('message', $plainFallback);
+                                    }
+                                }),
+
+                            Forms\Components\Select::make('template_type')
+                                ->label('Tipe Template')
+                                ->options($templateOptions)
+                                ->searchable()
+                                ->preload()
+                                ->default($guessed)
+                                ->visible(fn (\Filament\Forms\Get $get) => (bool) $get('use_template'))
+                                ->reactive()
+                                ->afterStateUpdated(function ($state, \Filament\Forms\Set $set, \Filament\Forms\Get $get) use ($variables, $plainFallback) {
+                                    if (!(bool) $get('use_template')) {
+                                        return;
+                                    }
+                                    try {
+                                        /** @var MessageTemplateService $mts */
+                                        $mts = app(MessageTemplateService::class);
+                                        $rendered = (string) $mts->renderByType((string) $state, $variables);
+                                        $set('message', $rendered !== '' ? $rendered : $plainFallback);
+                                    } catch (\Throwable $e) {
+                                        $set('message', $plainFallback);
+                                    }
+                                }),
+
+                            Forms\Components\View::make('filament.student_attendance._wa_template_help'),
+
+                            Forms\Components\Textarea::make('message')
+                                ->label('Pesan WhatsApp')
+                                ->rows(7)
+                                ->required()
+                                ->default($defaultMessage)
+                                ->helperText('Placeholder: {student_name}, {date}, {time_in}, {status_label}, dan {v:key} untuk variasi frasa.'),
+                        ];
+                    })
+                    ->action(function (\App\Models\StudentAttendance $record, array $data): void {
+                        $receiver = optional($record->student)->parent_whatsapp;
+
+                        // Build variables (with aliases) to maximize template compatibility
+                        $studentName = optional($record->student)->name ?? '-';
+                        $className = optional(optional($record->student)->class)->name ?? '-';
+                        $deviceName = optional($record->device)->name ?? '-';
+                        $date = \Illuminate\Support\Carbon::parse($record->date)->format('d M Y');
+                        $timeIn = $record->time_in ? substr((string) $record->time_in, 0, 5) : '-';
+                        $timeOut = $record->time_out ? substr((string) $record->time_out, 0, 5) : '-';
+                        $statusLabel = $record->status instanceof AttendanceStatusEnum ? $record->status->getLabel() : (string) ($record->status ?? '-');
+                        $expectedTime = '-'; // TODO: derive from schedule/rules if available
+
+                        $variables = [
+                            // English-ish keys
+                            'student_name' => $studentName,
+                            'class_name' => $className,
+                            'device_name' => $deviceName,
+                            'date' => $date,
+                            'time_in' => $timeIn,
+                            'time_out' => $timeOut,
+                            'status_label' => $statusLabel,
+                            'expected_time' => $expectedTime,
+                            // Indonesian aliases
+                            'nama_siswa' => $studentName,
+                            'kelas' => $className,
+                            'perangkat' => $deviceName,
+                            'tanggal' => $date,
+                            'jam_masuk' => $timeIn,
+                            'jam_keluar' => $timeOut,
+                            'status' => $statusLabel,
+                            'jam_seharusnya' => $expectedTime,
+                        ];
+
+                        $message = (string) ($data['message'] ?? '');
+                        $useTemplate = (bool) ($data['use_template'] ?? false);
+                        $templateType = (string) ($data['template_type'] ?? '');
+
+                        try {
+                            /** @var \App\Services\MessageTemplateService $mts */
+                            $mts = app(\App\Services\MessageTemplateService::class);
+                            if ($useTemplate && $templateType !== '') {
+                                // Authoritative render by type at send time
+                                $rendered = (string) $mts->renderByType($templateType, $variables);
+                                if ($rendered !== '') {
+                                    $message = $rendered;
+                                }
+                            }
+                            // Always post-process to ensure placeholders resolved
+                            $message = $mts->expandVariants($message);
+                            $message = $mts->interpolate($message, $variables);
+                        } catch (\Throwable $e) {
+                            // Keep message as-is on failure
+                        }
+
+                        // As a safety net, replace any leftover {key} with '-'
+                        $message = preg_replace('/\{[A-Za-z0-9_\.-]+\}/', '-', (string) $message) ?? (string) $message;
+
+                        $result = app(\App\Services\WhatsappService::class)->sendMessage((string) $receiver, $message);
+
+                        if (($result['success'] ?? false) === true) {
+                            Notification::make()
+                                ->title('Pesan WhatsApp terkirim')
+                                ->success()
+                                ->send();
+                        } else {
+                            $error = $result['error'] ?? 'Gagal mengirim pesan.';
+                            Notification::make()
+                                ->title('Gagal mengirim WhatsApp')
+                                ->body($error)
+                                ->danger()
+                                ->send();
+                        }
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
